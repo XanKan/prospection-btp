@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chantier Prospect — Prospection B2B BTP</title>
+<meta name="description" content="Trouvez les entreprises du BTP par département et effectif, à partir des données publiques de l'État (base SIRENE). Export CSV pour Excel.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22313F;
+    --ink-soft:#5A6B7A;
+    --paper:#EEF1F4;
+    --panel:#FFFFFF;
+    --line:#CBD4DC;
+    --safety:#E8650D;
+    --safety-dark:#C2530A;
+    --ok:#2E7D46;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:16px}
+  body{
+    font-family:"Archivo",system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.5;
+    min-height:100vh;
+  }
+  a{color:var(--safety-dark)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  /* ---------- entête ---------- */
+  header{background:var(--ink);color:#fff;padding:34px 0 30px}
+  .brand{font-variation-settings:"wdth" 110;font-weight:850;font-size:clamp(1.7rem,3.5vw,2.4rem);letter-spacing:-.01em}
+  .brand em{font-style:normal;color:var(--safety)}
+  .tagline{color:#B9C4CE;max-width:62ch;margin-top:8px;font-size:.98rem}
+  .hazard{height:8px;background:repeating-linear-gradient(-45deg,var(--safety) 0 14px,var(--ink) 14px 28px)}
+
+  /* ---------- panneau de recherche ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-top:-1px;padding:26px 26px 22px}
+  .panel-search{margin-top:28px}
+  fieldset{border:0;margin-bottom:20px}
+  legend{font-weight:700;font-size:1rem;margin-bottom:10px}
+  legend small{font-weight:400;color:var(--ink-soft)}
+  .hint{font-size:.85rem;color:var(--ink-soft);margin-top:6px}
+  input[type=text]{
+    font:inherit;width:100%;max-width:420px;padding:10px 12px;
+    border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--ink)
+  }
+  input[type=text]:focus,button:focus-visible,.chip:focus-within{outline:2px solid var(--safety);outline-offset:2px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none;
+    border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:#fff;font-size:.92rem
+  }
+  .chip input{accent-color:var(--safety-dark)}
+  .chip:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+
+  .actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px}
+  button{
+    font:inherit;font-weight:700;cursor:pointer;border-radius:var(--radius);
+    padding:11px 22px;border:1px solid transparent;transition:background .15s
+  }
+  .btn-main{background:var(--safety-dark);color:#fff}
+  .btn-main:hover{background:var(--safety)}
+  .btn-main:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{background:#fff}
+  .btn-ghost:disabled{opacity:.45;cursor:not-allowed}
+
+  /* ---------- statut ---------- */
+  #status{margin:22px 0 10px;font-size:.95rem;min-height:1.4em}
+  #status.err{color:#B3261E;font-weight:600}
+  #status.ok{color:var(--ok);font-weight:600}
+  .bar{height:6px;background:#fff;border:1px solid var(--line);border-radius:999px;overflow:hidden;max-width:420px;display:none}
+  .bar>i{display:block;height:100%;width:0;background:var(--safety);transition:width .2s}
+
+  /* ---------- résultats ---------- */
+  .results-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin:26px 0 12px}
+  .results-head h2{font-size:1.15rem}
+  .count{color:var(--ink-soft);font-size:.92rem}
+  .table-scroll{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+  table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:900px}
+  th{
+    text-align:left;background:var(--ink);color:#fff;font-weight:600;
+    padding:10px 12px;position:sticky;top:0;white-space:nowrap
+  }
+  td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#F7F9FA}
+  td.nowrap{white-space:nowrap}
+  .naf{color:var(--ink-soft);font-size:.82rem}
+  footer{padding:36px 0 44px;color:var(--ink-soft);font-size:.85rem;max-width:78ch}
+  footer p{margin-bottom:8px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">Chantier<em>Prospect</em></div>
+    <p class="tagline">Trouvez les entreprises du bâtiment et des travaux publics par département et par effectif, à partir des données publiques de l'État (base SIRENE). Résultats exportables en CSV pour Excel.</p>
+  </div>
+</header>
+<div class="hazard" aria-hidden="true"></div>
+
+<main class="wrap">
+
+  <form class="panel panel-search" id="searchForm">
+    <div class="grid2">
+      <fieldset>
+        <legend>Départements <small>— séparés par des virgules</small></legend>
+        <input type="text" id="departements" placeholder="Ex : 68, 67, 90" autocomplete="off">
+        <p class="hint">Laissez vide pour chercher dans toute la France (plus long).</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Secteur d'activité</legend>
+        <div class="chips" id="secteurs">
+          <label class="chip"><input type="checkbox" name="secteur" value="41" checked> Construction de bâtiments (41)</label>
+          <label class="chip"><input type="checkbox" name="secteur" value="42" checked> Génie civil (42)</label>
+          <label class="chip"><input type="checkbox" name="secteur" value="43" checked> Travaux spécialisés (43)</label>
+        </div>
+        <p class="hint">Les trois cases cochées couvrent tout le secteur de la construction (section F).</p>
+      </fieldset>
+    </div>
+
+    <fieldset>
+      <legend>Effectif salarié <small>— tranches INSEE, la sélection par défaut correspond à « plus de 2 salariés »</small></legend>
+      <div class="chips" id="effectifs">
+        <label class="chip"><input type="checkbox" name="eff" value="01"> 1 à 2</label>
+        <label class="chip"><input type="checkbox" name="eff" value="02" checked> 3 à 5</label>
+        <label class="chip"><input type="checkbox" name="eff" value="03" checked> 6 à 9</label>
+        <label class="chip"><input type="checkbox" name="eff" value="11" checked> 10 à 19</label>
+        <label class="chip"><input type="checkbox" name="eff" value="12" checked> 20 à 49</label>
+        <label class="chip"><input type="checkbox" name="eff" value="21" checked> 50 à 99</label>
+        <label class="chip"><input type="checkbox" name="eff" value="22" checked> 100 à 199</label>
+        <label class="chip"><input type="checkbox" name="eff" value="31,32" checked> 200 à 499</label>
+        <label class="chip"><input type="checkbox" name="eff" value="41,42,51,52,53" checked> 500 et +</label>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit" class="btn-main" id="btnSearch">Lancer la recherche</button>
+      <button type="button" class="btn-ghost" id="btnStop" disabled>Arrêter</button>
+      <button type="button" class="btn-ghost" id="btnCsv" disabled>Exporter en CSV (Excel)</button>
+    </div>
+  </form>
+
+  <p id="status" role="status" aria-live="polite"></p>
+  <div class="bar" id="bar"><i></i></div>
+
+  <div class="results-head">
+    <h2>Résultats</h2>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="table-scroll">
+    <table id="table">
+      <thead>
+        <tr>
+          <th>Entreprise</th>
+          <th>SIREN</th>
+          <th>Activité</th>
+          <th>Effectif</th>
+          <th>Adresse du siège</th>
+          <th>Dirigeant(s)</th>
+          <th>Création</th>
+          <th>Fiche</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="8" style="color:var(--ink-soft);padding:22px">Aucune recherche lancée pour l'instant. Choisissez vos filtres ci-dessus, puis lancez la recherche.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    <p><strong>Source des données :</strong> API Recherche d'entreprises (recherche-entreprises.api.gouv.fr), qui expose la base SIRENE de l'INSEE et le Registre National des Entreprises. Données publiques, gratuites, mises à jour quotidiennement.</p>
+    <p><strong>Limites :</strong> la base ne contient ni email ni téléphone (ces données n'existent pas dans SIRENE). L'effectif affiché est la tranche INSEE déclarée, souvent datée de 2 à 3 ans. L'API limite la pagination à environ 10 000 résultats par recherche : affinez par département si vous atteignez la limite.</p>
+    <p><strong>RGPD :</strong> les noms de dirigeants sont des données publiques du RNE, mais leur usage en prospection reste soumis au RGPD (intérêt légitime, information des personnes, droit d'opposition).</p>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  const API = "https://recherche-entreprises.api.gouv.fr/search";
+  const PER_PAGE = 25;          // maximum autorisé par l'API
+  const MAX_PAGES = 400;        // plafond de pagination de l'API (~10 000 résultats)
+  const DELAY_MS = 180;         // ~5,5 requêtes/s, sous la limite de 7 req/s
+
+  const EFF_LABELS = {
+    "00":"0 salarié","01":"1 à 2","02":"3 à 5","03":"6 à 9","11":"10 à 19",
+    "12":"20 à 49","21":"50 à 99","22":"100 à 199","31":"200 à 249","32":"250 à 499",
+    "41":"500 à 999","42":"1 000 à 1 999","51":"2 000 à 4 999","52":"5 000 à 9 999","53":"10 000 et +"
+  };
+
+  const $ = id => document.getElementById(id);
+  const form = $("searchForm"), tbody = $("tbody"), statusEl = $("status");
+  const bar = $("bar"), barFill = bar.querySelector("i");
+  const btnSearch = $("btnSearch"), btnStop = $("btnStop"), btnCsv = $("btnCsv");
+  const countEl = $("count");
+
+  let rows = [];        // résultats accumulés (objets normalisés)
+  let aborter = null;   // AbortController de la recherche en cours
+
+  function setStatus(msg, cls){ statusEl.textContent = msg; statusEl.className = cls || ""; }
+  function esc(s){ const d=document.createElement("span"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+  const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+  function readFilters(){
+    const deps = $("departements").value
+      .split(",").map(s=>s.trim()).filter(Boolean)
+      .map(s=>/^\d$/.test(s) ? "0"+s : s.toUpperCase());
+    const badDep = deps.find(d=>!/^(\d{2}|2A|2B|9[7-8]\d)$/.test(d));
+    if (badDep) throw new Error("Département invalide : « "+badDep+" ». Utilisez des codes à 2 chiffres (ou 2A/2B, 971…).");
+
+    const secteurs = [...document.querySelectorAll('input[name=secteur]:checked')].map(c=>c.value);
+    if (!secteurs.length) throw new Error("Sélectionnez au moins un secteur d'activité.");
+
+    const effs = [...document.querySelectorAll('input[name=eff]:checked')].flatMap(c=>c.value.split(","));
+    if (!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
+
+    return { deps, secteurs, effs };
+  }
+
+  function buildUrl(f, page){
+    const p = new URLSearchParams();
+    // Si les 3 divisions sont cochées, on filtre sur la section F entière (plus simple pour l'API)
+    if (f.secteurs.length === 3) p.set("section_activite_principale","F");
+    else p.set("activite_principale", f.secteurs.join(","));
+    p.set("tranche_effectif_salarie", f.effs.join(","));
+    if (f.deps.length) p.set("departement", f.deps.join(","));
+    p.set("etat_administratif","A");
+    p.set("per_page", PER_PAGE);
+    p.set("page", page);
+    return API + "?" + p.toString();
+  }
+
+  function normalize(r){
+    const s = r.siege || {};
+    const dirigeants = (r.dirigeants||[])
+      .filter(d=>d.type_dirigeant==="personne physique")
+      .map(d=>[(d.prenoms||"").split(" ")[0], d.nom].filter(Boolean).join(" "))
+      .filter(Boolean);
+    const qualite = (r.dirigeants||[]).find(d=>d.type_dirigeant==="personne physique")?.qualite || "";
+    return {
+      nom: r.nom_complet || r.nom_raison_sociale || "",
+      siren: r.siren || "",
+      siret: s.siret || "",
+      naf: r.activite_principale || "",
+      effectif: EFF_LABELS[r.tranche_effectif_salarie] || r.tranche_effectif_salarie || "n.c.",
+      adresse: s.adresse || "",
+      code_postal: s.code_postal || "",
+      commune: s.libelle_commune || "",
+      departement: s.departement || "",
+      dirigeants: dirigeants.join(" ; "),
+      qualite,
+      creation: r.date_creation || "",
+      fiche: "https://annuaire-entreprises.data.gouv.fr/entreprise/" + (r.siren||"")
+    };
+  }
+
+  function render(){
+    countEl.textContent = rows.length ? rows.length.toLocaleString("fr-FR") + " entreprise(s)" : "";
+    if (!rows.length){
+      tbody.innerHTML = '<tr><td colspan="8" style="color:var(--ink-soft);padding:22px">Aucun résultat pour ces critères.</td></tr>';
+      return;
+    }
+    // Rendu par blocs pour rester fluide sur de gros volumes
+    const html = rows.map(x=>
+      "<tr><td><strong>"+esc(x.nom)+"</strong></td>"+
+      '<td class="nowrap">'+esc(x.siren)+"</td>"+
+      '<td><span class="naf">'+esc(x.naf)+"</span></td>"+
+      '<td class="nowrap">'+esc(x.effectif)+"</td>"+
+      "<td>"+esc(x.adresse)+"</td>"+
+      "<td>"+esc(x.dirigeants)+"</td>"+
+      '<td class="nowrap">'+esc(x.creation)+"</td>"+
+      '<td class="nowrap"><a href="'+esc(x.fiche)+'" target="_blank" rel="noopener">Ouvrir</a></td></tr>'
+    ).join("");
+    tbody.innerHTML = html;
+  }
+
+  async function run(f){
+    rows = [];
+    render();
+    aborter = new AbortController();
+    btnSearch.disabled = true; btnStop.disabled = false; btnCsv.disabled = true;
+    bar.style.display = "block"; barFill.style.width = "0";
+
+    let page = 1, totalPages = 1, total = 0, retried = false;
+    try{
+      while (page <= totalPages && page <= MAX_PAGES){
+        const resp = await fetch(buildUrl(f, page), { signal: aborter.signal });
+        if (resp.status === 429){
+          if (retried) throw new Error("L'API limite le débit (erreur 429). Réessayez dans une minute.");
+          retried = true; await sleep(2000); continue;
+        }
+        if (!resp.ok) throw new Error("L'API a répondu avec une erreur ("+resp.status+"). Réessayez, ou réduisez les critères.");
+        const data = await resp.json();
+        retried = false;
+
+        if (page === 1){
+          total = data.total_results || 0;
+          totalPages = data.total_pages || 1;
+          if (!total){ setStatus("Aucune entreprise ne correspond à ces critères.", ""); break; }
+        }
+        for (const r of (data.results||[])) rows.push(normalize(r));
+
+        const capped = totalPages > MAX_PAGES;
+        setStatus("Récupération : "+rows.length.toLocaleString("fr-FR")+" / "+total.toLocaleString("fr-FR")+" entreprise(s)…"+(capped?" (l'API plafonne à ~10 000 résultats — affinez par département pour tout récupérer)":""));
+        barFill.style.width = Math.min(100, Math.round(page/Math.min(totalPages,MAX_PAGES)*100)) + "%";
+
+        page++;
+        if (page <= totalPages) await sleep(DELAY_MS);
+      }
+      if (rows.length){
+        const capped = totalPages > MAX_PAGES;
+        setStatus("Terminé : "+rows.length.toLocaleString("fr-FR")+" entreprise(s) récupérée(s)"+(capped?" sur "+total.toLocaleString("fr-FR")+" (plafond API atteint — relancez département par département)":"")+".", "ok");
+      }
+    }catch(e){
+      if (e.name === "AbortError") setStatus("Recherche arrêtée : "+rows.length.toLocaleString("fr-FR")+" entreprise(s) déjà récupérée(s).", "");
+      else setStatus(e.message || "Erreur réseau. Vérifiez votre connexion et réessayez.", "err");
+    }finally{
+      aborter = null;
+      btnSearch.disabled = false; btnStop.disabled = true;
+      btnCsv.disabled = rows.length === 0;
+      bar.style.display = "none";
+      render();
+    }
+  }
+
+  form.addEventListener("submit", ev=>{
+    ev.preventDefault();
+    let f;
+    try{ f = readFilters(); }
+    catch(e){ setStatus(e.message, "err"); return; }
+    setStatus("Recherche en cours…");
+    run(f);
+  });
+
+  btnStop.addEventListener("click", ()=>{ if (aborter) aborter.abort(); });
+
+  btnCsv.addEventListener("click", ()=>{
+    const cols = [
+      ["nom","Entreprise"],["siren","SIREN"],["siret","SIRET siège"],["naf","Code NAF"],
+      ["effectif","Effectif (tranche INSEE)"],["adresse","Adresse siège"],["code_postal","Code postal"],
+      ["commune","Commune"],["departement","Département"],["dirigeants","Dirigeant(s)"],
+      ["qualite","Qualité du 1er dirigeant"],["creation","Date de création"],["fiche","Fiche Annuaire des Entreprises"]
+    ];
+    const cell = v => '"' + String(v==null?"":v).replace(/"/g,'""') + '"';
+    const lines = ["sep=;", cols.map(c=>cell(c[1])).join(";")]
+      .concat(rows.map(x=>cols.map(c=>cell(x[c[0]])).join(";")));
+    const blob = new Blob(["\uFEFF"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "prospection-btp-" + new Date().toISOString().slice(0,10) + ".csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+})();
+</script>
+</body>
+</html>
