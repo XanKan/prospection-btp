@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Chantier Prospect — Prospection B2B BTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --ink:#22313F; --ink-soft:#5A6B7A; --paper:#EEF1F4; --panel:#FFFFFF;
+    --line:#CBD4DC; --safety:#E8650D; --safety-dark:#C2530A; --ok:#2E7D46; --radius:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Archivo",system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;min-height:100vh}
+  a{color:var(--safety-dark)}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+
+  #gate{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+  #gate .box{background:var(--panel);border-radius:var(--radius);padding:32px;width:100%;max-width:390px}
+  #gate h1{font-size:1.45rem;font-variation-settings:"wdth" 110;font-weight:850;margin-bottom:4px}
+  #gate h1 em{font-style:normal;color:var(--safety)}
+  #gate p{color:var(--ink-soft);font-size:.9rem;margin-bottom:20px}
+  #gate input{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px}
+  #gate button{width:100%}
+  #gateErr{color:#B3261E;font-size:.88rem;font-weight:600;margin-top:10px;min-height:1.2em}
+  #app{display:none}
+
+  header{background:var(--ink);color:#fff;padding:34px 0 30px}
+  .brand{font-variation-settings:"wdth" 110;font-weight:850;font-size:clamp(1.7rem,3.5vw,2.4rem);letter-spacing:-.01em}
+  .brand em{font-style:normal;color:var(--safety)}
+  .tagline{color:#B9C4CE;max-width:64ch;margin-top:8px;font-size:.98rem}
+  .hazard{height:8px;background:repeating-linear-gradient(-45deg,var(--safety) 0 14px,var(--ink) 14px 28px)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px 26px 22px;margin-top:28px}
+  fieldset{border:0;margin-bottom:20px}
+  legend{font-weight:700;font-size:1rem;margin-bottom:10px}
+  legend small{font-weight:400;color:var(--ink-soft)}
+  .hint{font-size:.85rem;color:var(--ink-soft);margin-top:6px}
+  input[type=text],select{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--ink)}
+  select{max-width:260px}
+  input:focus,select:focus,button:focus-visible,.chip:focus-within{outline:2px solid var(--safety);outline-offset:2px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:#fff;font-size:.92rem}
+  .chip input{accent-color:var(--safety-dark)}
+  .chip:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
+  .grid3{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:760px){.grid3{grid-template-columns:1fr}}
+
+  .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px}
+  button{font:inherit;font-weight:700;cursor:pointer;border-radius:var(--radius);padding:11px 22px;border:1px solid transparent;transition:background .15s}
+  .btn-main{background:var(--safety-dark);color:#fff}
+  .btn-main:hover{background:var(--safety)}
+  .btn-main:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{background:#fff}
+  .btn-ghost:disabled{opacity:.45;cursor:not-allowed}
+
+  #status{margin:22px 0 10px;font-size:.95rem;min-height:1.4em}
+  #status.err{color:#B3261E;font-weight:600}
+  #status.ok{color:var(--ok);font-weight:600}
+  .bar{height:6px;background:#fff;border:1px solid var(--line);border-radius:999px;overflow:hidden;max-width:420px;display:none}
+  .bar>i{display:block;height:100%;width:0;background:var(--safety);transition:width .2s}
+
+  .results-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin:26px 0 12px}
+  .results-head h2{font-size:1.15rem}
+  .count{color:var(--ink-soft);font-size:.92rem}
+  .table-scroll{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:1150px}
+  th{text-align:left;background:var(--ink);color:#fff;font-weight:600;padding:10px 12px;position:sticky;top:0;white-space:nowrap}
+  td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#F7F9FA}
+  tr.has-contact td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+  td.nowrap{white-space:nowrap}
+  .naf{color:var(--ink-soft);font-size:.82rem}
+  .muted{color:var(--ink-soft)}
+  footer{padding:36px 0 44px;color:var(--ink-soft);font-size:.85rem;max-width:80ch}
+  footer p{margin-bottom:8px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <form class="box" id="gateForm">
+    <h1>Chantier<em>Prospect</em></h1>
+    <p>Accès réservé. Entrez le mot de passe pour continuer.</p>
+    <input type="password" id="pwd" placeholder="Mot de passe" autocomplete="current-password" autofocus>
+    <button type="submit" class="btn-main">Entrer</button>
+    <p id="gateErr" role="alert"></p>
+  </form>
+</div>
+
+<div id="app">
+<header>
+  <div class="wrap">
+    <div class="brand">Chantier<em>Prospect</em></div>
+    <p class="tagline">Entreprises du BTP par département et par effectif (base SIRENE), avec recherche automatique des téléphones et e-mails dans la base RGE de l'ADEME. Export Excel prêt à importer dans Brevo.</p>
+  </div>
+</header>
+<div class="hazard" aria-hidden="true"></div>
+
+<main class="wrap">
+  <form class="panel" id="searchForm">
+    <div class="grid3">
+      <fieldset>
+        <legend>Départements <small>— séparés par des virgules</small></legend>
+        <input type="text" id="departements" placeholder="Ex : 68, 67, 90" autocomplete="off">
+        <p class="hint">Laissez vide pour chercher dans toute la France.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Nombre de résultats <small>— limite de la recherche</small></legend>
+        <select id="limite">
+          <option value="100">100 entreprises</option>
+          <option value="300" selected>300 entreprises</option>
+          <option value="500">500 entreprises</option>
+          <option value="1000">1 000 entreprises</option>
+          <option value="2000">2 000 entreprises</option>
+          <option value="5000">5 000 entreprises</option>
+          <option value="0">Tout (peut être très long)</option>
+        </select>
+        <p class="hint">300 correspond au quota d'envoi quotidien de l'offre gratuite Brevo.</p>
+      </fieldset>
+    </div>
+
+    <fieldset>
+      <legend>Secteur d'activité</legend>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="secteur" value="41" checked> Construction de bâtiments (41)</label>
+        <label class="chip"><input type="checkbox" name="secteur" value="42" checked> Génie civil (42)</label>
+        <label class="chip"><input type="checkbox" name="secteur" value="43" checked> Travaux spécialisés (43)</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Effectif salarié <small>— tranches INSEE, la sélection par défaut correspond à « plus de 2 salariés »</small></legend>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="eff" value="01"> 1 à 2</label>
+        <label class="chip"><input type="checkbox" name="eff" value="02" checked> 3 à 5</label>
+        <label class="chip"><input type="checkbox" name="eff" value="03" checked> 6 à 9</label>
+        <label class="chip"><input type="checkbox" name="eff" value="11" checked> 10 à 19</label>
+        <label class="chip"><input type="checkbox" name="eff" value="12" checked> 20 à 49</label>
+        <label class="chip"><input type="checkbox" name="eff" value="21" checked> 50 à 99</label>
+        <label class="chip"><input type="checkbox" name="eff" value="22" checked> 100 à 199</label>
+        <label class="chip"><input type="checkbox" name="eff" value="31,32" checked> 200 à 499</label>
+        <label class="chip"><input type="checkbox" name="eff" value="41,42,51,52,53" checked> 500 et +</label>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit" class="btn-main" id="btnSearch">Lancer la recherche</button>
+      <button type="button" class="btn-ghost" id="btnStop" disabled>Arrêter</button>
+      <button type="button" class="btn-main" id="btnBrevo" disabled>Export Brevo (.xlsx)</button>
+      <button type="button" class="btn-ghost" id="btnCsv" disabled>Export complet (CSV)</button>
+      <label class="chip" style="margin-left:auto"><input type="checkbox" id="onlyContact" checked> Uniquement les fiches avec contact</label>
+    </div>
+  </form>
+
+  <p id="status" role="status" aria-live="polite"></p>
+  <div class="bar" id="bar"><i></i></div>
+
+  <div class="results-head">
+    <h2>Résultats</h2>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Entreprise</th><th>Téléphone</th><th>E-mail</th><th>Site web</th>
+          <th>Effectif</th><th>Activité</th><th>Adresse du siège</th>
+          <th>Dirigeant(s)</th><th>SIREN</th><th>Fiche</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="10" class="muted" style="padding:22px">Aucune recherche lancée. Choisissez vos filtres et lancez la recherche : les coordonnées sont cherchées automatiquement dans la foulée.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    <p><strong>Sources.</strong> Liste des entreprises : API Recherche d'entreprises (base SIRENE de l'INSEE et Registre National des Entreprises). Coordonnées : jeu de données « Liste des entreprises RGE » de l'ADEME, publié en Licence Ouverte Etalab et mis à jour quotidiennement.</p>
+    <p><strong>Taux de correspondance.</strong> La base RGE recense environ 60 000 établissements du bâtiment qualifiés « Reconnu Garant de l'Environnement ». Une entreprise BTP non RGE n'y figure pas : le taux est bon sur les métiers de la rénovation énergétique (isolation, menuiseries, pompes à chaleur, photovoltaïque, chauffage), plus faible sur le gros œuvre et les travaux publics.</p>
+    <p><strong>Import Brevo.</strong> Le fichier .xlsx contient une colonne EMAIL en première position et des attributs en majuscules, comme attendu par Brevo. Seules les fiches disposant d'une adresse e-mail y figurent. Pensez à valider les adresses avec l'outil intégré de Brevo avant votre première campagne.</p>
+    <p><strong>RGPD.</strong> Ces coordonnées sont publiées en open data pour aider les particuliers à trouver un artisan qualifié. Leur réutilisation en prospection B2B suppose une base légale d'intérêt légitime, l'information des personnes dès le premier contact, un lien de désinscription et le respect immédiat des oppositions.</p>
+  </footer>
+</main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================================================================
+     MOT DE PASSE — pour le changer, ouvrez la page avec
+     ?hash=votrenouveaupasse puis collez le code affiché ci-dessous.
+     ================================================================ */
+  const PWD_HASH = "f73560f92e46d37bc6c185864ef21b73bd142d9307427bb71a0a883d40955a2b";
+
+  const $ = id => document.getElementById(id);
+  const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+  async function sha256(t){
+    const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+    return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+  }
+
+  const qp = new URLSearchParams(location.search);
+  if (qp.has("hash")){
+    sha256(qp.get("hash")).then(h=>{
+      document.body.innerHTML='<div style="font:15px/1.6 monospace;padding:40px;max-width:760px">'+
+      '<p>Mot de passe : <b>'+qp.get("hash").replace(/</g,"&lt;")+'</b></p>'+
+      '<p style="margin-top:14px">Remplacez la valeur de <code>PWD_HASH</code> par :</p>'+
+      '<p style="margin-top:10px;word-break:break-all;background:#fff;padding:14px;border-radius:6px">"'+h+'"</p></div>';
+    });
+    return;
+  }
+
+  const gate=$("gate"), app=$("app");
+  function unlock(){ gate.style.display="none"; app.style.display="block"; try{sessionStorage.setItem("cp_ok","1");}catch(e){} }
+  try{ if(sessionStorage.getItem("cp_ok")==="1") unlock(); }catch(e){}
+  $("gateForm").addEventListener("submit", async ev=>{
+    ev.preventDefault();
+    if(await sha256($("pwd").value)===PWD_HASH) unlock();
+    else { $("gateErr").textContent="Mot de passe incorrect."; $("pwd").select(); }
+  });
+
+  /* ================================================================ */
+  const API_SIRENE="https://recherche-entreprises.api.gouv.fr/search";
+  const API_RGE="https://data.ademe.fr/data-fair/api/v1/datasets/liste-des-entreprises-rge-2/lines";
+  const PER_PAGE=25, MAX_PAGES=400, DELAY=180, RGE_BATCH=25, RGE_DELAY=220;
+
+  const EFF={"00":"0 salarié","01":"1 à 2","02":"3 à 5","03":"6 à 9","11":"10 à 19","12":"20 à 49",
+    "21":"50 à 99","22":"100 à 199","31":"200 à 249","32":"250 à 499","41":"500 à 999",
+    "42":"1 000 à 1 999","51":"2 000 à 4 999","52":"5 000 à 9 999","53":"10 000 et +"};
+
+  const form=$("searchForm"), tbody=$("tbody"), statusEl=$("status");
+  const bar=$("bar"), barFill=bar.querySelector("i");
+  const btnSearch=$("btnSearch"), btnStop=$("btnStop"), btnBrevo=$("btnBrevo"), btnCsv=$("btnCsv");
+  const countEl=$("count"), onlyContact=$("onlyContact");
+
+  let rows=[], aborter=null;
+
+  const setStatus=(m,c)=>{statusEl.textContent=m;statusEl.className=c||"";};
+  const esc=s=>{const d=document.createElement("span");d.textContent=s==null?"":String(s);return d.innerHTML;};
+
+  function readFilters(){
+    const deps=$("departements").value.split(",").map(s=>s.trim()).filter(Boolean)
+      .map(s=>/^\d$/.test(s)?"0"+s:s.toUpperCase());
+    const bad=deps.find(d=>!/^(\d{2}|2A|2B|9[7-8]\d)$/.test(d));
+    if(bad) throw new Error("Département invalide : « "+bad+" ». Utilisez des codes à 2 chiffres (ou 2A/2B, 971…).");
+    const sect=[...document.querySelectorAll('input[name=secteur]:checked')].map(c=>c.value);
+    if(!sect.length) throw new Error("Sélectionnez au moins un secteur d'activité.");
+    const effs=[...document.querySelectorAll('input[name=eff]:checked')].flatMap(c=>c.value.split(","));
+    if(!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
+    const limite=parseInt($("limite").value,10)||0;
+    return {deps,sect,effs,limite};
+  }
+
+  function urlSirene(f,page){
+    const p=new URLSearchParams();
+    if(f.sect.length===3) p.set("section_activite_principale","F");
+    else p.set("activite_principale",f.sect.join(","));
+    p.set("tranche_effectif_salarie",f.effs.join(","));
+    if(f.deps.length) p.set("departement",f.deps.join(","));
+    p.set("etat_administratif","A");
+    p.set("per_page",PER_PAGE); p.set("page",page);
+    return API_SIRENE+"?"+p.toString();
+  }
+
+  // Prénom / nom du premier dirigeant, en casse normale
+  function capital(s){
+    return String(s||"").toLowerCase().replace(/(^|[\s'\-])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
+  }
+  function telIntl(t){
+    const d=String(t||"").replace(/[^\d+]/g,"");
+    if(/^\+/.test(d)) return d;
+    if(/^0\d{9}$/.test(d)) return "+33"+d.slice(1);
+    return d;
+  }
+
+  function normalize(r){
+    const s=r.siege||{};
+    const pp=(r.dirigeants||[]).filter(d=>d.type_dirigeant==="personne physique");
+    const first=pp[0]||{};
+    return {
+      nom:r.nom_complet||r.nom_raison_sociale||"", siren:r.siren||"", siret:s.siret||"",
+      naf:r.activite_principale||"", effectif:EFF[r.tranche_effectif_salarie]||"n.c.",
+      adresse:s.adresse||"", cp:s.code_postal||"", commune:capital(s.libelle_commune||""),
+      dep:s.departement||"",
+      prenom:capital((first.prenoms||"").split(" ")[0]||""),
+      nomDir:capital(first.nom||""),
+      dirigeants:pp.map(d=>capital([(d.prenoms||"").split(" ")[0],d.nom].filter(Boolean).join(" "))).filter(Boolean).join(" ; "),
+      qualite:first.qualite||"", creation:r.date_creation||"",
+      tel:"", email:"", site:"", rge:"",
+      fiche:"https://annuaire-entreprises.data.gouv.fr/entreprise/"+(r.siren||"")
+    };
+  }
+
+  const visibleRows=()=> onlyContact.checked ? rows.filter(r=>r.tel||r.email) : rows;
+
+  function render(){
+    const list=visibleRows();
+    const withC=rows.filter(r=>r.tel||r.email).length;
+    countEl.textContent = rows.length
+      ? list.length.toLocaleString("fr-FR")+" affichée(s) • "+withC.toLocaleString("fr-FR")+" avec contact sur "+rows.length.toLocaleString("fr-FR")
+      : "";
+    if(!list.length){
+      tbody.innerHTML='<tr><td colspan="10" class="muted" style="padding:22px">Aucune fiche à afficher. Décochez « Uniquement les fiches avec contact » pour voir toutes les entreprises.</td></tr>';
+      return;
+    }
+    tbody.innerHTML=list.map(x=>{
+      const site=x.site?'<a href="'+esc(x.site)+'" target="_blank" rel="noopener">lien</a>':'<span class="muted">—</span>';
+      const tel=x.tel?'<a href="tel:'+esc(telIntl(x.tel))+'">'+esc(x.tel)+'</a>':'<span class="muted">—</span>';
+      const mail=x.email?'<a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'<span class="muted">—</span>';
+      return '<tr class="'+((x.tel||x.email)?"has-contact":"")+'">'+
+        "<td><strong>"+esc(x.nom)+"</strong>"+(x.rge?'<br><span class="naf">RGE : '+esc(x.rge)+"</span>":"")+"</td>"+
+        '<td class="nowrap">'+tel+"</td><td>"+mail+"</td><td>"+site+"</td>"+
+        '<td class="nowrap">'+esc(x.effectif)+'</td><td><span class="naf">'+esc(x.naf)+"</span></td>"+
+        "<td>"+esc(x.adresse)+"</td><td>"+esc(x.dirigeants)+"</td>"+
+        '<td class="nowrap">'+esc(x.siren)+'</td>'+
+        '<td class="nowrap"><a href="'+esc(x.fiche)+'" target="_blank" rel="noopener">Ouvrir</a></td></tr>';
+    }).join("");
+  }
+
+  /* ---------- Phase 1 : liste des entreprises ---------- */
+  async function fetchCompanies(f){
+    let page=1,totalPages=1,total=0,retried=false;
+    while(page<=totalPages && page<=MAX_PAGES){
+      if(f.limite && rows.length>=f.limite) break;
+      const resp=await fetch(urlSirene(f,page),{signal:aborter.signal});
+      if(resp.status===429){ if(retried) throw new Error("L'API limite le débit. Réessayez dans une minute."); retried=true; await sleep(2000); continue; }
+      if(!resp.ok) throw new Error("L'API a répondu avec une erreur ("+resp.status+"). Réduisez les critères et réessayez.");
+      const d=await resp.json(); retried=false;
+      if(page===1){
+        total=d.total_results||0; totalPages=d.total_pages||1;
+        if(!total){ setStatus("Aucune entreprise ne correspond à ces critères."); return 0; }
+      }
+      for(const r of (d.results||[])){
+        if(f.limite && rows.length>=f.limite) break;
+        rows.push(normalize(r));
+      }
+      const cible=f.limite?Math.min(f.limite,total):total;
+      setStatus("Étape 1/2 — liste des entreprises : "+rows.length.toLocaleString("fr-FR")+" / "+cible.toLocaleString("fr-FR")+"…");
+      barFill.style.width=Math.min(100,Math.round(rows.length/cible*100))+"%";
+      page++;
+      if(page<=totalPages) await sleep(DELAY);
+    }
+    return total;
+  }
+
+  /* ---------- Phase 2 : coordonnées via la base RGE ---------- */
+  async function fetchContacts(){
+    const sirens=[...new Set(rows.map(r=>r.siren).filter(Boolean))];
+    const found=new Map();
+    let done=0, errors=0;
+    for(let i=0;i<sirens.length;i+=RGE_BATCH){
+      const batch=sirens.slice(i,i+RGE_BATCH);
+      const p=new URLSearchParams();
+      p.set("qs","siret:("+batch.map(s=>s+"*").join(" OR ")+")");
+      p.set("size","200");
+      p.set("select","siret,telephone,email,site_internet,domaine");
+      try{
+        const resp=await fetch(API_RGE+"?"+p.toString(),{signal:aborter.signal});
+        if(resp.ok){
+          const d=await resp.json();
+          for(const l of (d.results||[])){
+            const sir=String(l.siret||"").slice(0,9);
+            if(!sir) continue;
+            const cur=found.get(sir)||{tel:"",email:"",site:"",dom:new Set()};
+            if(!cur.tel && l.telephone) cur.tel=l.telephone;
+            if(!cur.email && l.email) cur.email=l.email;
+            if(!cur.site && l.site_internet) cur.site=l.site_internet;
+            if(l.domaine) String(l.domaine).split(";").forEach(x=>{const t=x.trim(); if(t) cur.dom.add(t);});
+            found.set(sir,cur);
+          }
+        } else errors++;
+      }catch(err){ if(err.name==="AbortError") throw err; errors++; }
+
+      done+=batch.length;
+      barFill.style.width=Math.round(done/sirens.length*100)+"%";
+      setStatus("Étape 2/2 — recherche des coordonnées : "+done.toLocaleString("fr-FR")+" / "+sirens.length.toLocaleString("fr-FR")+" vérifiée(s), "+found.size.toLocaleString("fr-FR")+" contact(s) trouvé(s)…");
+      if(i+RGE_BATCH<sirens.length) await sleep(RGE_DELAY);
+    }
+    for(const r of rows){
+      const f=found.get(r.siren);
+      if(f){ r.tel=f.tel; r.email=f.email; r.site=f.site; r.rge=[...f.dom].slice(0,3).join(", "); }
+    }
+    return errors;
+  }
+
+  async function run(f){
+    rows=[]; render();
+    aborter=new AbortController();
+    btnSearch.disabled=true; btnStop.disabled=false; btnBrevo.disabled=true; btnCsv.disabled=true;
+    bar.style.display="block"; barFill.style.width="0";
+    try{
+      const total=await fetchCompanies(f);
+      if(rows.length){
+        barFill.style.width="0";
+        const errors=await fetchContacts();
+        const withMail=rows.filter(r=>r.email).length;
+        const withC=rows.filter(r=>r.tel||r.email).length;
+        setStatus("Terminé : "+rows.length.toLocaleString("fr-FR")+" entreprise(s), "+withC.toLocaleString("fr-FR")+" avec contact, dont "+withMail.toLocaleString("fr-FR")+" avec e-mail exploitable pour Brevo."+(errors?" ("+errors+" lot(s) en erreur)":""),"ok");
+      }
+    }catch(e){
+      if(e.name==="AbortError") setStatus("Recherche arrêtée : "+rows.length.toLocaleString("fr-FR")+" entreprise(s) récupérée(s).");
+      else setStatus(e.message||"Erreur réseau. Vérifiez votre connexion.","err");
+    }finally{
+      aborter=null; btnSearch.disabled=false; btnStop.disabled=true;
+      btnBrevo.disabled=rows.filter(r=>r.email).length===0;
+      btnCsv.disabled=rows.length===0;
+      bar.style.display="none"; render();
+    }
+  }
+
+  form.addEventListener("submit",ev=>{
+    ev.preventDefault();
+    let f; try{ f=readFilters(); }catch(e){ setStatus(e.message,"err"); return; }
+    setStatus("Recherche en cours…"); run(f);
+  });
+  btnStop.addEventListener("click",()=>{ if(aborter) aborter.abort(); });
+  onlyContact.addEventListener("change",render);
+
+  /* ---------- Export Brevo (.xlsx) ---------- */
+  btnBrevo.addEventListener("click",()=>{
+    const list=rows.filter(r=>r.email);
+    if(!list.length){ setStatus("Aucune adresse e-mail à exporter.","err"); return; }
+    const data=list.map(r=>({
+      EMAIL:r.email,
+      PRENOM:r.prenom,
+      NOM:r.nomDir,
+      ENTREPRISE:r.nom,
+      SMS:telIntl(r.tel),
+      TELEPHONE:r.tel,
+      VILLE:r.commune,
+      CODE_POSTAL:r.cp,
+      DEPARTEMENT:r.dep,
+      ADRESSE:r.adresse,
+      EFFECTIF:r.effectif,
+      METIER_RGE:r.rge,
+      CODE_NAF:r.naf,
+      FONCTION:r.qualite,
+      SITE_WEB:r.site,
+      SIREN:r.siren
+    }));
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.json_to_sheet(data);
+    ws["!cols"]=[{wch:32},{wch:14},{wch:16},{wch:34},{wch:15},{wch:15},{wch:18},{wch:11},{wch:12},{wch:38},{wch:14},{wch:30},{wch:10},{wch:20},{wch:28},{wch:11}];
+    XLSX.utils.book_append_sheet(wb,ws,"Contacts");
+    XLSX.writeFile(wb,"brevo-btp-"+new Date().toISOString().slice(0,10)+".xlsx");
+    setStatus(list.length.toLocaleString("fr-FR")+" contact(s) exporté(s) au format Brevo.","ok");
+  });
+
+  /* ---------- Export complet (CSV) ---------- */
+  btnCsv.addEventListener("click",()=>{
+    const cols=[["nom","Entreprise"],["tel","Téléphone"],["email","E-mail"],["site","Site web"],
+      ["effectif","Effectif"],["naf","Code NAF"],["rge","Domaines RGE"],["adresse","Adresse siège"],
+      ["cp","Code postal"],["commune","Commune"],["dep","Département"],["prenom","Prénom dirigeant"],
+      ["nomDir","Nom dirigeant"],["qualite","Fonction"],["dirigeants","Tous les dirigeants"],
+      ["siren","SIREN"],["siret","SIRET siège"],["creation","Création"],["fiche","Fiche officielle"]];
+    const cell=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+    const list=visibleRows();
+    const lines=["sep=;",cols.map(c=>cell(c[1])).join(";")]
+      .concat(list.map(x=>cols.map(c=>cell(x[c[0]])).join(";")));
+    const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="prospection-btp-"+new Date().toISOString().slice(0,10)+".csv";
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+})();
+</script>
+</body>
+</html>
