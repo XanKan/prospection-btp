@@ -74,7 +74,7 @@
   .results-head h2{font-size:1.15rem}
   .count{color:var(--ink-soft);font-size:.92rem}
   .table-scroll{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
-  table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:1100px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:1350px}
   th{text-align:left;background:var(--ink);color:#fff;font-weight:600;padding:10px 12px;white-space:nowrap}
   td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
   tbody tr:nth-child(even){background:#F7F9FA}
@@ -83,15 +83,27 @@
   .naf{color:var(--ink-soft);font-size:.82rem}
   .muted{color:var(--ink-soft)}
 
+  .score{display:inline-block;min-width:2.2em;text-align:center;border-radius:999px;padding:2px 9px;font-weight:800;font-size:.85rem;cursor:help}
+  .score-prio{background:#FCE4D6;color:var(--safety-dark)}
+  .score-bon{background:#DCEEE1;color:var(--ok)}
+  .score-qualif{background:#E7EAED;color:var(--ink-soft)}
+  .score-label{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:2px;white-space:nowrap}
+  .row-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+  .pipe-select{font:inherit;font-size:.78rem;padding:5px 6px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;max-width:140px}
+  select.pipe-select.is-set{border-color:var(--ok);color:var(--ok);font-weight:600}
+
   /* ---------- historique ---------- */
   #histWrap{display:none;position:fixed;inset:0;background:rgba(34,49,63,.55);z-index:40;padding:40px 20px;overflow:auto}
   #histBox{background:var(--panel);max-width:860px;margin:0 auto;border-radius:var(--radius);padding:26px}
   .hist-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
   .hist-head h2{font-size:1.2rem}
-  .hist-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+  .hist-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;align-items:center}
   #histTable{min-width:0;font-size:.85rem}
   #histTable th{position:static}
   .hist-scroll{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:var(--radius)}
+  .pipe-stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+  .pipe-stat{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.8rem;color:var(--ink-soft)}
+  .pipe-stat b{color:var(--ink)}
 
   footer{padding:36px 0 44px;color:var(--ink-soft);font-size:.85rem;max-width:80ch}
   footer p{margin-bottom:8px}
@@ -115,9 +127,9 @@
   <div class="wrap head-row">
     <div>
       <div class="brand">Chantier<em>Prospect</em></div>
-      <p class="tagline">Entreprises du BTP avec téléphone et e-mail, issues des bases publiques SIRENE et RGE. Export Excel prêt pour Brevo, sans jamais renvoyer deux fois le même prospect.</p>
+      <p class="tagline">Entreprises du BTP avec téléphone et e-mail, classées selon leur profil d'achat pour Piloz (taille d'équipe, multi-chantiers, chiffre d'affaires). Message de prospection prêt à copier, pipeline de suivi, sans jamais retravailler deux fois le même prospect.</p>
     </div>
-    <button type="button" class="btn-hist" id="btnHist">Historique (0)</button>
+    <button type="button" class="btn-hist" id="btnHist">Pipeline (0)</button>
   </div>
 </header>
 <div class="hazard" aria-hidden="true"></div>
@@ -179,7 +191,7 @@
   <div class="bar" id="bar"><i></i></div>
 
   <div class="results-head">
-    <h2>Résultats</h2>
+    <h2>Résultats <span class="hint" style="font-weight:400">— triés par score Piloz décroissant</span></h2>
     <span class="count" id="count"></span>
   </div>
 
@@ -187,12 +199,13 @@
     <table>
       <thead>
         <tr>
+          <th title="Estime l'intérêt probable pour Piloz à partir de données publiques (effectif, multi-établissements, chiffre d'affaires, ancienneté). Ne mesure pas une intention de recherche réelle.">Score Piloz</th>
           <th>Entreprise</th><th>Téléphone</th><th>E-mail</th><th>Site web</th>
-          <th>Effectif</th><th>Adresse du siège</th><th>Dirigeant(s)</th><th>SIREN</th><th>Fiche</th>
+          <th>Effectif</th><th>Adresse du siège</th><th>Dirigeant(s)</th><th>SIREN</th><th>Fiche</th><th>Prospection</th>
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="9" class="muted" style="padding:22px">Aucune recherche lancée. Seules les entreprises disposant d'un téléphone ou d'un e-mail sont conservées, et celles déjà exportées sont automatiquement écartées.</td></tr>
+        <tr><td colspan="11" class="muted" style="padding:22px">Aucune recherche lancée. Seules les entreprises disposant d'un téléphone ou d'un e-mail sont conservées, et celles déjà dans le pipeline sont automatiquement écartées.</td></tr>
       </tbody>
     </table>
   </div>
@@ -210,17 +223,28 @@
 <div id="histWrap">
   <div id="histBox">
     <div class="hist-head">
-      <h2>Historique des exports</h2>
+      <h2>Pipeline de prospection</h2>
       <button type="button" class="btn-ghost btn-sm" id="histClose">Fermer</button>
     </div>
-    <p class="muted" style="font-size:.9rem">Ces entreprises ont déjà été exportées vers Brevo. Elles sont automatiquement retirées des recherches suivantes.</p>
+    <p class="muted" style="font-size:.9rem">Toute entreprise contactée, exportée vers Brevo ou marquée manuellement entre ici et sort des recherches suivantes.</p>
+    <div class="pipe-stats" id="pipeStats"></div>
     <div class="hist-actions">
-      <button type="button" class="btn-ghost btn-sm" id="histCsv">Exporter l'historique (CSV)</button>
-      <button type="button" class="btn-ghost btn-sm" id="histClear">Vider l'historique</button>
+      <label style="font-size:.85rem;font-weight:600">Filtrer :
+        <select id="pipeFilter" style="font:inherit;font-size:.85rem;padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);margin-left:6px">
+          <option value="">Tous les statuts</option>
+          <option value="Contacté">Contacté</option>
+          <option value="Relancé">Relancé</option>
+          <option value="RDV programmé">RDV programmé</option>
+          <option value="Client">Client</option>
+          <option value="Perdu">Perdu</option>
+        </select>
+      </label>
+      <button type="button" class="btn-ghost btn-sm" id="histCsv">Exporter le pipeline (CSV)</button>
+      <button type="button" class="btn-ghost btn-sm" id="histClear">Vider le pipeline</button>
     </div>
     <div class="hist-scroll">
       <table id="histTable">
-        <thead><tr><th>Date</th><th>Entreprise</th><th>E-mail</th><th>SIREN</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Entreprise</th><th>Score</th><th>Statut</th><th>E-mail</th><th>SIREN</th><th></th></tr></thead>
         <tbody id="histBody"></tbody>
       </table>
     </div>
@@ -262,11 +286,20 @@
     else { $("gateErr").textContent="Mot de passe incorrect."; $("pwd").select(); }
   });
 
-  /* ================= HISTORIQUE (mémorisé dans ce navigateur) ================= */
-  const HIST_KEY="cp_historique";
+  /* ================= PIPELINE (mémorisé dans ce navigateur) ================= */
+  const HIST_KEY="cp_pipeline";
+  const OLD_HIST_KEY="cp_historique"; // migration depuis l'ancienne version "historique d'export"
   let hist=[];
-  try{ hist=JSON.parse(localStorage.getItem(HIST_KEY)||"[]"); }catch(e){ hist=[]; }
+  try{ hist=JSON.parse(localStorage.getItem(HIST_KEY)||"null"); }catch(e){ hist=null; }
+  if(!hist){
+    try{
+      const legacy=JSON.parse(localStorage.getItem(OLD_HIST_KEY)||"[]");
+      hist=legacy.map(h=>({date:h.date,nom:h.nom,email:h.email,tel:"",siren:h.siren,score:null,statut:"Contacté"}));
+    }catch(e){ hist=[]; }
+  }
   let histSet=new Set(hist.map(h=>h.siren));
+  const PIPE_STATUSES=["Contacté","Relancé","RDV programmé","Client","Perdu"];
+  let pipeFilter="";
 
   function saveHist(){
     try{ localStorage.setItem(HIST_KEY,JSON.stringify(hist)); }
@@ -276,17 +309,47 @@
   }
 
   function renderHist(){
-    $("btnHist").textContent="Historique ("+hist.length.toLocaleString("fr-FR")+")";
+    $("btnHist").textContent="Pipeline ("+hist.length.toLocaleString("fr-FR")+")";
+
+    const statsEl=$("pipeStats");
+    if(statsEl){
+      const counts={};
+      for(const s of PIPE_STATUSES) counts[s]=0;
+      for(const h of hist) counts[h.statut]=(counts[h.statut]||0)+1;
+      statsEl.innerHTML=hist.length
+        ? PIPE_STATUSES.map(s=>'<span class="pipe-stat"><b>'+counts[s]+'</b> '+esc(s)+'</span>').join("")
+        : "";
+    }
+
     const body=$("histBody");
-    if(!hist.length){
-      body.innerHTML='<tr><td colspan="5" class="muted" style="padding:18px">Aucun export pour le moment.</td></tr>';
+    const list=hist.filter(h=>!pipeFilter||h.statut===pipeFilter);
+    if(!list.length){
+      body.innerHTML='<tr><td colspan="7" class="muted" style="padding:18px">'+(hist.length?"Aucune entrée pour ce filtre.":"Le pipeline est vide pour le moment.")+'</td></tr>';
       return;
     }
-    body.innerHTML=hist.slice().reverse().map(h=>
-      '<tr><td class="nowrap">'+esc(h.date)+"</td><td>"+esc(h.nom)+"</td><td>"+esc(h.email)+"</td>"+
+    body.innerHTML=list.slice().reverse().map(h=>
+      '<tr><td class="nowrap">'+esc(h.date)+"</td><td>"+esc(h.nom)+"</td>"+
+      '<td class="nowrap">'+(h.score!=null?scoreBadge(h.score):'<span class="muted">—</span>')+"</td>"+
+      '<td class="nowrap"><select class="pipe-select is-set" data-pipe-siren="'+esc(h.siren)+'">'+
+        PIPE_STATUSES.map(s=>'<option value="'+esc(s)+'"'+(s===h.statut?" selected":"")+'>'+esc(s)+"</option>").join("")+
+      "</select></td>"+
+      "<td>"+esc(h.email)+"</td>"+
       '<td class="nowrap">'+esc(h.siren)+'</td>'+
       '<td><button type="button" class="btn-ghost btn-sm" data-del="'+esc(h.siren)+'">Retirer</button></td></tr>'
     ).join("");
+  }
+
+  function scoreBadge(score){
+    const tier = score>=65?"prio":score>=40?"bon":"qualif";
+    return '<span class="score score-'+tier+'">'+score+"</span>";
+  }
+
+  function upsertPipeline(row,statut){
+    const d=new Date().toLocaleDateString("fr-FR");
+    const existing=hist.find(h=>h.siren===row.siren);
+    if(existing){ existing.statut=statut; existing.date=d; }
+    else hist.push({date:d,nom:row.nom,email:row.email,tel:row.tel,siren:row.siren,score:row.score?row.score.total:null,statut});
+    saveHist();
   }
 
   $("btnHist").addEventListener("click",()=>{ $("histWrap").style.display="block"; });
@@ -297,15 +360,22 @@
     if(!s) return;
     hist=hist.filter(h=>h.siren!==s); saveHist();
   });
+  $("histBody").addEventListener("change",ev=>{
+    const siren=ev.target.getAttribute&&ev.target.getAttribute("data-pipe-siren");
+    if(!siren) return;
+    const h=hist.find(x=>x.siren===siren);
+    if(h){ h.statut=ev.target.value; saveHist(); }
+  });
+  $("pipeFilter").addEventListener("change",ev=>{ pipeFilter=ev.target.value; renderHist(); });
   $("histClear").addEventListener("click",()=>{
     if(!hist.length) return;
-    if(confirm("Vider tout l'historique ? Les "+hist.length+" entreprises pourront réapparaître dans les recherches.")){
+    if(confirm("Vider tout le pipeline ? Les "+hist.length+" entreprises pourront réapparaître dans les recherches.")){
       hist=[]; saveHist();
     }
   });
   $("histCsv").addEventListener("click",()=>{
     if(!hist.length) return;
-    downloadCsv("historique-prospection-",[["date","Date d'export"],["nom","Entreprise"],["email","E-mail"],["siren","SIREN"]],hist);
+    downloadCsv("pipeline-prospection-",[["date","Date"],["nom","Entreprise"],["score","Score Piloz"],["statut","Statut"],["email","E-mail"],["tel","Téléphone"],["siren","SIREN"]],hist);
   });
 
   /* ================= API ================= */
@@ -318,6 +388,91 @@
   const EFF={"00":"0 salarié","01":"1 à 2","02":"3 à 5","03":"6 à 9","11":"10 à 19","12":"20 à 49",
     "21":"50 à 99","22":"100 à 199","31":"200 à 249","32":"250 à 499","41":"500 à 999",
     "42":"1 000 à 1 999","51":"2 000 à 4 999","52":"5 000 à 9 999","53":"10 000 et +"};
+
+  /* ================= SCORE PILOZ =================
+     Estime le profil d'achat à partir de signaux publics corrélés au besoin
+     d'un outil comme Piloz : taille d'équipe proche des offres Piloz,
+     coordination multi-chantiers (nombre d'établissements ouverts), capacité
+     budgétaire (chiffre d'affaires quand il est publié) et maturité de la
+     structure. Ce n'est PAS une mesure d'intention de recherche réelle :
+     aucune donnée publique ne l'indique. */
+  function latestCA(finances){
+    if(!finances) return {ca:null,annee:null};
+    const years=Object.keys(finances).filter(y=>/^\d{4}$/.test(y)).sort().reverse();
+    if(!years.length) return {ca:null,annee:null};
+    const y=years[0], v=finances[y];
+    return {ca:(v&&typeof v.ca==="number")?v.ca:null, annee:y};
+  }
+  function ageYears(dateStr){
+    if(!dateStr) return null;
+    const d=new Date(dateStr);
+    if(isNaN(d)) return null;
+    return (Date.now()-d.getTime())/(365.25*24*3600*1000);
+  }
+  function scoreEffectif(code){
+    const m={"00":5,"01":15,"02":25,"03":33,"11":35,"12":32,"21":24,"22":14,"31":8,"32":6,"41":4,"42":2,"51":1,"52":1,"53":1};
+    return m[code]!=null?m[code]:10;
+  }
+  function scoreSites(n){
+    if(n==null) return 10;
+    if(n<=1) return 6;
+    if(n<=3) return 16;
+    if(n<=9) return 26;
+    return 30;
+  }
+  function scoreCA(ca){
+    if(ca==null) return 10;
+    if(ca<50000) return 3;
+    if(ca<200000) return 8;
+    if(ca<1000000) return 16;
+    if(ca<5000000) return 20;
+    if(ca<15000000) return 14;
+    return 8;
+  }
+  function scoreAge(years){
+    if(years==null) return 8;
+    if(years<1) return 5;
+    if(years<2) return 9;
+    if(years<5) return 14;
+    if(years<15) return 15;
+    if(years<25) return 11;
+    return 7;
+  }
+  function computeScore(row){
+    const sEff=scoreEffectif(row.effCode), sSite=scoreSites(row.etablissementsOuverts),
+          sCa=scoreCA(row.ca), sAge=scoreAge(row.age);
+    const total=Math.round(sEff+sSite+sCa+sAge);
+    const tier=total>=65?"prio":total>=40?"bon":"qualif";
+    const label=tier==="prio"?"🔥 Profil prioritaire":tier==="bon"?"Bon profil":"À qualifier";
+    const detail="Effectif "+row.effectif+" : "+sEff+"/35 · "+
+      (row.etablissementsOuverts!=null?row.etablissementsOuverts+" site(s) ouvert(s)":"Sites inconnus")+" : "+sSite+"/30 · "+
+      (row.ca!=null?"CA "+Math.round(row.ca/1000).toLocaleString("fr-FR")+" k€ ("+row.caAnnee+")":"CA non publié")+" : "+sCa+"/20 · "+
+      (row.age!=null?Math.floor(row.age)+" an(s) d'existence":"Ancienneté inconnue")+" : "+sAge+"/15";
+    return {total,tier,label,detail};
+  }
+
+  /* ---- Message de prospection personnalisé ---- */
+  function pitchFor(r){
+    const greeting=r.prenom?"Bonjour "+r.prenom+",":"Bonjour,";
+    const pain=(r.etablissementsOuverts&&r.etablissementsOuverts>1)
+      ? "Avec "+r.etablissementsOuverts+" établissements à coordonner, centraliser le planning et le suivi des équipes n'est pas toujours simple."
+      : "Entre le commercial, le planning des chantiers et le pointage des équipes, ces sujets prennent vite un temps que vous n'avez pas forcément.";
+    const link="https://piloz.fr/?utm_source=prospection&utm_medium=email&utm_campaign=btp";
+    return greeting+"\n\n"+pain+" Piloz réunit CRM BTP, planning de chantier, pointage mobile des équipes et tableaux de bord de direction dans un seul outil, pensé pour des entreprises comme "+(r.nom||"la vôtre")+".\n\n"+
+      "Si ça peut être utile, l'essai est gratuit 14 jours, sans engagement : "+link+"\n\nBonne journée,";
+  }
+  async function copyText(t){
+    try{ await navigator.clipboard.writeText(t); return true; }
+    catch(e){
+      try{
+        const ta=document.createElement("textarea");
+        ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        const ok=document.execCommand("copy"); document.body.removeChild(ta);
+        return ok;
+      }catch(e2){ return false; }
+    }
+  }
 
   const form=$("searchForm"), tbody=$("tbody"), statusEl=$("status");
   const bar=$("bar"), barFill=bar.querySelector("i");
@@ -364,40 +519,81 @@
     const s=r.siege||{};
     const pp=(r.dirigeants||[]).filter(d=>d.type_dirigeant==="personne physique");
     const first=pp[0]||{};
-    return {
+    const ca=latestCA(r.finances);
+    const row={
       nom:r.nom_complet||r.nom_raison_sociale||"", siren:r.siren||"", siret:s.siret||"",
-      naf:r.activite_principale||"", effectif:EFF[r.tranche_effectif_salarie]||"n.c.",
+      naf:r.activite_principale||"", effCode:r.tranche_effectif_salarie||"", effectif:EFF[r.tranche_effectif_salarie]||"n.c.",
       adresse:s.adresse||"", cp:s.code_postal||"", commune:capital(s.libelle_commune||""),
       dep:s.departement||"",
+      etablissements:r.nombre_etablissements!=null?r.nombre_etablissements:null,
+      etablissementsOuverts:r.nombre_etablissements_ouverts!=null?r.nombre_etablissements_ouverts:null,
+      ca:ca.ca, caAnnee:ca.annee, categorie:r.categorie_entreprise||"",
+      age:ageYears(r.date_creation),
       prenom:capital((first.prenoms||"").split(" ")[0]||""), nomDir:capital(first.nom||""),
       dirigeants:pp.map(d=>capital([(d.prenoms||"").split(" ")[0],d.nom].filter(Boolean).join(" "))).filter(Boolean).join(" ; "),
       qualite:first.qualite||"", creation:r.date_creation||"",
       tel:"", email:"", site:"", rge:"",
       fiche:"https://annuaire-entreprises.data.gouv.fr/entreprise/"+(r.siren||"")
     };
+    row.score=computeScore(row);
+    return row;
   }
 
   function render(){
+    rows.sort((a,b)=>b.score.total-a.score.total);
     const mails=rows.filter(r=>r.email).length;
     countEl.textContent = rows.length
       ? rows.length.toLocaleString("fr-FR")+" fiche(s) avec contact • "+mails.toLocaleString("fr-FR")+" avec e-mail"
       : "";
     if(!rows.length){
-      tbody.innerHTML='<tr><td colspan="9" class="muted" style="padding:22px">Aucune fiche avec contact pour ces critères.</td></tr>';
+      tbody.innerHTML='<tr><td colspan="11" class="muted" style="padding:22px">Aucune fiche avec contact pour ces critères.</td></tr>';
       return;
     }
     tbody.innerHTML=rows.map(x=>{
       const site=x.site?'<a href="'+esc(x.site)+'" target="_blank" rel="noopener">lien</a>':'<span class="muted">—</span>';
       const tel=x.tel?'<a href="tel:'+esc(telIntl(x.tel))+'">'+esc(x.tel)+'</a>':'<span class="muted">—</span>';
       const mail=x.email?'<a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'<span class="muted">—</span>';
+      const score='<span class="score score-'+x.score.tier+'" title="'+esc(x.score.detail)+'">'+x.score.total+'</span>'+
+        '<span class="score-label">'+esc(x.score.label)+'</span>';
+      const actions='<div class="row-actions">'+
+        '<button type="button" class="btn-ghost btn-sm" data-msg="'+esc(x.siren)+'">✉ Message</button>'+
+        '<select class="pipe-select" data-siren="'+esc(x.siren)+'">'+
+          '<option value="" selected disabled>Ajouter au pipeline…</option>'+
+          PIPE_STATUSES.map(s=>'<option value="'+esc(s)+'">'+esc(s)+"</option>").join("")+
+        '</select></div>';
       return '<tr class="'+(x.email?"has-mail":"")+'">'+
+        '<td class="nowrap">'+score+'</td>'+
         "<td><strong>"+esc(x.nom)+"</strong>"+(x.rge?'<br><span class="naf">'+esc(x.rge)+"</span>":"")+"</td>"+
         '<td class="nowrap">'+tel+"</td><td>"+mail+"</td><td>"+site+"</td>"+
         '<td class="nowrap">'+esc(x.effectif)+"</td><td>"+esc(x.adresse)+"</td>"+
         "<td>"+esc(x.dirigeants)+'</td><td class="nowrap">'+esc(x.siren)+"</td>"+
-        '<td class="nowrap"><a href="'+esc(x.fiche)+'" target="_blank" rel="noopener">Ouvrir</a></td></tr>';
+        '<td class="nowrap"><a href="'+esc(x.fiche)+'" target="_blank" rel="noopener">Ouvrir</a></td>'+
+        '<td class="nowrap">'+actions+'</td></tr>';
     }).join("");
   }
+
+  /* ---- Actions par ligne : message copié, ajout au pipeline ---- */
+  tbody.addEventListener("click",async ev=>{
+    const siren=ev.target.getAttribute&&ev.target.getAttribute("data-msg");
+    if(!siren) return;
+    const row=rows.find(r=>r.siren===siren);
+    if(!row) return;
+    const ok=await copyText(pitchFor(row));
+    setStatus(ok?"Message copié pour "+row.nom+" — collez-le dans votre e-mail.":"Impossible de copier automatiquement. Sélectionnez le texte manuellement.", ok?"ok":"err");
+  });
+  tbody.addEventListener("change",ev=>{
+    const siren=ev.target.getAttribute&&ev.target.getAttribute("data-siren");
+    if(!siren || !ev.target.classList.contains("pipe-select")) return;
+    const row=rows.find(r=>r.siren===siren);
+    if(!row) return;
+    const statut=ev.target.value;
+    upsertPipeline(row,statut);
+    rows=rows.filter(r=>r.siren!==siren);
+    render();
+    btnBrevo.disabled=rows.filter(r=>r.email).length===0;
+    btnCsv.disabled=rows.length===0;
+    setStatus(row.nom+" ajouté au pipeline avec le statut « "+statut+" ».","ok");
+  });
 
   /* ---- Coordonnées d'un lot d'entreprises via la base RGE ---- */
   async function contactsFor(batchRows){
@@ -522,33 +718,29 @@
     const data=list.map(r=>({
       EMAIL:r.email, PRENOM:r.prenom, NOM:r.nomDir, ENTREPRISE:r.nom,
       SMS:telIntl(r.tel), TELEPHONE:r.tel, VILLE:r.commune, CODE_POSTAL:r.cp,
-      DEPARTEMENT:r.dep, ADRESSE:r.adresse, EFFECTIF:r.effectif, METIER_RGE:r.rge,
-      CODE_NAF:r.naf, FONCTION:r.qualite, SITE_WEB:r.site, SIREN:r.siren
+      DEPARTEMENT:r.dep, ADRESSE:r.adresse, EFFECTIF:r.effectif, SCORE_PILOZ:r.score.total,
+      METIER_RGE:r.rge, CODE_NAF:r.naf, FONCTION:r.qualite, SITE_WEB:r.site, SIREN:r.siren
     }));
     const wb=XLSX.utils.book_new();
     const ws=XLSX.utils.json_to_sheet(data);
-    ws["!cols"]=[{wch:32},{wch:14},{wch:16},{wch:34},{wch:15},{wch:15},{wch:18},{wch:11},{wch:12},{wch:38},{wch:14},{wch:30},{wch:10},{wch:20},{wch:28},{wch:11}];
+    ws["!cols"]=[{wch:32},{wch:14},{wch:16},{wch:34},{wch:15},{wch:15},{wch:18},{wch:11},{wch:12},{wch:38},{wch:14},{wch:11},{wch:30},{wch:10},{wch:20},{wch:28},{wch:11}];
     XLSX.utils.book_append_sheet(wb,ws,"Contacts");
     XLSX.writeFile(wb,"brevo-btp-"+new Date().toISOString().slice(0,10)+".xlsx");
 
-    // archivage + retrait des résultats
-    const d=new Date().toLocaleDateString("fr-FR");
-    for(const r of list){
-      if(!histSet.has(r.siren)) hist.push({date:d,nom:r.nom,email:r.email,siren:r.siren});
-    }
-    saveHist();
+    // ajout au pipeline (statut "Contacté") + retrait des résultats
+    for(const r of list) upsertPipeline(r,"Contacté");
     const exported=list.length;
     rows=rows.filter(r=>!r.email);
     render();
     btnBrevo.disabled=true; btnCsv.disabled=rows.length===0;
-    setStatus(exported.toLocaleString("fr-FR")+" contact(s) exporté(s) et archivé(s) dans l'historique. Ils n'apparaîtront plus dans les prochaines recherches.","ok");
+    setStatus(exported.toLocaleString("fr-FR")+" contact(s) exporté(s) et ajouté(s) au pipeline avec le statut « Contacté ». Ils n'apparaîtront plus dans les prochaines recherches.","ok");
   });
 
   /* ---------- Export complet ---------- */
   function downloadCsv(prefix,cols,list){
     const cell=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
     const lines=["sep=;",cols.map(c=>cell(c[1])).join(";")]
-      .concat(list.map(x=>cols.map(c=>cell(x[c[0]])).join(";")));
+      .concat(list.map(x=>cols.map(c=>cell(typeof c[2]==="function"?c[2](x):x[c[0]])).join(";")));
     const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
@@ -558,7 +750,10 @@
 
   btnCsv.addEventListener("click",()=>{
     downloadCsv("prospection-btp-",[["nom","Entreprise"],["tel","Téléphone"],["email","E-mail"],
-      ["site","Site web"],["effectif","Effectif"],["naf","Code NAF"],["rge","Domaines RGE"],
+      ["site","Site web"],["effectif","Effectif"],
+      ["score","Score Piloz",x=>x.score.total],["scoreLabel","Profil",x=>x.score.label],
+      ["etablissementsOuverts","Établissements ouverts"],["ca","CA (€)"],["caAnnee","CA année"],
+      ["naf","Code NAF"],["rge","Domaines RGE"],
       ["adresse","Adresse siège"],["cp","Code postal"],["commune","Commune"],["dep","Département"],
       ["prenom","Prénom dirigeant"],["nomDir","Nom dirigeant"],["qualite","Fonction"],
       ["dirigeants","Tous les dirigeants"],["siren","SIREN"],["siret","SIRET siège"],
