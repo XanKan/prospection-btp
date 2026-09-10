@@ -11,7 +11,10 @@ Application web de prospection qui trouve, note et suit les entreprises du BTP (
 
 - **Score Piloz (0–100)** calculé pour chaque entreprise à partir de signaux corrélés au besoin d'un outil comme Piloz : tranche d'effectif la plus proche des offres Piloz, nombre d'établissements ouverts (coordination multi-chantiers), chiffre d'affaires publié quand il est disponible (capacité budgétaire) et ancienneté de la structure. Les résultats sont triés automatiquement du meilleur profil au moins bon ; le détail du calcul apparaît en survolant le score.
   ⚠️ Ce score **n'indique pas** qu'une entreprise recherche activement un CRM — aucune donnée publique ne permet de le savoir. C'est une estimation de correspondance avec le profil client de Piloz, à vérifier au contact.
-- **Message de prospection prêt à copier** : bouton « ✉ Message » sur chaque ligne, génère un e-mail personnalisé (prénom du dirigeant si connu, mention du multi-établissements quand c'est pertinent, lien piloz.fr trackable) et le copie dans le presse-papiers.
+- **Trois relances prêtes à copier par entreprise**, pensées pour convertir plutôt que pour un seul envoi :
+  - **✉ 1er contact** — e-mail personnalisé (prénom du dirigeant, métier réel déduit du code NAF précis — ex. « installation de chauffage et de climatisation » plutôt que « BTP » générique —, mention du multi-établissements si pertinent), avec le lien d'essai gratuit piloz.fr et un lien de prise de rendez-vous direct (Calendly, 15 min).
+  - **✉ Relance** — deuxième message à envoyer quelques jours après si pas de réponse, angle différent (moins de vente, plus de service), toujours avec le lien Calendly.
+  - **☎ Script d'appel** — trame d'appel téléphonique (accroche, qualification, pitch, réponses aux objections courantes, call-to-action) pour les cas où l'e-mail ne suffit pas.
 - **Historique d'export** (bouton en haut à droite) : les entreprises exportées vers Brevo sont mémorisées dans ce navigateur et ne réapparaissent jamais dans une recherche suivante.
 - **Export Brevo (.xlsx)** prêt à importer dans une campagne e-mail, et **export complet (CSV)** avec toutes les données récupérées, score et signaux inclus.
 

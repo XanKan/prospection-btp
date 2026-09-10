@@ -88,6 +88,7 @@
   .score-bon{background:#DCEEE1;color:var(--ok)}
   .score-qualif{background:#E7EAED;color:var(--ink-soft)}
   .score-label{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:2px;white-space:nowrap}
+  .row-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
 
   /* ---------- historique ---------- */
   #histWrap{display:none;position:fixed;inset:0;background:rgba(34,49,63,.55);z-index:40;padding:40px 20px;overflow:auto}
@@ -388,15 +389,63 @@
     return {total,tier,label,detail};
   }
 
-  /* ---- Message de prospection personnalisé ---- */
+  /* ---- Métier réel à partir du code NAF (nomenclature officielle Rev.2) ---- */
+  const NAF_METIER={
+    "41.20A":"construction de maisons individuelles","41.20B":"construction de bâtiments",
+    "42.11Z":"travaux de voirie","42.12Z":"construction de voies ferrées","42.13A":"construction d'ouvrages d'art","42.13B":"construction de lignes électriques et de télécommunications",
+    "42.21Z":"construction de réseaux pour fluides","42.22Z":"construction de réseaux électriques et de télécommunications",
+    "42.91Z":"construction d'ouvrages maritimes et fluviaux","42.99Z":"génie civil",
+    "43.11Z":"démolition","43.12A":"terrassement courants","43.12B":"terrassement spécialisés","43.13Z":"forages et sondages",
+    "43.21A":"installation électrique","43.21B":"installation électrique",
+    "43.22A":"installation d'eau et de gaz","43.22B":"installation de chauffage et de climatisation",
+    "43.29A":"travaux d'isolation","43.29B":"installations diverses",
+    "43.31Z":"plâtrerie","43.32A":"menuiserie","43.32B":"menuiserie","43.32C":"agencement de lieux de vente",
+    "43.33Z":"revêtement des sols et des murs","43.34Z":"peinture et vitrerie","43.39Z":"travaux de finition",
+    "43.91A":"charpente","43.91B":"couverture",
+    "43.99A":"étanchéification","43.99B":"montage de structures métalliques","43.99C":"travaux de maçonnerie générale et gros œuvre","43.99D":"autres travaux spécialisés de construction"
+  };
+  function metierFor(nafCode){
+    if(!nafCode) return "";
+    return NAF_METIER[nafCode]||"";
+  }
+
+  const CALENDLY="https://calendly.com/erp-piloz/30min";
+  const PILOZ_LINK="https://piloz.fr/?utm_source=prospection&utm_medium=email&utm_campaign=btp";
+
+  /* ---- Messages de prospection personnalisés (multi-contact) ---- */
   function pitchFor(r){
     const greeting=r.prenom?"Bonjour "+r.prenom+",":"Bonjour,";
+    const metier=metierFor(r.naf);
+    const activite=metier?"en "+metier:"dans le BTP";
     const pain=(r.etablissementsOuverts&&r.etablissementsOuverts>1)
       ? "Avec "+r.etablissementsOuverts+" établissements à coordonner, centraliser le planning et le suivi des équipes n'est pas toujours simple."
       : "Entre le commercial, le planning des chantiers et le pointage des équipes, ces sujets prennent vite un temps que vous n'avez pas forcément.";
-    const link="https://piloz.fr/?utm_source=prospection&utm_medium=email&utm_campaign=btp";
-    return greeting+"\n\n"+pain+" Piloz réunit CRM BTP, planning de chantier, pointage mobile des équipes et tableaux de bord de direction dans un seul outil, pensé pour des entreprises comme "+(r.nom||"la vôtre")+".\n\n"+
-      "Si ça peut être utile, l'essai est gratuit 14 jours, sans engagement : "+link+"\n\nBonne journée,";
+    return greeting+"\n\n"+pain+" Piloz réunit CRM BTP, planning de chantier, pointage mobile des équipes et tableaux de bord de direction dans un seul outil, pensé pour des entreprises "+activite+" comme "+(r.nom||"la vôtre")+".\n\n"+
+      "Essai gratuit 14 jours, sans engagement (carte sécurisée par Stripe) : "+PILOZ_LINK+"\n"+
+      "Ou si vous préférez qu'on en parle directement, 15 minutes suffisent : "+CALENDLY+"\n\nBonne journée,";
+  }
+  function relanceFor(r){
+    const greeting=r.prenom?"Bonjour "+r.prenom+",":"Bonjour,";
+    const metier=metierFor(r.naf);
+    const outil=metier&&/couverture|charpente|maçonnerie|gros œuvre/.test(metier)
+      ? "le carnet ou le tableau blanc pour le planning, et les feuilles papier pour les heures"
+      : "le tableur du planning et les allers-retours pour valider les heures";
+    return greeting+"\n\nJe me permets de revenir vers vous — le quotidien sur les chantiers ne laisse pas forcément le temps de regarder un nouvel outil.\n\n"+
+      "En résumé, Piloz remplace "+outil+" par un seul outil : CRM, planning de chantier et pointage mobile, avec 14 jours d'essai gratuit et sans engagement.\n\n"+
+      "Si ça vous intéresse, 15 minutes suffisent pour vous montrer l'outil en direct : "+CALENDLY+"\n"+
+      "Sinon, dites-le-moi et je ne vous relance plus.\n\nBonne journée,";
+  }
+  function callScriptFor(r){
+    const metier=metierFor(r.naf);
+    const activite=metier?" ("+metier+")":"";
+    return "SCRIPT D'APPEL — "+(r.nom||"")+activite+"\n\n"+
+      "1. Accroche : « Bonjour, je vous appelle au sujet de la gestion de vos chantiers"+(r.commune?" à "+r.commune:"")+" — vous avez 2 minutes ? »\n\n"+
+      "2. Qualifier : « Aujourd'hui, comment vous gérez le planning et le pointage de vos équipes ? »\n\n"+
+      "3. Pitch court : « Piloz réunit CRM, planning de chantier et pointage mobile dans un seul outil pensé pour le BTP. »\n\n"+
+      "4. Objection « on a déjà un outil » : « Piloz se connecte à vos outils de facturation existants, il ne les remplace pas — il pilote le commercial, les chantiers et les équipes. »\n\n"+
+      "5. Objection « pas le temps » : « L'essai est gratuit 14 jours, sans engagement, et la prise en main se fait en général le jour même. »\n\n"+
+      "6. Call to action : « Je vous propose 15 minutes pour vous montrer l'outil, quel jour vous arrange ? » (lien direct : "+CALENDLY+")\n\n"+
+      "7. Repli : « Je vous envoie un lien par e-mail pour réserver un créneau quand vous voulez. »";
   }
   async function copyText(t){
     try{ await navigator.clipboard.writeText(t); return true; }
@@ -492,7 +541,11 @@
       const mail=x.email?'<a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'<span class="muted">—</span>';
       const score='<span class="score score-'+x.score.tier+'" title="'+esc(x.score.detail)+'">'+x.score.total+'</span>'+
         '<span class="score-label">'+esc(x.score.label)+'</span>';
-      const actions='<button type="button" class="btn-ghost btn-sm" data-msg="'+esc(x.siren)+'">✉ Message</button>';
+      const actions='<div class="row-actions">'+
+        '<button type="button" class="btn-ghost btn-sm" data-msg="'+esc(x.siren)+'">✉ 1er contact</button>'+
+        '<button type="button" class="btn-ghost btn-sm" data-relance="'+esc(x.siren)+'">✉ Relance</button>'+
+        '<button type="button" class="btn-ghost btn-sm" data-call="'+esc(x.siren)+'">☎ Script d\'appel</button>'+
+        '</div>';
       return '<tr class="'+(x.email?"has-mail":"")+'">'+
         '<td class="nowrap">'+score+'</td>'+
         "<td><strong>"+esc(x.nom)+"</strong>"+(x.rge?'<br><span class="naf">'+esc(x.rge)+"</span>":"")+"</td>"+
@@ -504,14 +557,20 @@
     }).join("");
   }
 
-  /* ---- Actions par ligne : message copié, ajout au pipeline ---- */
+  /* ---- Actions par ligne : copie du message, de la relance ou du script d'appel ---- */
   tbody.addEventListener("click",async ev=>{
-    const siren=ev.target.getAttribute&&ev.target.getAttribute("data-msg");
+    const t=ev.target;
+    const msg=t.getAttribute&&t.getAttribute("data-msg");
+    const relance=t.getAttribute&&t.getAttribute("data-relance");
+    const call=t.getAttribute&&t.getAttribute("data-call");
+    const siren=msg||relance||call;
     if(!siren) return;
     const row=rows.find(r=>r.siren===siren);
     if(!row) return;
-    const ok=await copyText(pitchFor(row));
-    setStatus(ok?"Message copié pour "+row.nom+" — collez-le dans votre e-mail.":"Impossible de copier automatiquement. Sélectionnez le texte manuellement.", ok?"ok":"err");
+    const text = msg?pitchFor(row) : relance?relanceFor(row) : callScriptFor(row);
+    const what = msg?"Message":relance?"Message de relance":"Script d'appel";
+    const ok=await copyText(text);
+    setStatus(ok?what+" copié pour "+row.nom+" — collez-le où vous en avez besoin.":"Impossible de copier automatiquement. Sélectionnez le texte manuellement.", ok?"ok":"err");
   });
 
   /* ---- Coordonnées d'un lot d'entreprises via la base RGE ---- */
