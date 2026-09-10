@@ -1,38 +1,82 @@
 # Chantier Prospect — Prospection B2B BTP pour vendre Piloz
 
-Application web de prospection qui trouve et note les entreprises du BTP (construction, génie civil, travaux spécialisés) les plus susceptibles d'acheter **Piloz**, sur toute la France, à partir de données publiques : l'[API Recherche d'entreprises](https://recherche-entreprises.api.gouv.fr) de l'État (base SIRENE / RNE) pour identifier les entreprises, et le jeu de données « Liste des entreprises RGE » de l'ADEME pour leurs coordonnées (téléphone, e-mail, site web).
+Application web de prospection qui trouve, note et cartographie les entreprises du BTP (construction, génie civil, travaux spécialisés) les plus susceptibles d'acheter **Piloz**, sur toute la France, à partir de données publiques et gratuites.
 
 - 100 % statique : un seul fichier `index.html`, aucun serveur, aucune clé API.
-- Données publiques, gratuites, mises à jour quotidiennement.
-- Accès protégé par mot de passe (contrôle client, voir plus bas) et non indexé par les moteurs de recherche.
-- Recherche toujours sur toute la France (pas de filtre géographique).
+- Accès protégé par mot de passe (contrôle côté navigateur, voir plus bas), non indexé.
+- Recherche toujours sur toute la France : aucun filtre géographique n'est proposé.
 
-## Ce qui en fait un outil de prospection, pas juste un export
+## Sources de données
 
-- **Score Piloz (0–100)** calculé pour chaque entreprise à partir de signaux corrélés au besoin d'un outil comme Piloz : tranche d'effectif la plus proche des offres Piloz, nombre d'établissements ouverts (coordination multi-chantiers), chiffre d'affaires publié quand il est disponible (capacité budgétaire) et ancienneté de la structure. Les résultats sont triés automatiquement du meilleur profil au moins bon ; le détail du calcul apparaît en survolant le score.
-  ⚠️ Ce score **n'indique pas** qu'une entreprise recherche activement un CRM — aucune donnée publique ne permet de le savoir. C'est une estimation de correspondance avec le profil client de Piloz, à vérifier au contact.
-- **Filtre métier précis** (optionnel) : en plus des 3 secteurs larges (bâtiment / génie civil / travaux spécialisés), une trentaine de métiers précis basés sur les vrais codes NAF (couverture, plomberie, électricité, maçonnerie, charpente…) pour cibler exactement le corps de métier voulu. Le métier réel de chaque entreprise est aussi affiché dans les résultats.
-- **Historique d'export** (bouton en haut à droite) : chaque export Brevo mémorise les entreprises exportées dans ce navigateur ; elles ne réapparaissent plus jamais dans une recherche suivante, pour ne jamais relancer un prospect qui a déjà reçu une communication.
-- **Export Brevo (.xlsx)** prêt à importer dans une campagne e-mail (la communication elle-même se fait ensuite dans Brevo), et **export complet (CSV)** avec toutes les données récupérées, score et signaux inclus.
+| Source | Ce qu'elle apporte |
+| --- | --- |
+| [API Recherche d'entreprises](https://recherche-entreprises.api.gouv.fr) (SIRENE / RNE) | Raison sociale, effectif, chiffre d'affaires publié et son évolution, dirigeants, nombre d'établissements, coordonnées GPS, code NAF |
+| [Liste des entreprises RGE](https://data.ademe.fr/datasets/liste-des-entreprises-rge-2) (ADEME) | Téléphone, e-mail, site web des **60 200** entreprises actuellement qualifiées RGE |
+| [Historique des entreprises RGE](https://data.ademe.fr/datasets/historique-rge) (ADEME) | Les mêmes coordonnées pour **173 400** entreprises depuis 2014, qualification parfois expirée |
 
-## Mise en ligne sur GitHub Pages
+## Le point clé : trouver des e-mails, pas des noms
 
-Le dépôt est déjà relié à `prospection.piloz.fr` (fichier `CNAME`). Un `git push` sur la branche par défaut suffit à mettre à jour le site après activation de GitHub Pages (**Settings → Pages → Build and deployment**, source **Deploy from a branch**).
+En France, **seules les entreprises qualifiées RGE publient leurs coordonnées en open data**. Toutes les autres n'ont ni e-mail ni téléphone accessible gratuitement.
 
-## Ce que l'outil sort
+L'outil exploite le fait que l'API SIRENE expose un indicateur `est_rge` : la recherche est donc **filtrée en amont sur les entreprises qui ont un contact**, au lieu de balayer tout le BTP en espérant tomber dessus.
 
-Raison sociale, SIREN, SIRET du siège, code NAF et métier associé, tranche d'effectif INSEE, nombre d'établissements ouverts, chiffre d'affaires publié (et son année), adresse complète du siège, dirigeant(s), date de création, téléphone, e-mail, site web, domaines RGE, score Piloz, et un lien vers la fiche officielle sur l'Annuaire des Entreprises.
+Mesuré en conditions réelles : **189 entreprises analysées pour 188 contacts avec e-mail** (99 %), contre environ quatre entreprises analysées par e-mail obtenu avant ce filtrage.
+
+Deux modes au choix :
+
+- **RGE actifs** (par défaut) — 60 200 entreprises, coordonnées à jour, recherche rapide.
+- **+ anciens RGE** — 173 400 entreprises. La qualification a pu expirer mais les coordonnées restent souvent valables. Presque trois fois plus de stock, recherche plus lente.
+
+## Couverture nationale réelle
+
+L'API plafonne chaque requête à 10 000 résultats. Au-delà, l'outil découpe automatiquement la recherche par département et les balaie **en tourniquet** — une page dans chacun, à tour de rôle, dans un ordre aléatoire.
+
+Sans ce tourniquet, une recherche vidait entièrement le premier département tiré et tous les prospects venaient du même coin de France. Mesuré : une recherche de 100 contacts ramène des prospects répartis sur **27 départements**.
+
+## Score Piloz (0–100)
+
+Six signaux publics, corrélés au besoin d'un outil de pilotage de chantiers :
+
+| Signal | Poids | Pourquoi |
+| --- | --- | --- |
+| Effectif salarié | 30 | Cœur de cible : les équipes de 3 à 20 personnes |
+| Établissements ouverts | 22 | Plusieurs sites = coordination à organiser |
+| Chiffre d'affaires | 16 | Capacité budgétaire |
+| Croissance du CA | 12 | Une entreprise qui grossit change d'outils |
+| Ancienneté | 10 | Structure installée, mais pas figée |
+| Qualifications RGE | 10 | Activité réelle et diversifiée |
+
+⚠️ **Le score n'indique pas qu'une entreprise cherche un logiciel.** Aucune donnée ouverte ne le dit. Il classe des profils de correspondance avec la cible Piloz, à vérifier au contact.
+
+Le détail du calcul, signal par signal, est affiché dans la fiche de chaque prospect.
+
+## Fonctionnalités
+
+- **Dashboard** : indicateurs (prospects, contacts avec e-mail, profils prioritaires, score moyen) et répartition par profil et par taille d'équipe.
+- **Tableau triable** par score, nom, effectif, chiffre d'affaires ou ville, avec filtre texte instantané et sélection par cases à cocher.
+- **Fiche prospect** : toutes les données, détail du score, boutons de copie de l'e-mail / du téléphone / du SIREN, et liens directs vers la fiche officielle, Google, Maps et LinkedIn.
+- **Carte de France** des prospects, colorés par profil, cliquables.
+- **Filtre métier précis** : une trentaine de métiers basés sur les vrais codes NAF, plus un raccourci « métiers à fort potentiel ».
+- **Export Brevo (.xlsx)** prêt à importer, et **export complet (CSV)** avec tous les signaux. Si des lignes sont sélectionnées, l'export ne porte que sur elles.
+- **Historique** : chaque export Brevo archive les entreprises envoyées ; elles sont ensuite écartées automatiquement des recherches suivantes. Importable et exportable en CSV pour être sauvegardé ou transféré sur un autre poste.
+
+L'objectif de contacts sert de **condition d'arrêt** du balayage : les contacts trouvés au-delà sont conservés, puisqu'ils ont déjà coûté les mêmes appels d'API.
+
+## Mise en ligne
+
+Le dépôt est relié à `prospection.piloz.fr` (fichier `CNAME`). Un `git push` sur la branche par défaut met à jour le site via GitHub Pages.
 
 ## Limites à connaître
 
-- **Coordonnées limitées aux entreprises RGE** : seules les entreprises qualifiées RGE publient leurs coordonnées en open data, soit environ 60 000 établissements sur toute la France. L'outil parcourt donc la liste SIRENE et ne retient que celles qui ont un contact : comptez environ quatre entreprises analysées pour un e-mail obtenu. Sur un métier très précis, le stock disponible peut être inférieur à l'objectif demandé.
-- **Le chiffre d'affaires n'est pas toujours publié** (micro-entreprises, dépôts récents…) : le score neutralise ce facteur plutôt que de pénaliser l'entreprise quand la donnée manque.
-- L'effectif est la tranche déclarée à l'INSEE, généralement datée de 2 à 3 ans ; il n'est pas renseigné pour beaucoup d'entreprises récentes.
-- L'API plafonne la pagination à environ 10 000 résultats par recherche.
-- Limite de débit : 7 requêtes/seconde côté SIRENE (l'outil reste en dessous automatiquement).
-- **L'historique est local au navigateur** : il n'est pas partagé entre plusieurs ordinateurs ou navigateurs. Exportez-le en CSV si vous voulez le conserver ou le transférer.
-- Le mot de passe d'accès est vérifié côté navigateur (hash SHA-256 dans le code source) : cela décourage un accès accidentel, ce n'est pas une protection contre quelqu'un qui lit le code source. Aucune donnée sensible n'est protégée derrière (tout provient d'API publiques) — c'est un filtre d'usage, pas une sécurité.
+- **Pas de contact hors RGE.** Une entreprise du BTP qui n'a jamais été qualifiée RGE n'a aucune coordonnée publique gratuite. Sur un métier très précis, le stock peut être inférieur à l'objectif demandé.
+- **Le chiffre d'affaires n'est pas toujours publié** (micro-entreprises, dépôts récents) : le score neutralise ce facteur au lieu de pénaliser l'entreprise.
+- L'effectif est la tranche déclarée à l'INSEE, généralement datée de 2 à 3 ans.
+- Limite de débit de 7 requêtes/seconde côté SIRENE : l'outil reste en dessous automatiquement.
+- **L'historique est local au navigateur.** Il n'est pas partagé entre postes. Exportez-le en CSV pour le conserver.
+- Le mot de passe est vérifié côté navigateur (hash SHA-256 dans le code source). Cela décourage un accès accidentel, ce n'est pas une protection contre quelqu'un qui lit le code. Aucune donnée sensible n'est protégée derrière : tout provient d'API publiques.
+
+Pour changer le mot de passe, ouvrez la page avec `?hash=votrenouveaupasse` : elle affiche le hash à recopier dans `PWD_HASH`.
 
 ## RGPD
 
-Les noms de dirigeants et les coordonnées RGE sont des données publiques, mais leur utilisation en prospection reste soumise au RGPD : base légale de l'intérêt légitime, information des personnes dès le premier contact, lien de désinscription, et respect immédiat du droit d'opposition.
+Les noms de dirigeants et les coordonnées RGE sont publics, mais leur réutilisation en prospection reste soumise au RGPD : base légale d'intérêt légitime, information des personnes dès le premier contact, lien de désinscription, et respect immédiat du droit d'opposition.

@@ -4,716 +4,1417 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Chantier Prospect — Prospection B2B BTP</title>
+<title>Chantier Prospect — Prospection BTP Piloz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root{
-    --ink:#22313F; --ink-soft:#5A6B7A; --paper:#EEF1F4; --panel:#FFFFFF;
-    --line:#CBD4DC; --safety:#E8650D; --safety-dark:#C2530A; --ok:#2E7D46; --radius:6px;
+    --ink:#15161f; --ink-2:#1e2030; --ink-3:#2a2c3f;
+    --paper:#f6f6fb; --panel:#fff;
+    --violet:#6d5ef8; --violet-2:#8b7cfb; --violet-soft:#efecff;
+    --muted:#5b5d72; --line:#e8e8f2; --line-2:#f1f1f7;
+    --ok:#17a06a; --ok-soft:#e4f5ee;
+    --warn:#e08a2c; --warn-soft:#fdf1e0;
+    --danger:#e0473f; --danger-soft:#fdeceb;
+    --blue:#3a7de0;
+    --r:10px; --r-sm:7px;
+    --sh:0 1px 2px rgba(21,22,31,.05),0 4px 14px rgba(21,22,31,.05);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Archivo",system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;min-height:100vh}
-  a{color:var(--safety-dark)}
-  .wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+  html,body{height:100%}
+  body{font-family:"Archivo",system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--violet)}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  input,select{font:inherit;color:inherit}
+  .num{font-variant-numeric:tabular-nums}
+  ::selection{background:var(--violet-soft)}
 
-  #gate{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
-  #gate .box{background:var(--panel);border-radius:var(--radius);padding:32px;width:100%;max-width:390px}
-  #gate h1{font-size:1.45rem;font-variation-settings:"wdth" 110;font-weight:850;margin-bottom:4px}
-  #gate h1 em{font-style:normal;color:var(--safety)}
-  #gate p{color:var(--ink-soft);font-size:.9rem;margin-bottom:20px}
-  #gate input{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px}
-  #gate button{width:100%}
-  #gateErr{color:#B3261E;font-size:.88rem;font-weight:600;margin-top:10px;min-height:1.2em}
-  #app{display:none}
+  /* ================= GATE ================= */
+  #gate{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px;z-index:200}
+  #gate .box{background:var(--panel);border-radius:var(--r);padding:34px;width:100%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+  #gate .logo{display:flex;align-items:center;gap:9px;margin-bottom:18px}
+  #gate h1{font-size:1.3rem;font-variation-settings:"wdth" 108;font-weight:850;letter-spacing:-.02em}
+  #gate p{color:var(--muted);font-size:.9rem;margin-bottom:20px}
+  #gate input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:var(--r-sm);margin-bottom:12px;background:var(--paper)}
+  #gate button{width:100%;padding:11px;background:var(--violet);color:#fff;border-radius:var(--r-sm);font-weight:700}
+  #gate button:hover{background:#5c4df0}
+  #gateErr{color:var(--danger);font-size:.87rem;font-weight:600;margin:10px 0 0;min-height:1.2em}
 
-  header{background:var(--ink);color:#fff;padding:30px 0 26px}
-  .head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
-  .brand{font-variation-settings:"wdth" 110;font-weight:850;font-size:clamp(1.7rem,3.5vw,2.4rem);letter-spacing:-.01em}
-  .brand em{font-style:normal;color:var(--safety)}
-  .tagline{color:#B9C4CE;max-width:60ch;margin-top:8px;font-size:.95rem}
-  .btn-hist{background:transparent;border:1px solid #4A5B6A;color:#fff;white-space:nowrap}
-  .btn-hist:hover{background:#2E3E4D}
-  .hazard{height:8px;background:repeating-linear-gradient(-45deg,var(--safety) 0 14px,var(--ink) 14px 28px)}
+  /* ================= SHELL ================= */
+  #app{display:none;min-height:100vh}
+  #app.on{display:grid;grid-template-columns:230px 1fr}
+  /* Sans cela, la rangée de navigation en mode mobile élargit sa colonne de
+     grille et fait déborder toute la page horizontalement. */
+  #app.on>*{min-width:0}
 
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px 26px 22px;margin-top:28px}
-  fieldset{border:0;margin-bottom:20px}
-  legend{font-weight:700;font-size:1rem;margin-bottom:10px}
-  legend small{font-weight:400;color:var(--ink-soft)}
-  .hint{font-size:.85rem;color:var(--ink-soft);margin-top:6px}
-  input[type=text],select{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--ink)}
-  select{max-width:300px}
-  input:focus,select:focus,button:focus-visible,.chip:focus-within{outline:2px solid var(--safety);outline-offset:2px}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:#fff;font-size:.92rem}
-  .chip input{accent-color:var(--safety-dark)}
+  .side{background:var(--ink);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .side-top{padding:22px 20px 18px}
+  .mark{display:flex;align-items:center;gap:9px}
+  .mark-dot{width:26px;height:26px;border-radius:7px;background:var(--violet);display:grid;place-items:center;flex:none}
+  .mark-name{font-variation-settings:"wdth" 108;font-weight:850;font-size:1.02rem;letter-spacing:-.02em;line-height:1.1}
+  .mark-sub{font-size:.72rem;color:#8e90a8;letter-spacing:.04em;text-transform:uppercase;font-weight:600;margin-top:1px}
+  nav.side-nav{padding:6px 12px;display:flex;flex-direction:column;gap:2px}
+  .nav-b{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border-radius:var(--r-sm);color:#b9bacd;font-size:.9rem;font-weight:600;text-align:left;transition:background .13s,color .13s}
+  .nav-b:hover{background:var(--ink-2);color:#fff}
+  .nav-b.on{background:var(--violet);color:#fff}
+  .nav-b svg{flex:none;opacity:.9}
+  .nav-b .pill{margin-left:auto;background:rgba(255,255,255,.13);border-radius:99px;padding:1px 7px;font-size:.72rem;font-weight:700}
+  .nav-b.on .pill{background:rgba(255,255,255,.24)}
+  .side-foot{margin-top:auto;padding:16px 20px 20px;border-top:1px solid var(--ink-3);font-size:.75rem;color:#7c7e96;line-height:1.45}
+
+  main{min-width:0;display:flex;flex-direction:column}
+  .top{background:var(--panel);border-bottom:1px solid var(--line);padding:16px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+  .top h1{font-size:1.12rem;font-variation-settings:"wdth" 105;font-weight:800;letter-spacing:-.01em}
+  .top p{font-size:.84rem;color:var(--muted)}
+  .top-act{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap}
+  .content{padding:24px 28px 60px;flex:1}
+  .view{display:none}
+  .view.on{display:block}
+
+  /* ================= BUTTONS ================= */
+  .b{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:var(--r-sm);font-weight:700;font-size:.88rem;transition:background .13s,border-color .13s,opacity .13s;border:1px solid transparent;white-space:nowrap}
+  .b svg{flex:none}
+  .b-main{background:var(--violet);color:#fff}
+  .b-main:hover{background:#5c4df0}
+  .b-main:disabled{background:#cfd0dd;cursor:not-allowed}
+  .b-dark{background:var(--ink);color:#fff}
+  .b-dark:hover{background:var(--ink-2)}
+  .b-dark:disabled{background:#cfd0dd;cursor:not-allowed}
+  .b-out{border-color:var(--line);background:var(--panel);color:var(--ink)}
+  .b-out:hover{border-color:#cfd0e4;background:var(--paper)}
+  .b-out:disabled{opacity:.45;cursor:not-allowed}
+  .b-sm{padding:6px 12px;font-size:.83rem}
+  .b-xs{padding:4px 9px;font-size:.78rem;border-radius:6px}
+  :focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+
+  /* ================= CARDS ================= */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+  .card-h{padding:16px 20px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .card-h h2{font-size:.97rem;font-weight:800;letter-spacing:-.01em}
+  .card-h .sub{font-size:.82rem;color:var(--muted)}
+  .card-b{padding:20px}
+
+  /* ================= FILTERS ================= */
+  .fset{padding:18px 20px;border-bottom:1px solid var(--line-2)}
+  .fset:last-of-type{border-bottom:0}
+  .fset-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+  .fset-h h3{font-size:.87rem;font-weight:800}
+  .fset-h .sub{font-size:.8rem;color:var(--muted)}
+  .fset-h .spacer{margin-left:auto}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;border:1px solid var(--line);border-radius:99px;padding:5px 13px;background:var(--panel);font-size:.85rem;font-weight:600;transition:background .12s,border-color .12s,color .12s}
+  .chip:hover{border-color:#cfd0e4}
+  .chip input{position:absolute;opacity:0;width:0;height:0}
   .chip:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip:has(input:focus-visible){outline:2px solid var(--violet);outline-offset:2px}
+  .seg{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px;gap:3px}
+  .seg label{cursor:pointer;padding:6px 13px;border-radius:5px;font-size:.85rem;font-weight:700;color:var(--muted);transition:background .12s,color .12s}
+  .seg input{position:absolute;opacity:0;width:0;height:0}
+  .seg label:has(input:checked){background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(21,22,31,.12)}
+  select.inp{padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel);font-weight:600;font-size:.87rem;min-width:210px}
+  .swi{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:.86rem;font-weight:600}
+  .swi input{position:absolute;opacity:0;width:0;height:0}
+  .swi i{width:34px;height:20px;border-radius:99px;background:#d4d5e4;position:relative;transition:background .15s;flex:none}
+  .swi i:after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .swi input:checked + i{background:var(--violet)}
+  .swi input:checked + i:after{transform:translateX(14px)}
+  .swi input:focus-visible + i{outline:2px solid var(--violet);outline-offset:2px}
+  .run{padding:16px 20px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:var(--paper);border-top:1px solid var(--line-2);border-radius:0 0 var(--r) var(--r)}
 
-  .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px}
-  button{font:inherit;font-weight:700;cursor:pointer;border-radius:var(--radius);padding:11px 22px;border:1px solid transparent;transition:background .15s}
-  .btn-main{background:var(--safety-dark);color:#fff}
-  .btn-main:hover{background:var(--safety)}
-  .btn-main:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed}
-  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink)}
-  .btn-ghost:hover{background:#fff}
-  .btn-ghost:disabled{opacity:.45;cursor:not-allowed}
-  .btn-sm{padding:7px 14px;font-size:.88rem}
+  /* ================= PROGRESS ================= */
+  #prog{display:none;margin-top:18px}
+  #prog.on{display:block}
+  .bar{height:7px;background:var(--line-2);border-radius:99px;overflow:hidden;margin:14px 0 12px}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--violet),var(--violet-2));border-radius:99px;transition:width .25s}
+  .prog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px}
+  .prog-grid div{font-size:.8rem;color:var(--muted);font-weight:600}
+  .prog-grid b{display:block;font-size:1.25rem;font-weight:850;color:var(--ink);letter-spacing:-.02em}
+  .msg{font-size:.88rem;font-weight:600;margin-top:14px}
+  .msg.err{color:var(--danger)} .msg.ok{color:var(--ok)} .msg.warn{color:var(--warn)}
 
-  #status{margin:22px 0 10px;font-size:.95rem;min-height:1.4em}
-  #status.err{color:#B3261E;font-weight:600}
-  #status.ok{color:var(--ok);font-weight:600}
-  #status.warn{color:var(--safety-dark);font-weight:600}
-  .bar{height:6px;background:#fff;border:1px solid var(--line);border-radius:999px;overflow:hidden;max-width:420px;display:none}
-  .bar>i{display:block;height:100%;width:0;background:var(--safety);transition:width .2s}
+  /* ================= KPI ================= */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:14px;margin-bottom:18px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;box-shadow:var(--sh)}
+  .kpi .lab{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px}
+  .kpi .val{font-size:1.75rem;font-weight:850;letter-spacing:-.03em;margin-top:5px;line-height:1.1}
+  .kpi .foot{font-size:.79rem;color:var(--muted);margin-top:2px}
+  .kpi.a{border-left:3px solid var(--violet)} .kpi.b{border-left:3px solid var(--ok)}
+  .kpi.c{border-left:3px solid var(--warn)} .kpi.d{border-left:3px solid var(--blue)}
 
-  .results-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin:26px 0 12px}
-  .results-head h2{font-size:1.15rem}
-  .count{color:var(--ink-soft);font-size:.92rem}
-  .table-scroll{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
-  table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:1220px}
-  th{text-align:left;background:var(--ink);color:#fff;font-weight:600;padding:10px 12px;white-space:nowrap}
-  td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
-  tbody tr:nth-child(even){background:#F7F9FA}
-  tr.has-mail td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
-  td.nowrap{white-space:nowrap}
-  .naf{color:var(--ink-soft);font-size:.82rem}
-  .muted{color:var(--ink-soft)}
+  /* ================= CHARTS ================= */
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+  @media(max-width:900px){.charts{grid-template-columns:1fr}}
+  .brow{display:grid;grid-template-columns:118px 1fr 54px;align-items:center;gap:11px;margin-bottom:8px;font-size:.83rem}
+  .brow:last-child{margin-bottom:0}
+  .brow .nm{color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow .tr{background:var(--line-2);border-radius:99px;height:9px;overflow:hidden}
+  .brow .tr>i{display:block;height:100%;border-radius:99px;background:var(--violet);transition:width .3s}
+  .brow .tr>i.t-prio{background:var(--warn)} .brow .tr>i.t-bon{background:var(--ok)} .brow .tr>i.t-qual{background:#b9bacd}
+  .brow .vl{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
 
-  .score{display:inline-block;min-width:2.2em;text-align:center;border-radius:999px;padding:2px 9px;font-weight:800;font-size:.85rem;cursor:help}
-  .score-prio{background:#FCE4D6;color:var(--safety-dark)}
-  .score-bon{background:#DCEEE1;color:var(--ok)}
-  .score-qualif{background:#E7EAED;color:var(--ink-soft)}
-  .score-label{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:2px;white-space:nowrap}
+  /* ================= TABLE ================= */
+  .tbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:13px 20px;border-bottom:1px solid var(--line-2);background:var(--panel);border-radius:var(--r) var(--r) 0 0}
+  .search-in{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 11px;background:var(--paper);min-width:230px;flex:1;max-width:340px}
+  .search-in input{border:0;background:none;outline:0;width:100%;font-size:.87rem}
+  .search-in svg{flex:none;color:var(--muted)}
+  #selBar{display:none;align-items:center;gap:10px;padding:10px 20px;background:var(--violet-soft);border-bottom:1px solid #ddd8ff;font-size:.86rem;font-weight:700;color:#4a3fd0;flex-wrap:wrap}
+  #selBar.on{display:flex}
+  .tscroll{overflow-x:auto;background:var(--panel);border-radius:0 0 var(--r) var(--r)}
+  table{border-collapse:separate;border-spacing:0;width:100%;font-size:.855rem}
+  thead th{text-align:left;background:var(--paper);color:var(--muted);font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;padding:9px 13px;white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  th.srt{cursor:pointer;user-select:none}
+  th.srt:hover{color:var(--ink)}
+  th.srt span{opacity:.35;margin-left:3px}
+  th.srt.act{color:var(--ink)} th.srt.act span{opacity:1;color:var(--violet)}
+  tbody td{padding:10px 13px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+  tbody tr{transition:background .1s}
+  tbody tr:hover{background:var(--paper)}
+  tbody tr.sel{background:var(--violet-soft)}
+  td.nw{white-space:nowrap}
+  .cbx{width:15px;height:15px;accent-color:var(--violet);cursor:pointer}
+  .co{font-weight:800;letter-spacing:-.01em;cursor:pointer;display:block}
+  .co:hover{color:var(--violet)}
+  .meta{font-size:.78rem;color:var(--muted);margin-top:1px}
+  .muted{color:var(--muted)}
+  .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+  .tag{font-size:.68rem;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--line-2);color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .tag.rge{background:var(--ok-soft);color:var(--ok)}
+  .tag.ex{background:var(--warn-soft);color:var(--warn)}
+  .tag.gr{background:var(--violet-soft);color:var(--violet)}
+  .sc{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:9px;font-weight:850;font-size:.92rem;font-variant-numeric:tabular-nums}
+  .sc-prio{background:var(--warn-soft);color:#b96c14} .sc-bon{background:var(--ok-soft);color:var(--ok)} .sc-qual{background:var(--line-2);color:var(--muted)}
+  .ic{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:6px;color:var(--muted);transition:background .12s,color .12s}
+  .ic:hover{background:var(--line-2);color:var(--ink)}
+  .ic.ok{color:var(--ok)}
+  .empty{padding:44px 20px;text-align:center;color:var(--muted)}
+  .empty b{display:block;color:var(--ink);font-size:1rem;margin-bottom:5px}
 
-  /* ---------- historique ---------- */
-  #histWrap{display:none;position:fixed;inset:0;background:rgba(34,49,63,.55);z-index:40;padding:40px 20px;overflow:auto}
-  #histBox{background:var(--panel);max-width:860px;margin:0 auto;border-radius:var(--radius);padding:26px}
-  .hist-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
-  .hist-head h2{font-size:1.2rem}
-  .hist-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
-  #histTable{min-width:0;font-size:.85rem}
-  #histTable th{position:static}
-  .hist-scroll{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:var(--radius)}
+  /* ================= MODAL ================= */
+  .ov{display:none;position:fixed;inset:0;background:rgba(21,22,31,.5);z-index:100;padding:32px 20px;overflow-y:auto;backdrop-filter:blur(2px)}
+  .ov.on{display:block}
+  .mod{background:var(--panel);max-width:820px;margin:0 auto;border-radius:var(--r);box-shadow:0 24px 70px rgba(0,0,0,.3);overflow:hidden}
+  .mod-h{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:14px}
+  .mod-h h2{font-size:1.15rem;font-weight:850;letter-spacing:-.02em}
+  .mod-h .sub{font-size:.85rem;color:var(--muted);margin-top:2px}
+  .mod-h .x{margin-left:auto;flex:none}
+  .mod-b{padding:22px 24px;max-height:66vh;overflow-y:auto}
+  .mod-f{padding:14px 24px;border-top:1px solid var(--line);background:var(--paper);display:flex;gap:9px;flex-wrap:wrap}
+  .dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 20px;margin-bottom:20px}
+  .dl>div{min-width:0}
+  .dl dt{font-size:.73rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-bottom:2px}
+  .dl dd{font-weight:600;font-size:.9rem;word-break:break-word}
+  .sect-t{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800;margin:0 0 11px;padding-bottom:7px;border-bottom:1px solid var(--line-2)}
+  .cp{display:inline-flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:.8rem;font-weight:700;margin-left:6px}
+  .cp:hover{border-color:var(--violet);color:var(--violet)}
+  .lnks{display:flex;gap:8px;flex-wrap:wrap}
+  .lnks a{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 13px;font-size:.84rem;font-weight:700;color:var(--ink);text-decoration:none}
+  .lnks a:hover{border-color:var(--violet);color:var(--violet)}
 
-  footer{padding:36px 0 44px;color:var(--ink-soft);font-size:.85rem;max-width:80ch}
-  footer p{margin-bottom:8px}
+  /* ================= MAP ================= */
+  #map{height:min(70vh,660px);border-radius:var(--r);border:1px solid var(--line);z-index:1}
+  .leaflet-container{font-family:inherit;border-radius:var(--r)}
+  .lg{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:.83rem;color:var(--muted);font-weight:600}
+  .lg span{display:inline-flex;align-items:center;gap:6px}
+  .lg i{width:11px;height:11px;border-radius:50%;display:inline-block}
+
+  .note{font-size:.83rem;color:var(--muted);line-height:1.55}
+  .note + .note{margin-top:9px}
+  .note b{color:var(--ink)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:var(--r-sm);font-size:.87rem;font-weight:700;z-index:300;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:820px){
+    #app.on{grid-template-columns:1fr}
+    .side{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto}
+    .side-top{padding:12px 16px} .side-foot{display:none}
+    nav.side-nav{flex-direction:row;padding:8px 12px}
+    .nav-b span.t{display:none} .nav-b{padding:9px}
+    .top,.content{padding-left:16px;padding-right:16px}
+  }
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 
+<!-- ============================ GATE ============================ -->
 <div id="gate">
   <form class="box" id="gateForm">
-    <h1>Chantier<em>Prospect</em></h1>
-    <p>Accès réservé. Entrez le mot de passe pour continuer.</p>
+    <div class="logo">
+      <span class="mark-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-7h6v7"/></svg></span>
+      <h1>Chantier Prospect</h1>
+    </div>
+    <p>Accès réservé — outil interne Piloz.</p>
     <input type="password" id="pwd" placeholder="Mot de passe" autocomplete="current-password" autofocus>
-    <button type="submit" class="btn-main">Entrer</button>
+    <button type="submit">Entrer</button>
     <p id="gateErr" role="alert"></p>
   </form>
 </div>
 
+<!-- ============================ APP ============================ -->
 <div id="app">
-<header>
-  <div class="wrap head-row">
-    <div>
-      <div class="brand">Chantier<em>Prospect</em></div>
-      <p class="tagline">Entreprises du BTP avec téléphone et e-mail, classées selon leur profil d'achat pour Piloz (taille d'équipe, multi-chantiers, chiffre d'affaires). Export prêt pour Brevo, sans jamais renvoyer deux fois le même prospect.</p>
+
+  <aside class="side">
+    <div class="side-top">
+      <div class="mark">
+        <span class="mark-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-7h6v7"/></svg></span>
+        <div>
+          <div class="mark-name">Chantier Prospect</div>
+          <div class="mark-sub">Piloz</div>
+        </div>
+      </div>
     </div>
-    <button type="button" class="btn-hist" id="btnHist">Historique (0)</button>
-  </div>
-</header>
-<div class="hazard" aria-hidden="true"></div>
-
-<main class="wrap">
-  <form class="panel" id="searchForm">
-    <fieldset>
-      <legend>Objectif <small>— nombre de contacts avec e-mail à réunir, recherche sur toute la France</small></legend>
-      <select id="limite">
-        <option value="50">50 contacts avec e-mail</option>
-        <option value="100">100 contacts avec e-mail</option>
-        <option value="300" selected>300 contacts avec e-mail</option>
-        <option value="500">500 contacts avec e-mail</option>
-        <option value="1000">1 000 contacts avec e-mail</option>
-      </select>
-      <p class="hint">L'outil continue de chercher jusqu'à atteindre ce nombre. Environ une entreprise sur quatre dispose d'un e-mail public.</p>
-    </fieldset>
-
-    <fieldset>
-      <legend>Secteur d'activité</legend>
-      <div class="chips">
-        <label class="chip"><input type="checkbox" name="secteur" value="41" checked> Construction de bâtiments (41)</label>
-        <label class="chip"><input type="checkbox" name="secteur" value="42" checked> Génie civil (42)</label>
-        <label class="chip"><input type="checkbox" name="secteur" value="43" checked> Travaux spécialisés (43)</label>
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Métier précis <small>— optionnel, remplace le secteur ci-dessus si coché</small>
-        <button type="button" class="btn-ghost btn-sm" id="btnMetierAll" style="margin-left:10px">Tout sélectionner</button>
-      </legend>
-      <div class="chips" id="metierChips">
-        <label class="chip"><input type="checkbox" name="metier" value="41.20A"> Maisons individuelles</label>
-        <label class="chip"><input type="checkbox" name="metier" value="41.20B"> Autres bâtiments</label>
-        <label class="chip"><input type="checkbox" name="metier" value="42.11Z"> Voirie</label>
-        <label class="chip"><input type="checkbox" name="metier" value="42.12Z"> Voies ferrées</label>
-        <label class="chip"><input type="checkbox" name="metier" value="42.13A"> Ouvrages d'art</label>
-        <label class="chip"><input type="checkbox" name="metier" value="42.13B"> Lignes électriques (génie civil)</label>
-        <label class="chip"><input type="checkbox" name="metier" value="42.21Z"> Réseaux fluides</label>
-        <label class="chip"><input type="checkbox" name="metier" value="42.22Z"> Réseaux électriques / télécoms</label>
-        <label class="chip"><input type="checkbox" name="metier" value="42.91Z"> Ouvrages maritimes et fluviaux</label>
-        <label class="chip"><input type="checkbox" name="metier" value="42.99Z"> Génie civil (autres ouvrages)</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.11Z"> Démolition</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.12A,43.12B"> Terrassement</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.13Z"> Forages et sondages</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.21A,43.21B"> Installation électrique</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.22A"> Plomberie (eau et gaz)</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.22B"> Chauffage et climatisation</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.29A"> Isolation</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.29B"> Installations diverses</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.31Z"> Plâtrerie</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.32A,43.32B"> Menuiserie</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.32C"> Agencement de lieux de vente</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.33Z"> Revêtement sols et murs</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.34Z"> Peinture et vitrerie</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.39Z"> Travaux de finition</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.91A"> Charpente</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.91B"> Couverture</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.99A"> Étanchéité</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.99B"> Structures métalliques</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.99C"> Maçonnerie / gros œuvre</label>
-        <label class="chip"><input type="checkbox" name="metier" value="43.99D"> Autres travaux spécialisés</label>
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Effectif salarié <small>— tranches INSEE</small></legend>
-      <div class="chips">
-        <label class="chip"><input type="checkbox" name="eff" value="01"> 1 à 2</label>
-        <label class="chip"><input type="checkbox" name="eff" value="02" checked> 3 à 5</label>
-        <label class="chip"><input type="checkbox" name="eff" value="03" checked> 6 à 9</label>
-        <label class="chip"><input type="checkbox" name="eff" value="11" checked> 10 à 19</label>
-        <label class="chip"><input type="checkbox" name="eff" value="12" checked> 20 à 49</label>
-        <label class="chip"><input type="checkbox" name="eff" value="21" checked> 50 à 99</label>
-        <label class="chip"><input type="checkbox" name="eff" value="22" checked> 100 à 199</label>
-        <label class="chip"><input type="checkbox" name="eff" value="31,32" checked> 200 à 499</label>
-        <label class="chip"><input type="checkbox" name="eff" value="41,42,51,52,53" checked> 500 et +</label>
-      </div>
-    </fieldset>
-
-    <div class="actions">
-      <button type="submit" class="btn-main" id="btnSearch">Lancer la recherche</button>
-      <button type="button" class="btn-ghost" id="btnStop" disabled>Arrêter</button>
-      <button type="button" class="btn-main" id="btnBrevo" disabled>Export Brevo (.xlsx)</button>
-      <button type="button" class="btn-ghost" id="btnCsv" disabled>Export complet (CSV)</button>
+    <nav class="side-nav">
+      <button class="nav-b on" data-view="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg><span class="t">Recherche</span></button>
+      <button class="nav-b" data-view="pros"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h12"/></svg><span class="t">Prospects</span><span class="pill num" id="pillPros">0</span></button>
+      <button class="nav-b" data-view="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3z"/><path d="M9 3v15M15 6v15"/></svg><span class="t">Carte</span></button>
+      <button class="nav-b" data-view="hist"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v5H3zM5 8v13h14V8"/><path d="M10 12h4"/></svg><span class="t">Historique</span><span class="pill num" id="pillHist">0</span></button>
+    </nav>
+    <div class="side-foot">
+      Données publiques INSEE / RNE&nbsp;+ ADEME RGE.<br>Historique stocké dans ce navigateur uniquement.
     </div>
-  </form>
+  </aside>
 
-  <p id="status" role="status" aria-live="polite"></p>
-  <div class="bar" id="bar"><i></i></div>
+  <main>
+    <div class="top">
+      <div>
+        <h1 id="topT">Recherche</h1>
+        <p id="topS">Cibler les entreprises du BTP qui ont un contact public exploitable.</p>
+      </div>
+      <div class="top-act" id="topAct"></div>
+    </div>
 
-  <div class="results-head">
-    <h2>Résultats <span class="hint" style="font-weight:400">— triés par score Piloz décroissant</span></h2>
-    <span class="count" id="count"></span>
-  </div>
+    <div class="content">
 
-  <div class="table-scroll">
-    <table>
-      <thead>
-        <tr>
-          <th title="Estime l'intérêt probable pour Piloz à partir de données publiques (effectif, multi-établissements, chiffre d'affaires, ancienneté). Ne mesure pas une intention de recherche réelle.">Score Piloz</th>
-          <th>Entreprise</th><th>Téléphone</th><th>E-mail</th><th>Site web</th>
-          <th>Effectif</th><th>Adresse du siège</th><th>Dirigeant(s)</th><th>SIREN</th><th>Fiche</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="10" class="muted" style="padding:22px">Aucune recherche lancée. Seules les entreprises disposant d'un téléphone ou d'un e-mail sont conservées, et celles déjà dans l'historique sont automatiquement écartées.</td></tr>
-      </tbody>
-    </table>
-  </div>
+      <!-- ==================== VUE RECHERCHE ==================== -->
+      <section class="view on" id="v-search">
+        <form class="card" id="searchForm" style="max-width:1080px">
 
-  <footer>
-    <p><strong>Sources.</strong> API Recherche d'entreprises (base SIRENE de l'INSEE et Registre National des Entreprises) pour les entreprises, jeu de données « Liste des entreprises RGE » de l'ADEME (Licence Ouverte Etalab) pour les coordonnées.</p>
-    <p><strong>Pourquoi il faut scanner beaucoup d'entreprises.</strong> Seules les entreprises qualifiées RGE publient leurs coordonnées en open data, soit environ 60 000 établissements sur toute la France. L'outil parcourt donc la liste SIRENE (sur toute la France) et ne retient que celles qui ont un contact : comptez environ quatre entreprises analysées pour un e-mail obtenu. Sur un métier très précis, le stock disponible peut être inférieur à votre objectif.</p>
-    <p><strong>Historique.</strong> Les entreprises exportées vers Brevo sont mémorisées dans ce navigateur et exclues des recherches suivantes. L'historique n'est pas partagé entre plusieurs ordinateurs ou navigateurs : exportez-le en CSV si vous voulez le conserver.</p>
-    <p><strong>RGPD.</strong> Ces coordonnées sont publiées pour aider les particuliers à trouver un artisan qualifié. Leur réutilisation en prospection B2B suppose une base légale d'intérêt légitime, l'information des personnes dès le premier contact, un lien de désinscription et le respect immédiat des oppositions.</p>
-  </footer>
-</main>
+          <div class="fset">
+            <div class="fset-h">
+              <h3>Objectif</h3>
+              <span class="sub">nombre de contacts avec e-mail à réunir — recherche sur toute la France</span>
+            </div>
+            <select class="inp" id="cible">
+              <option value="50">50 contacts</option>
+              <option value="100">100 contacts</option>
+              <option value="300" selected>300 contacts</option>
+              <option value="500">500 contacts</option>
+              <option value="1000">1 000 contacts</option>
+              <option value="2000">2 000 contacts</option>
+            </select>
+          </div>
+
+          <div class="fset">
+            <div class="fset-h">
+              <h3>Source des contacts</h3>
+              <span class="sub">seules les entreprises qualifiées RGE publient leurs coordonnées en open data</span>
+            </div>
+            <div class="seg" id="segSrc">
+              <label><input type="radio" name="src" value="actifs" checked> RGE actifs — 60 200 entreprises</label>
+              <label><input type="radio" name="src" value="tous"> + anciens RGE — 173 400 entreprises</label>
+            </div>
+            <p class="note" style="margin-top:10px" id="srcNote"></p>
+          </div>
+
+          <div class="fset">
+            <div class="fset-h"><h3>Secteur</h3><span class="sub">codes NAF de la construction</span></div>
+            <div class="chips">
+              <label class="chip"><input type="checkbox" name="secteur" value="41" checked> Construction de bâtiments</label>
+              <label class="chip"><input type="checkbox" name="secteur" value="42" checked> Génie civil</label>
+              <label class="chip"><input type="checkbox" name="secteur" value="43" checked> Travaux spécialisés</label>
+            </div>
+          </div>
+
+          <div class="fset">
+            <div class="fset-h">
+              <h3>Métier précis</h3>
+              <span class="sub">optionnel — remplace le secteur ci-dessus</span>
+              <span class="spacer"></span>
+              <button type="button" class="b b-out b-xs" id="bMetAll">Tout sélectionner</button>
+              <button type="button" class="b b-out b-xs" id="bMetTop">Métiers à fort potentiel</button>
+            </div>
+            <div class="chips" id="metChips"></div>
+          </div>
+
+          <div class="fset">
+            <div class="fset-h"><h3>Effectif salarié</h3><span class="sub">tranches INSEE</span></div>
+            <div class="chips">
+              <label class="chip"><input type="checkbox" name="eff" value="01"> 1 à 2</label>
+              <label class="chip"><input type="checkbox" name="eff" value="02" checked> 3 à 5</label>
+              <label class="chip"><input type="checkbox" name="eff" value="03" checked> 6 à 9</label>
+              <label class="chip"><input type="checkbox" name="eff" value="11" checked> 10 à 19</label>
+              <label class="chip"><input type="checkbox" name="eff" value="12" checked> 20 à 49</label>
+              <label class="chip"><input type="checkbox" name="eff" value="21" checked> 50 à 99</label>
+              <label class="chip"><input type="checkbox" name="eff" value="22" checked> 100 à 199</label>
+              <label class="chip"><input type="checkbox" name="eff" value="31,32" checked> 200 à 499</label>
+              <label class="chip"><input type="checkbox" name="eff" value="41,42,51,52,53" checked> 500 et +</label>
+            </div>
+          </div>
+
+          <div class="fset">
+            <div class="fset-h"><h3>Options</h3></div>
+            <div style="display:flex;gap:22px;flex-wrap:wrap">
+              <label class="swi"><input type="checkbox" id="optHist" checked><i></i> Exclure les entreprises déjà exportées</label>
+              <label class="swi"><input type="checkbox" id="optMail" checked><i></i> Garder uniquement celles qui ont un e-mail</label>
+              <label class="swi"><input type="checkbox" id="optDedup" checked><i></i> Une seule entreprise par adresse e-mail</label>
+            </div>
+          </div>
+
+          <div class="run">
+            <button type="submit" class="b b-main" id="bRun">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              Lancer la recherche
+            </button>
+            <button type="button" class="b b-out" id="bStop" disabled>Arrêter</button>
+            <span class="note" id="planNote"></span>
+          </div>
+        </form>
+
+        <div class="card" id="prog" style="max-width:1080px">
+          <div class="card-b">
+            <div class="prog-grid">
+              <div>Analysées<b class="num" id="pScan">0</b></div>
+              <div>Avec contact<b class="num" id="pHit">0</b></div>
+              <div>Avec e-mail<b class="num" id="pMail">0</b></div>
+              <div>Déjà exportées<b class="num" id="pSkip">0</b></div>
+              <div>Départements couverts<b id="pZone">—</b></div>
+            </div>
+            <div class="bar"><i id="pBar"></i></div>
+            <p class="msg" id="msg"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VUE PROSPECTS ==================== -->
+      <section class="view" id="v-pros">
+        <div class="kpis">
+          <div class="kpi a"><div class="lab">Prospects</div><div class="val num" id="kTot">0</div><div class="foot" id="kTotF">aucune recherche lancée</div></div>
+          <div class="kpi b"><div class="lab">Avec e-mail</div><div class="val num" id="kMail">0</div><div class="foot" id="kMailF">prêts pour Brevo</div></div>
+          <div class="kpi c"><div class="lab">Profils prioritaires</div><div class="val num" id="kPrio">0</div><div class="foot">score 65 et plus</div></div>
+          <div class="kpi d"><div class="lab">Score moyen</div><div class="val num" id="kAvg">—</div><div class="foot">sur 100</div></div>
+        </div>
+
+        <div class="charts">
+          <div class="card"><div class="card-h"><h2>Profil des prospects</h2></div><div class="card-b" id="chTier"></div></div>
+          <div class="card"><div class="card-h"><h2>Taille des équipes</h2></div><div class="card-b" id="chEff"></div></div>
+        </div>
+
+        <div class="card">
+          <div class="tbar">
+            <div class="search-in">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input type="search" id="q" placeholder="Filtrer : nom, ville, métier, e-mail…">
+            </div>
+            <span class="note" id="tCount"></span>
+            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="b b-out b-sm" id="bCsv" disabled>Export complet (CSV)</button>
+              <button type="button" class="b b-dark b-sm" id="bBrevo" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+                Export Brevo
+              </button>
+            </div>
+          </div>
+          <div id="selBar">
+            <span id="selTxt"></span>
+            <button type="button" class="b b-out b-xs" id="bSelNone">Tout désélectionner</button>
+            <span class="note" style="margin-left:auto">L'export ne portera que sur la sélection.</span>
+          </div>
+          <div class="tscroll">
+            <table>
+              <thead><tr>
+                <th style="width:34px"><input type="checkbox" class="cbx" id="cbAll" title="Tout sélectionner"></th>
+                <th class="srt act" data-k="score" style="width:74px">Score <span id="sh-score">▼</span></th>
+                <th class="srt" data-k="nom">Entreprise <span id="sh-nom"></span></th>
+                <th style="width:92px">Contact</th>
+                <th class="srt" data-k="eff" style="width:96px">Effectif <span id="sh-eff"></span></th>
+                <th class="srt" data-k="ca" style="width:104px">CA connu <span id="sh-ca"></span></th>
+                <th class="srt" data-k="ville">Ville <span id="sh-ville"></span></th>
+                <th style="width:60px"></th>
+              </tr></thead>
+              <tbody id="tbody">
+                <tr><td colspan="8" class="empty"><b>Aucun prospect pour le moment</b>Lancez une recherche pour remplir cette vue.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VUE CARTE ==================== -->
+      <section class="view" id="v-map">
+        <div id="map"></div>
+        <div class="lg">
+          <span><i style="background:#e08a2c"></i> Profil prioritaire (65+)</span>
+          <span><i style="background:#17a06a"></i> Bon profil (40-64)</span>
+          <span><i style="background:#b9bacd"></i> À qualifier (&lt;40)</span>
+          <span style="margin-left:auto">Cliquez un point pour ouvrir la fiche.</span>
+        </div>
+      </section>
+
+      <!-- ==================== VUE HISTORIQUE ==================== -->
+      <section class="view" id="v-hist">
+        <div class="card">
+          <div class="tbar">
+            <div class="search-in">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input type="search" id="qh" placeholder="Chercher dans l'historique…">
+            </div>
+            <span class="note" id="hCount"></span>
+            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="b b-out b-sm" id="bHistImp">Importer un CSV</button>
+              <button type="button" class="b b-out b-sm" id="bHistCsv">Exporter (CSV)</button>
+              <button type="button" class="b b-out b-sm" id="bHistClr">Vider</button>
+            </div>
+          </div>
+          <div class="tscroll">
+            <table>
+              <thead><tr><th style="width:110px">Date</th><th>Entreprise</th><th>E-mail</th><th style="width:110px">SIREN</th><th style="width:90px"></th></tr></thead>
+              <tbody id="hBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="note" style="margin-top:14px;max-width:80ch"><b>Pourquoi c'est important.</b> Chaque export Brevo archive les entreprises envoyées. Elles sont ensuite écartées automatiquement des recherches, ce qui évite de relancer un contact qui a déjà reçu une communication. L'historique vit dans ce navigateur : exportez-le en CSV pour le sauvegarder ou le transférer sur un autre poste.</p>
+        <input type="file" id="histFile" accept=".csv,text/csv" hidden>
+      </section>
+
+    </div>
+  </main>
 </div>
 
-<!-- ============ HISTORIQUE ============ -->
-<div id="histWrap">
-  <div id="histBox">
-    <div class="hist-head">
-      <h2>Historique des exports</h2>
-      <button type="button" class="btn-ghost btn-sm" id="histClose">Fermer</button>
+<!-- ============================ FICHE ============================ -->
+<div class="ov" id="ov">
+  <div class="mod">
+    <div class="mod-h">
+      <div style="min-width:0">
+        <h2 id="mT"></h2>
+        <p class="sub" id="mS"></p>
+      </div>
+      <button class="b b-out b-sm x" id="mX">Fermer</button>
     </div>
-    <p class="muted" style="font-size:.9rem">Ces entreprises ont déjà été exportées vers Brevo. Elles sont automatiquement retirées des recherches suivantes.</p>
-    <div class="hist-actions">
-      <button type="button" class="btn-ghost btn-sm" id="histCsv">Exporter l'historique (CSV)</button>
-      <button type="button" class="btn-ghost btn-sm" id="histClear">Vider l'historique</button>
-    </div>
-    <div class="hist-scroll">
-      <table id="histTable">
-        <thead><tr><th>Date</th><th>Entreprise</th><th>E-mail</th><th>SIREN</th><th></th></tr></thead>
-        <tbody id="histBody"></tbody>
-      </table>
-    </div>
+    <div class="mod-b" id="mB"></div>
+    <div class="mod-f" id="mF"></div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 (function(){
-  "use strict";
+"use strict";
 
-  /* MOT DE PASSE — ouvrez la page avec ?hash=nouveaupasse pour obtenir le code */
-  const PWD_HASH = "f73560f92e46d37bc6c185864ef21b73bd142d9307427bb71a0a883d40955a2b";
+/* ============================================================
+   MOT DE PASSE — ouvrez la page avec ?hash=nouveaupasse
+   ============================================================ */
+const PWD_HASH = "f73560f92e46d37bc6c185864ef21b73bd142d9307427bb71a0a883d40955a2b";
 
-  const $ = id => document.getElementById(id);
-  const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmt = n => (n == null ? "—" : Number(n).toLocaleString("fr-FR"));
+function esc(s){ const d = document.createElement("span"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
 
-  async function sha256(t){
-    const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
-    return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+async function sha256(t){
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+const qp = new URLSearchParams(location.search);
+if (qp.has("hash")){
+  sha256(qp.get("hash")).then(h => {
+    document.body.innerHTML = '<div style="font:15px/1.7 monospace;padding:40px;max-width:760px">' +
+      "<p>Mot de passe : <b>" + esc(qp.get("hash")) + "</b></p>" +
+      "<p style='margin-top:14px'>Remplacez la valeur de <code>PWD_HASH</code> par :</p>" +
+      "<p style='margin-top:10px;word-break:break-all;background:#f6f6fb;padding:14px;border-radius:8px'>\"" + h + "\"</p></div>";
+  });
+  return;
+}
+
+function unlock(){
+  $("gate").style.display = "none";
+  $("app").classList.add("on");
+  try { sessionStorage.setItem("cp_ok", "1"); } catch(e){}
+  renderHist();
+}
+try { if (sessionStorage.getItem("cp_ok") === "1") unlock(); } catch(e){}
+$("gateForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  if (await sha256($("pwd").value) === PWD_HASH) unlock();
+  else { $("gateErr").textContent = "Mot de passe incorrect."; $("pwd").select(); }
+});
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastT = null;
+function toast(m){
+  const t = $("toast");
+  t.textContent = m; t.classList.add("on");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove("on"), 2600);
+}
+
+/* ============================================================
+   HISTORIQUE (localStorage)
+   ============================================================ */
+const HIST_KEY = "cp_historique";
+const OLD_HIST_KEYS = ["cp_pipeline"];
+let hist = [];
+try { hist = JSON.parse(localStorage.getItem(HIST_KEY) || "null"); } catch(e){ hist = null; }
+if (!hist){
+  hist = [];
+  for (const k of OLD_HIST_KEYS){
+    try {
+      const legacy = JSON.parse(localStorage.getItem(k) || "[]");
+      for (const h of legacy) if (h && h.siren) hist.push({ date: h.date, nom: h.nom, email: h.email, siren: h.siren });
+    } catch(e){}
+  }
+  if (hist.length) { try { localStorage.setItem(HIST_KEY, JSON.stringify(hist)); } catch(e){} }
+}
+let histSet = new Set(hist.map(h => h.siren));
+
+function saveHist(){
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(hist)); }
+  catch(e){ toast("Historique non enregistré : stockage du navigateur plein."); }
+  histSet = new Set(hist.map(h => h.siren));
+  renderHist();
+}
+
+function renderHist(){
+  $("pillHist").textContent = fmt(hist.length);
+  const term = ($("qh").value || "").trim().toLowerCase();
+  const list = term
+    ? hist.filter(h => ((h.nom || "") + " " + (h.email || "") + " " + (h.siren || "")).toLowerCase().includes(term))
+    : hist;
+  $("hCount").textContent = term
+    ? fmt(list.length) + " sur " + fmt(hist.length) + " entrée(s)"
+    : fmt(hist.length) + " entreprise(s) déjà exportée(s)";
+  const body = $("hBody");
+  if (!list.length){
+    body.innerHTML = '<tr><td colspan="5" class="empty"><b>' +
+      (hist.length ? "Aucun résultat" : "Historique vide") + "</b>" +
+      (hist.length ? "Aucune entrée ne correspond à cette recherche." : "Les entreprises exportées vers Brevo apparaîtront ici.") + "</td></tr>";
+    return;
+  }
+  body.innerHTML = list.slice().reverse().slice(0, 2000).map(h =>
+    '<tr><td class="nw muted">' + esc(h.date) + "</td><td><b>" + esc(h.nom) + "</b></td><td>" + esc(h.email) +
+    '</td><td class="nw muted num">' + esc(h.siren) +
+    '</td><td><button type="button" class="b b-out b-xs" data-del="' + esc(h.siren) + '">Retirer</button></td></tr>'
+  ).join("");
+}
+
+$("qh").addEventListener("input", renderHist);
+$("hBody").addEventListener("click", ev => {
+  const s = ev.target.getAttribute && ev.target.getAttribute("data-del");
+  if (!s) return;
+  hist = hist.filter(h => h.siren !== s);
+  saveHist();
+  toast("Entreprise retirée de l'historique.");
+});
+$("bHistClr").addEventListener("click", () => {
+  if (!hist.length) return;
+  if (confirm("Vider tout l'historique ?\n\nLes " + fmt(hist.length) + " entreprises archivées pourront réapparaître dans les recherches.")){
+    hist = []; saveHist(); toast("Historique vidé.");
+  }
+});
+$("bHistCsv").addEventListener("click", () => {
+  if (!hist.length) return toast("Historique vide.");
+  downloadCsv("historique-prospection-", [["date", "Date d'export"], ["nom", "Entreprise"], ["email", "E-mail"], ["siren", "SIREN"]], hist);
+});
+$("bHistImp").addEventListener("click", () => $("histFile").click());
+$("histFile").addEventListener("change", ev => {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || "");
+    const lines = text.split(/\r?\n/).filter(l => l.trim() && !/^sep=/i.test(l));
+    let added = 0;
+    for (let i = 1; i < lines.length; i++){
+      const cells = lines[i].split(";").map(c => c.replace(/^﻿/, "").replace(/^"|"$/g, "").replace(/""/g, '"').trim());
+      const siren = (cells.find(c => /^\d{9}$/.test(c)) || "").trim();
+      if (!siren || histSet.has(siren)) continue;
+      hist.push({ date: cells[0] || new Date().toLocaleDateString("fr-FR"), nom: cells[1] || "", email: cells[2] || "", siren: siren });
+      histSet.add(siren);
+      added++;
+    }
+    saveHist();
+    toast(added ? fmt(added) + " entreprise(s) ajoutée(s) à l'historique." : "Aucun SIREN nouveau détecté dans ce fichier.");
+  };
+  reader.readAsText(file, "utf-8");
+  ev.target.value = "";
+});
+
+/* ============================================================
+   RÉFÉRENTIELS
+   ============================================================ */
+const API_SIRENE = "https://recherche-entreprises.api.gouv.fr/search";
+const RGE_ACTIF = "https://data.ademe.fr/data-fair/api/v1/datasets/liste-des-entreprises-rge-2/lines";
+const RGE_HISTO = "https://data.ademe.fr/data-fair/api/v1/datasets/historique-rge/lines";
+
+const PER_PAGE = 25;         // maximum autorisé par l'API
+const API_CAP = 10000;       // plafond de résultats d'une requête SIRENE
+const DELAY = 165;           // ~6 req/s, sous la limite de l'API
+const RGE_DELAY = 180;
+const RGE_BATCH = 15;        // SIREN par requête ADEME
+const BUFFER = 150;          // entreprises accumulées avant un enrichissement
+
+const EFF = { "00":"0 salarié","01":"1 à 2","02":"3 à 5","03":"6 à 9","11":"10 à 19","12":"20 à 49",
+  "21":"50 à 99","22":"100 à 199","31":"200 à 249","32":"250 à 499","41":"500 à 999",
+  "42":"1 000 à 1 999","51":"2 000 à 4 999","52":"5 000 à 9 999","53":"10 000 et +" };
+
+const DEPS = (() => {
+  const l = [];
+  for (let i = 1; i <= 19; i++) l.push(String(i).padStart(2, "0"));
+  l.push("2A", "2B");
+  for (let i = 21; i <= 95; i++) l.push(String(i).padStart(2, "0"));
+  return l.concat(["971", "972", "973", "974", "976"]);
+})();
+
+/* Métiers BTP — nomenclature NAF rév. 2. `top` = métiers où la coordination
+   d'équipes et de chantiers multiples est la plus forte, donc où Piloz sert le plus. */
+const METIERS = [
+  { c:"41.20A", n:"Maisons individuelles", m:"construction de maisons individuelles", top:1 },
+  { c:"41.20B", n:"Autres bâtiments", m:"construction de bâtiments", top:1 },
+  { c:"42.11Z", n:"Voirie", m:"travaux de voirie", top:1 },
+  { c:"42.12Z", n:"Voies ferrées", m:"construction de voies ferrées" },
+  { c:"42.13A", n:"Ouvrages d'art", m:"construction d'ouvrages d'art" },
+  { c:"42.13B", n:"Lignes électriques (génie civil)", m:"construction de lignes électriques" },
+  { c:"42.21Z", n:"Réseaux fluides", m:"construction de réseaux pour fluides", top:1 },
+  { c:"42.22Z", n:"Réseaux électriques / télécoms", m:"construction de réseaux électriques et de télécommunications", top:1 },
+  { c:"42.91Z", n:"Ouvrages maritimes", m:"construction d'ouvrages maritimes et fluviaux" },
+  { c:"42.99Z", n:"Génie civil (autres)", m:"génie civil" },
+  { c:"43.11Z", n:"Démolition", m:"démolition" },
+  { c:"43.12A,43.12B", n:"Terrassement", m:"travaux de terrassement", top:1 },
+  { c:"43.13Z", n:"Forages et sondages", m:"forages et sondages" },
+  { c:"43.21A,43.21B", n:"Installation électrique", m:"installation électrique", top:1 },
+  { c:"43.22A", n:"Plomberie (eau et gaz)", m:"installation d'eau et de gaz", top:1 },
+  { c:"43.22B", n:"Chauffage et climatisation", m:"installation de chauffage et de climatisation", top:1 },
+  { c:"43.29A", n:"Isolation", m:"travaux d'isolation", top:1 },
+  { c:"43.29B", n:"Installations diverses", m:"installations diverses" },
+  { c:"43.31Z", n:"Plâtrerie", m:"plâtrerie" },
+  { c:"43.32A,43.32B", n:"Menuiserie", m:"menuiserie", top:1 },
+  { c:"43.32C", n:"Agencement de magasins", m:"agencement de lieux de vente" },
+  { c:"43.33Z", n:"Revêtement sols et murs", m:"revêtement des sols et des murs" },
+  { c:"43.34Z", n:"Peinture et vitrerie", m:"peinture et vitrerie", top:1 },
+  { c:"43.39Z", n:"Travaux de finition", m:"travaux de finition" },
+  { c:"43.91A", n:"Charpente", m:"charpente", top:1 },
+  { c:"43.91B", n:"Couverture", m:"couverture", top:1 },
+  { c:"43.99A", n:"Étanchéité", m:"étanchéification" },
+  { c:"43.99B", n:"Structures métalliques", m:"montage de structures métalliques" },
+  { c:"43.99C", n:"Maçonnerie / gros œuvre", m:"maçonnerie générale et gros œuvre", top:1 },
+  { c:"43.99D", n:"Autres travaux spécialisés", m:"autres travaux spécialisés de construction" }
+];
+const NAF_METIER = {};
+for (const m of METIERS) for (const code of m.c.split(",")) NAF_METIER[code] = m.m;
+
+$("metChips").innerHTML = METIERS.map(m =>
+  '<label class="chip"><input type="checkbox" name="metier" value="' + m.c + '"' + (m.top ? ' data-top="1"' : "") + "> " + esc(m.n) + "</label>"
+).join("");
+
+/* ============================================================
+   SCORE PILOZ (sur 100)
+   Estime le profil d'achat à partir de signaux publics corrélés au besoin
+   d'un outil de pilotage de chantiers. Ce n'est PAS une intention de
+   recherche : aucune donnée publique ne la mesure.
+   ============================================================ */
+function caSerie(finances){
+  if (!finances) return { ca:null, annee:null, prev:null, growth:null };
+  const years = Object.keys(finances).filter(y => /^\d{4}$/.test(y)).sort().reverse();
+  if (!years.length) return { ca:null, annee:null, prev:null, growth:null };
+  const ca = typeof finances[years[0]].ca === "number" ? finances[years[0]].ca : null;
+  const prev = years[1] && typeof finances[years[1]].ca === "number" ? finances[years[1]].ca : null;
+  const growth = (ca != null && prev != null && prev > 0) ? (ca - prev) / prev : null;
+  return { ca, annee: years[0], prev, growth };
+}
+function ageYears(d){
+  if (!d) return null;
+  const t = new Date(d);
+  return isNaN(t) ? null : (Date.now() - t.getTime()) / (365.25 * 864e5);
+}
+const sEff = c => ({ "00":4,"01":12,"02":22,"03":28,"11":30,"12":27,"21":20,"22":12,"31":7,"32":5,"41":3,"42":2,"51":1,"52":1,"53":1 }[c] ?? 9);
+const sSites = n => n == null ? 7 : n <= 1 ? 4 : n <= 3 ? 12 : n <= 9 ? 19 : 22;
+const sCa = c => c == null ? 7 : c < 5e4 ? 2 : c < 2e5 ? 6 : c < 1e6 ? 12 : c < 5e6 ? 16 : c < 15e6 ? 11 : 6;
+const sGrow = g => g == null ? 5 : g >= .25 ? 12 : g >= .10 ? 10 : g >= .02 ? 8 : g >= -.05 ? 5 : 2;
+const sAge = y => y == null ? 5 : y < 1 ? 3 : y < 2 ? 6 : y < 5 ? 9 : y < 15 ? 10 : y < 25 ? 7 : 5;
+function sRge(r){
+  if (!r.rgeActif && !r.rgeQualifs) return 2;
+  const base = r.rgeActif ? 6 : 3;
+  return Math.min(10, base + Math.min(4, (r.rgeQualifs || 1) - 1));
+}
+
+function computeScore(r){
+  const parts = [
+    { k:"Effectif",     v:sEff(r.effCode), max:30, d:r.effectif + " salarié(s)" },
+    { k:"Multi-sites",  v:sSites(r.sitesOuverts), max:22, d:r.sitesOuverts != null ? r.sitesOuverts + " établissement(s) ouvert(s)" : "nombre de sites inconnu" },
+    { k:"Chiffre d'affaires", v:sCa(r.ca), max:16, d:r.ca != null ? Math.round(r.ca / 1000).toLocaleString("fr-FR") + " k€ (" + r.caAnnee + ")" : "CA non publié" },
+    { k:"Croissance",   v:sGrow(r.growth), max:12, d:r.growth != null ? (r.growth >= 0 ? "+" : "") + Math.round(r.growth * 100) + " % de CA sur un an" : "évolution inconnue" },
+    { k:"Ancienneté",   v:sAge(r.age), max:10, d:r.age != null ? Math.floor(r.age) + " an(s) d'existence" : "date de création inconnue" },
+    { k:"Qualification RGE", v:sRge(r), max:10, d:(r.rgeActif ? "RGE en cours" : r.rgeQualifs ? "RGE expiré" : "non RGE") + (r.rgeQualifs > 1 ? " · " + r.rgeQualifs + " qualifications" : "") }
+  ];
+  const total = Math.round(parts.reduce((s, p) => s + p.v, 0));
+  const tier = total >= 65 ? "prio" : total >= 40 ? "bon" : "qual";
+  const label = tier === "prio" ? "Profil prioritaire" : tier === "bon" ? "Bon profil" : "À qualifier";
+  return { total, tier, label, parts };
+}
+
+/* ============================================================
+   ÉTAT
+   ============================================================ */
+let rows = [];              // prospects de la recherche courante
+let view = [];              // rows après filtre texte + tri
+let sel = new Set();        // SIREN sélectionnés
+let sortK = "score", sortD = -1;
+let aborter = null, running = false;
+let map = null, layer = null;
+
+const MAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
+const capital = s => String(s || "").toLowerCase().replace(/(^|[\s'\-])([a-zà-ÿ])/g, (m, a, b) => a + b.toUpperCase());
+/* Le RNE publie le nom d'usage entre parenthèses : « TUIL (TUIL) ». Tel quel,
+   il partirait dans la personnalisation des e-mails Brevo. */
+const cleanName = s => capital(String(s || "").replace(/\s*\([^)]*\)/g, "").trim());
+function telIntl(t){
+  const d = String(t || "").replace(/[^\d+]/g, "");
+  if (/^\+/.test(d)) return d;
+  if (/^0\d{9}$/.test(d)) return "+33" + d.slice(1);
+  return d;
+}
+const caTxt = c => c == null ? "—" : c >= 1e6 ? (c / 1e6).toFixed(c >= 1e7 ? 0 : 1).replace(".", ",") + " M€" : Math.round(c / 1000).toLocaleString("fr-FR") + " k€";
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const VIEWS = {
+  search: { t:"Recherche", s:"Cibler les entreprises du BTP qui ont un contact public exploitable." },
+  pros:   { t:"Prospects", s:"Résultats de la dernière recherche, classés par score Piloz." },
+  map:    { t:"Carte",     s:"Répartition géographique des prospects trouvés." },
+  hist:   { t:"Historique","s":"Entreprises déjà exportées, exclues des recherches suivantes." }
+};
+function showView(v){
+  document.querySelectorAll(".nav-b").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  document.querySelectorAll(".view").forEach(s => s.classList.toggle("on", s.id === "v-" + v));
+  $("topT").textContent = VIEWS[v].t;
+  $("topS").textContent = VIEWS[v].s;
+  if (v === "map") drawMap();
+}
+document.querySelectorAll(".nav-b").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
+
+/* ============================================================
+   FILTRES
+   ============================================================ */
+const metBoxes = () => [...document.querySelectorAll("input[name=metier]")];
+$("bMetAll").addEventListener("click", () => {
+  const all = metBoxes().every(c => c.checked);
+  metBoxes().forEach(c => { c.checked = !all; });
+  $("bMetAll").textContent = all ? "Tout sélectionner" : "Tout désélectionner";
+});
+$("bMetTop").addEventListener("click", () => {
+  metBoxes().forEach(c => { c.checked = c.dataset.top === "1"; });
+  $("bMetAll").textContent = "Tout sélectionner";
+  toast("Métiers où la coordination d'équipes est la plus forte.");
+});
+
+function srcNote(){
+  const tous = document.querySelector("input[name=src]:checked").value === "tous";
+  $("srcNote").innerHTML = tous
+    ? "<b>Volume maximum.</b> Ajoute les entreprises dont la qualification RGE a expiré : les coordonnées restent souvent valables, mais elles sont plus anciennes. La recherche est plus lente car il faut interroger une base de 5,7 millions de lignes."
+    : "<b>Rapide et frais.</b> La recherche ne parcourt que les entreprises actuellement qualifiées RGE, donc quasiment toutes ont un e-mail. C'est le mode recommandé.";
+}
+document.querySelectorAll("input[name=src]").forEach(r => r.addEventListener("change", srcNote));
+srcNote();
+
+function readFilters(){
+  const sect = [...document.querySelectorAll("input[name=secteur]:checked")].map(c => c.value);
+  const metiers = [...document.querySelectorAll("input[name=metier]:checked")].flatMap(c => c.value.split(","));
+  if (!sect.length && !metiers.length) throw new Error("Sélectionnez au moins un secteur ou un métier précis.");
+  const effs = [...document.querySelectorAll("input[name=eff]:checked")].flatMap(c => c.value.split(","));
+  if (!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
+  return {
+    sect, metiers, effs,
+    cible: parseInt($("cible").value, 10) || 300,
+    tousRge: document.querySelector("input[name=src]:checked").value === "tous",
+    exclHist: $("optHist").checked,
+    mailOnly: $("optMail").checked,
+    dedupMail: $("optDedup").checked
+  };
+}
+
+function baseParams(f){
+  const p = {};
+  if (f.metiers.length) p.activite_principale = f.metiers.join(",");
+  else if (f.sect.length === 3) p.section_activite_principale = "F";
+  else p.activite_principale = f.sect.join(",");
+  p.tranche_effectif_salarie = f.effs.join(",");
+  p.etat_administratif = "A";
+  if (!f.tousRge) p.est_rge = "true";
+  return p;
+}
+function sireneUrl(params, page){
+  const p = new URLSearchParams(params);
+  p.set("per_page", PER_PAGE);
+  p.set("page", page);
+  return API_SIRENE + "?" + p.toString();
+}
+
+/* ============================================================
+   NORMALISATION
+   ============================================================ */
+function normalize(r){
+  const s = r.siege || {};
+  const pp = (r.dirigeants || []).filter(d => d.type_dirigeant === "personne physique");
+  const first = pp[0] || {};
+  const fin = caSerie(r.finances);
+  const row = {
+    nom: r.nom_complet || r.nom_raison_sociale || "",
+    enseigne: (s.liste_enseignes || [])[0] || s.nom_commercial || "",
+    siren: r.siren || "", siret: s.siret || "", tva: r.tva || "",
+    naf: r.activite_principale || "",
+    effCode: r.tranche_effectif_salarie || "",
+    effectif: EFF[r.tranche_effectif_salarie] || "n.c.",
+    categorie: r.categorie_entreprise || "",
+    adresse: s.adresse || "", cp: s.code_postal || "", commune: capital(s.libelle_commune || ""),
+    dep: s.departement || "", region: s.region || "",
+    lat: parseFloat(s.latitude), lng: parseFloat(s.longitude),
+    sites: r.nombre_etablissements ?? null,
+    sitesOuverts: r.nombre_etablissements_ouverts ?? null,
+    ca: fin.ca, caAnnee: fin.annee, caPrev: fin.prev, growth: fin.growth,
+    age: ageYears(r.date_creation), creation: r.date_creation || "",
+    prenom: cleanName((first.prenoms || "").split(" ")[0] || ""),
+    nomDir: cleanName(first.nom || ""),
+    dirigeants: pp.map(d => cleanName([(d.prenoms || "").split(" ")[0], d.nom].filter(Boolean).join(" "))).filter(Boolean).join(" ; "),
+    qualite: first.qualite || "",
+    rgeFlag: !!(r.complements && r.complements.est_rge),
+    qualiopi: !!(r.complements && r.complements.est_qualiopi),
+    tel: "", email: "", site: "", rgeDomaines: "", rgeQualifs: 0, rgeActif: false, rgeFin: "",
+    fiche: "https://annuaire-entreprises.data.gouv.fr/entreprise/" + (r.siren || "")
+  };
+  row.metier = NAF_METIER[row.naf] || "";
+  return row;
+}
+
+/* ============================================================
+   ENRICHISSEMENT ADEME
+   ============================================================ */
+async function askRge(endpoint, sirens, fields){
+  const p = new URLSearchParams();
+  p.set("qs", "siret:(" + sirens.map(s => s + "*").join(" OR ") + ")");
+  p.set("size", "1000");
+  p.set("select", fields);
+  const resp = await fetch(endpoint + "?" + p.toString(), { signal: aborter.signal });
+  if (!resp.ok) throw new Error("ADEME " + resp.status);
+  return (await resp.json()).results || [];
+}
+
+function absorb(found, line, actif){
+  const siren = String(line.siret || "").slice(0, 9);
+  if (!siren) return;
+  const cur = found.get(siren) || { tel:"", email:"", site:"", dom:new Set(), qualifs:0, actif:false, fin:"" };
+  if (!cur.email && line.email && MAIL_RE.test(String(line.email).trim())) cur.email = String(line.email).trim().toLowerCase();
+  if (!cur.tel && line.telephone) cur.tel = String(line.telephone).trim();
+  if (!cur.site && line.site_internet) cur.site = String(line.site_internet).trim();
+  if (line.domaine) String(line.domaine).split(";").forEach(x => { const t = x.trim(); if (t) cur.dom.add(t); });
+  cur.qualifs++;
+  if (actif) cur.actif = true;
+  if (line.date_fin && line.date_fin > cur.fin) cur.fin = line.date_fin;
+  found.set(siren, cur);
+}
+
+async function enrich(batch, tousRge){
+  const sirens = [...new Set(batch.map(r => r.siren).filter(Boolean))];
+  const found = new Map();
+  let errors = 0;
+
+  for (let i = 0; i < sirens.length; i += RGE_BATCH){
+    const b = sirens.slice(i, i + RGE_BATCH);
+    try {
+      for (const l of await askRge(RGE_ACTIF, b, "siret,telephone,email,site_internet,domaine")) absorb(found, l, true);
+    } catch(err){ if (err.name === "AbortError") throw err; errors++; }
+    await sleep(RGE_DELAY);
+
+    // Seuls les SIREN encore sans e-mail justifient d'interroger la base historique.
+    if (tousRge){
+      const miss = b.filter(s => !(found.get(s) || {}).email);
+      if (miss.length){
+        try {
+          for (const l of await askRge(RGE_HISTO, miss, "siret,telephone,email,site_internet,domaine,date_fin")) absorb(found, l, false);
+        } catch(err){ if (err.name === "AbortError") throw err; errors++; }
+        await sleep(RGE_DELAY);
+      }
+    }
   }
 
-  const qp = new URLSearchParams(location.search);
-  if (qp.has("hash")){
-    sha256(qp.get("hash")).then(h=>{
-      document.body.innerHTML='<div style="font:15px/1.6 monospace;padding:40px;max-width:760px">'+
-      '<p>Mot de passe : <b>'+qp.get("hash").replace(/</g,"&lt;")+'</b></p>'+
-      '<p style="margin-top:14px">Remplacez la valeur de <code>PWD_HASH</code> par :</p>'+
-      '<p style="margin-top:10px;word-break:break-all;background:#fff;padding:14px;border-radius:6px">"'+h+'"</p></div>';
-    });
+  for (const r of batch){
+    const f = found.get(r.siren);
+    if (!f) continue;
+    r.tel = f.tel; r.email = f.email; r.site = f.site;
+    r.rgeDomaines = [...f.dom].slice(0, 4).join(", ");
+    r.rgeQualifs = f.qualifs;
+    r.rgeActif = f.actif || r.rgeFlag;
+    r.rgeFin = f.fin;
+  }
+  return errors;
+}
+
+/* ============================================================
+   RECHERCHE
+   ============================================================ */
+async function getJson(url){
+  const resp = await fetch(url, { signal: aborter.signal });
+  if (resp.status === 429){ await sleep(2600); return getJson(url); }
+  if (!resp.ok) throw new Error("L'API entreprises a répondu " + resp.status + ". Réessayez dans un instant.");
+  return resp.json();
+}
+
+function shuffled(a){
+  const l = a.slice();
+  for (let i = l.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; }
+  return l;
+}
+
+async function run(f){
+  rows = []; sel.clear(); running = true;
+  aborter = new AbortController();
+  $("bRun").disabled = true; $("bStop").disabled = false;
+  $("prog").classList.add("on");
+  $("pBar").style.width = "0"; setMsg("", "");
+  let scan = 0, skip = 0, errors = 0;
+  const seen = new Set(), mails = new Set();
+  const stat = () => {
+    $("pScan").textContent = fmt(scan);
+    $("pHit").textContent = fmt(rows.length);
+    $("pMail").textContent = fmt(rows.filter(r => r.email).length);
+    $("pSkip").textContent = fmt(skip);
+    const done = rows.filter(r => r.email).length;
+    $("pBar").style.width = Math.min(100, Math.round(done / f.cible * 100)) + "%";
+    $("pillPros").textContent = fmt(rows.length);
+  };
+  const reached = () => rows.filter(r => r.email).length >= f.cible;
+
+  try {
+    // --- Plan de balayage : une seule requête, ou un découpage par département
+    //     quand le stock dépasse le plafond de 10 000 résultats de l'API.
+    const base = baseParams(f);
+    const probe = await getJson(sireneUrl(base, 1));
+    if (!probe.total_results){
+      setMsg("Aucune entreprise ne correspond à ces critères. Élargissez les métiers ou les tranches d'effectif.", "warn");
+      return;
+    }
+    const partition = probe.total_results >= API_CAP;
+    const plan = partition
+      ? shuffled(DEPS).map(d => ({ params: Object.assign({}, base, { departement: d }), zone: d, page: 1, pages: 1, done: false }))
+      : [{ params: base, zone: "France entière", page: 1, pages: 1, done: false }];
+    $("planNote").textContent = partition
+      ? "Stock supérieur au plafond de l'API : balayage réparti sur les " + DEPS.length + " départements, à tour de rôle."
+      : fmt(probe.total_results) + " entreprise(s) à parcourir.";
+
+    let buffer = [];
+    const zones = new Set();
+
+    async function flush(){
+      if (!buffer.length) return;
+      const batch = buffer;
+      buffer = [];
+      errors += await enrich(batch, f.tousRge);
+      for (const r of batch){
+        if (f.mailOnly ? !r.email : !(r.email || r.tel)) continue;
+        if (f.dedupMail && r.email){
+          if (mails.has(r.email)) continue;
+          mails.add(r.email);
+        }
+        r.score = computeScore(r);
+        rows.push(r);
+      }
+      stat(); refresh();
+    }
+
+    /* Balayage en tourniquet : une page dans chaque département à tour de rôle.
+       Sans cela, une recherche vide entièrement le premier département tiré et
+       tous les prospects viennent du même coin de France. */
+    while (!reached() && plan.some(s => !s.done)){
+      for (const step of plan){
+        if (reached() || step.done) continue;
+        const d = await getJson(sireneUrl(step.params, step.page));
+        if (step.page === 1){
+          step.pages = Math.min(d.total_pages || 1, Math.ceil(API_CAP / PER_PAGE));
+          if (!d.total_results){ step.done = true; continue; }
+        }
+        for (const raw of (d.results || [])){
+          scan++;
+          const n = normalize(raw);
+          if (!n.siren || seen.has(n.siren)) continue;
+          seen.add(n.siren);
+          if (f.exclHist && histSet.has(n.siren)){ skip++; continue; }
+          buffer.push(n);
+        }
+        zones.add(step.zone);
+        step.page++;
+        if (step.page > step.pages) step.done = true;
+        $("pZone").textContent = partition ? fmt(zones.size) + " dép." : "France entière";
+        stat();
+        if (buffer.length >= BUFFER) await flush();
+        await sleep(DELAY);
+      }
+    }
+    await flush();
+
+    // L'objectif sert de condition d'arrêt du balayage : les contacts trouvés
+    // au-delà sont conservés, ils ont déjà coûté les mêmes appels d'API.
+    const got = rows.filter(r => r.email).length;
+
+    if (got >= f.cible){
+      setMsg("Objectif atteint : " + fmt(got) + " contact(s) avec e-mail" +
+        (got > f.cible ? ", soit " + fmt(got - f.cible) + " de plus que demandé (trouvés dans le même balayage, conservés)" : "") +
+        ", en analysant " + fmt(scan) + " entreprise(s)" +
+        (skip ? " et en écartant " + fmt(skip) + " déjà exportée(s)" : "") + ".", "ok");
+    } else {
+      setMsg("Stock épuisé : " + fmt(got) + " e-mail(s) sur les " + fmt(f.cible) + " demandés, après analyse de " + fmt(scan) + " entreprise(s)" +
+        (skip ? " et exclusion de " + fmt(skip) + " déjà exportée(s)" : "") + ". " +
+        (f.tousRge ? "Élargissez les métiers ou les tranches d'effectif." : "Passez la source sur « + anciens RGE » pour tripler le stock disponible."), "warn");
+    }
+    if (errors) setMsg($("msg").textContent + " — " + errors + " lot(s) de coordonnées en erreur.", $("msg").className.replace("msg ", ""));
+    if (rows.length) showView("pros");
+
+  } catch(e){
+    if (e.name === "AbortError") setMsg("Recherche arrêtée : " + fmt(rows.filter(r => r.email).length) + " e-mail(s) déjà trouvé(s).", "warn");
+    else setMsg(e.message || "Erreur réseau. Vérifiez votre connexion.", "err");
+  } finally {
+    running = false; aborter = null;
+    $("bRun").disabled = false; $("bStop").disabled = true;
+    $("pZone").textContent = "terminé";
+    stat(); refresh();
+  }
+}
+function setMsg(m, c){ $("msg").textContent = m; $("msg").className = "msg" + (c ? " " + c : ""); }
+
+$("searchForm").addEventListener("submit", ev => {
+  ev.preventDefault();
+  if (running) return;
+  let f;
+  try { f = readFilters(); } catch(e){ $("prog").classList.add("on"); setMsg(e.message, "err"); return; }
+  setMsg("Recherche en cours…", "");
+  run(f);
+});
+$("bStop").addEventListener("click", () => { if (aborter) aborter.abort(); });
+
+/* ============================================================
+   RENDU : KPI + graphes + tableau
+   ============================================================ */
+function refresh(){
+  const term = ($("q").value || "").trim().toLowerCase();
+  view = term
+    ? rows.filter(r => (r.nom + " " + r.commune + " " + r.metier + " " + r.email + " " + r.cp + " " + r.rgeDomaines).toLowerCase().includes(term))
+    : rows.slice();
+
+  const dir = sortD;
+  const key = {
+    score: r => r.score.total,
+    nom:   r => r.nom.toLowerCase(),
+    eff:   r => sEff(r.effCode),
+    ca:    r => r.ca == null ? -1 : r.ca,
+    ville: r => (r.commune || "zzz").toLowerCase()
+  }[sortK];
+  view.sort((a, b) => { const x = key(a), y = key(b); return x < y ? -dir : x > y ? dir : 0; });
+
+  const mail = rows.filter(r => r.email).length;
+  const prio = rows.filter(r => r.score.tier === "prio").length;
+  const avg = rows.length ? Math.round(rows.reduce((s, r) => s + r.score.total, 0) / rows.length) : null;
+  $("kTot").textContent = fmt(rows.length);
+  $("kTotF").textContent = rows.length ? "entreprises avec un contact" : "aucune recherche lancée";
+  $("kMail").textContent = fmt(mail);
+  $("kMailF").textContent = rows.length ? Math.round(mail / rows.length * 100) + " % des prospects" : "prêts pour Brevo";
+  $("kPrio").textContent = fmt(prio);
+  $("kAvg").textContent = avg == null ? "—" : avg;
+  $("pillPros").textContent = fmt(rows.length);
+  $("tCount").textContent = term ? fmt(view.length) + " sur " + fmt(rows.length) : "";
+  $("bBrevo").disabled = !mail;
+  $("bCsv").disabled = !rows.length;
+
+  drawCharts();
+  drawTable();
+  drawSel();
+}
+
+function bars(target, data, cls){
+  const max = Math.max(1, ...data.map(d => d.v));
+  $(target).innerHTML = data.length
+    ? data.map(d =>
+        '<div class="brow"><span class="nm" title="' + esc(d.n) + '">' + esc(d.n) + '</span>' +
+        '<span class="tr"><i class="' + (cls ? d.c : "") + '" style="width:' + Math.round(d.v / max * 100) + '%"></i></span>' +
+        '<span class="vl">' + fmt(d.v) + "</span></div>").join("")
+    : '<p class="note">Aucune donnée pour le moment.</p>';
+}
+function drawCharts(){
+  bars("chTier", [
+    { n:"Profil prioritaire", v:rows.filter(r => r.score.tier === "prio").length, c:"t-prio" },
+    { n:"Bon profil",         v:rows.filter(r => r.score.tier === "bon").length,  c:"t-bon" },
+    { n:"À qualifier",        v:rows.filter(r => r.score.tier === "qual").length, c:"t-qual" }
+  ].filter(d => rows.length), true);
+
+  const groups = {};
+  for (const r of rows) groups[r.effectif] = (groups[r.effectif] || 0) + 1;
+  bars("chEff", Object.entries(groups)
+    .map(([n, v]) => ({ n, v }))
+    .sort((a, b) => b.v - a.v).slice(0, 7), false);
+}
+
+function drawTable(){
+  document.querySelectorAll("th.srt").forEach(th => {
+    const on = th.dataset.k === sortK;
+    th.classList.toggle("act", on);
+    const sp = th.querySelector("span");
+    if (sp) sp.textContent = on ? (sortD === -1 ? "▼" : "▲") : "";
+  });
+
+  if (!view.length){
+    $("tbody").innerHTML = '<tr><td colspan="8" class="empty"><b>' +
+      (rows.length ? "Aucun résultat" : "Aucun prospect pour le moment") + "</b>" +
+      (rows.length ? "Aucun prospect ne correspond à ce filtre." : "Lancez une recherche pour remplir cette vue.") + "</td></tr>";
     return;
   }
 
-  const gate=$("gate"), app=$("app");
-  function unlock(){ gate.style.display="none"; app.style.display="block"; try{sessionStorage.setItem("cp_ok","1");}catch(e){} renderHist(); }
-  try{ if(sessionStorage.getItem("cp_ok")==="1") unlock(); }catch(e){}
-  $("gateForm").addEventListener("submit", async ev=>{
-    ev.preventDefault();
-    if(await sha256($("pwd").value)===PWD_HASH) unlock();
-    else { $("gateErr").textContent="Mot de passe incorrect."; $("pwd").select(); }
-  });
+  $("tbody").innerHTML = view.map(r => {
+    const tags = [];
+    if (r.rgeActif) tags.push('<span class="tag rge">RGE</span>');
+    else if (r.rgeQualifs) tags.push('<span class="tag ex">ex-RGE</span>');
+    if (r.growth != null && r.growth >= .10) tags.push('<span class="tag gr">+' + Math.round(r.growth * 100) + " % CA</span>");
+    if (r.sitesOuverts > 3) tags.push('<span class="tag">' + r.sitesOuverts + " sites</span>");
 
-  /* ================= HISTORIQUE (mémorisé dans ce navigateur) ================= */
-  const HIST_KEY="cp_historique";
-  const OLD_HIST_KEYS=["cp_pipeline"]; // clés utilisées par des versions précédentes de l'outil
-  let hist=[];
-  try{ hist=JSON.parse(localStorage.getItem(HIST_KEY)||"null"); }catch(e){ hist=null; }
-  if(!hist){
-    hist=[];
-    for(const k of OLD_HIST_KEYS){
-      try{
-        const legacy=JSON.parse(localStorage.getItem(k)||"[]");
-        for(const h of legacy) if(h&&h.siren) hist.push({date:h.date,nom:h.nom,email:h.email,siren:h.siren});
-      }catch(e){}
-    }
-    if(hist.length){ try{ localStorage.setItem(HIST_KEY,JSON.stringify(hist)); }catch(e){} }
+    const contact =
+      (r.tel ? '<a class="ic ok" href="tel:' + esc(telIntl(r.tel)) + '" title="' + esc(r.tel) + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></a>' : '<span class="ic muted" title="pas de téléphone">·</span>') +
+      (r.email ? '<a class="ic ok" href="mailto:' + esc(r.email) + '" title="' + esc(r.email) + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg></a>' : '<span class="ic muted" title="pas d\'e-mail">·</span>') +
+      (r.site ? '<a class="ic" href="' + esc(r.site) + '" target="_blank" rel="noopener" title="site web"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg></a>' : "");
+
+    return '<tr class="' + (sel.has(r.siren) ? "sel" : "") + '" data-s="' + esc(r.siren) + '">' +
+      '<td><input type="checkbox" class="cbx" data-sel="' + esc(r.siren) + '"' + (sel.has(r.siren) ? " checked" : "") + "></td>" +
+      '<td><span class="sc sc-' + r.score.tier + '" title="' + esc(r.score.label) + '">' + r.score.total + "</span></td>" +
+      '<td><span class="co" data-open="' + esc(r.siren) + '">' + esc(r.nom) + "</span>" +
+        (r.metier ? '<div class="meta">' + esc(r.metier) + "</div>" : "") +
+        (tags.length ? '<div class="tags">' + tags.join("") + "</div>" : "") + "</td>" +
+      '<td class="nw">' + contact + "</td>" +
+      '<td class="nw">' + esc(r.effectif) + "</td>" +
+      '<td class="nw num">' + caTxt(r.ca) + (r.caAnnee ? '<div class="meta">' + r.caAnnee + "</div>" : "") + "</td>" +
+      "<td>" + esc(r.commune) + '<div class="meta num">' + esc(r.cp) + "</div></td>" +
+      '<td class="nw"><button type="button" class="b b-out b-xs" data-open="' + esc(r.siren) + '">Fiche</button></td></tr>';
+  }).join("");
+}
+
+function drawSel(){
+  $("selBar").classList.toggle("on", sel.size > 0);
+  $("selTxt").textContent = fmt(sel.size) + " prospect(s) sélectionné(s)";
+  const all = view.length && view.every(r => sel.has(r.siren));
+  $("cbAll").checked = !!all;
+}
+
+$("q").addEventListener("input", refresh);
+document.querySelectorAll("th.srt").forEach(th => th.addEventListener("click", () => {
+  const k = th.dataset.k;
+  if (sortK === k) sortD = -sortD;
+  else { sortK = k; sortD = k === "nom" || k === "ville" ? 1 : -1; }
+  refresh();
+}));
+$("cbAll").addEventListener("change", () => {
+  if ($("cbAll").checked) view.forEach(r => sel.add(r.siren));
+  else view.forEach(r => sel.delete(r.siren));
+  refresh();
+});
+$("bSelNone").addEventListener("click", () => { sel.clear(); refresh(); });
+$("tbody").addEventListener("click", ev => {
+  const t = ev.target.closest("[data-open]");
+  if (t){ openCard(t.getAttribute("data-open")); return; }
+});
+$("tbody").addEventListener("change", ev => {
+  const s = ev.target.getAttribute && ev.target.getAttribute("data-sel");
+  if (!s) return;
+  if (ev.target.checked) sel.add(s); else sel.delete(s);
+  const tr = ev.target.closest("tr");
+  if (tr) tr.classList.toggle("sel", ev.target.checked);
+  drawSel();
+});
+
+/* ============================================================
+   FICHE PROSPECT
+   ============================================================ */
+function openCard(siren){
+  const r = rows.find(x => x.siren === siren);
+  if (!r) return;
+  $("mT").textContent = r.nom;
+  $("mS").textContent = [r.metier, r.commune && r.cp ? r.cp + " " + r.commune : r.commune].filter(Boolean).join(" · ");
+
+  const line = (label, value, copy) =>
+    "<div><dt>" + label + "</dt><dd>" + (value || '<span class="muted">—</span>') +
+    (copy ? '<button type="button" class="cp" data-copy="' + esc(copy) + '">copier</button>' : "") + "</dd></div>";
+
+  const sc = r.score.parts.map(p =>
+    '<div class="brow"><span class="nm">' + esc(p.k) + '</span><span class="tr"><i style="width:' +
+    Math.round(p.v / p.max * 100) + '%"></i></span><span class="vl">' + p.v + "/" + p.max + "</span></div>" +
+    '<p class="note" style="margin:-4px 0 9px 129px">' + esc(p.d) + "</p>").join("");
+
+  const q = encodeURIComponent(r.nom + " " + r.commune);
+  $("mB").innerHTML =
+    '<p class="sect-t">Contact</p><div class="dl">' +
+      line("E-mail", r.email ? '<a href="mailto:' + esc(r.email) + '">' + esc(r.email) + "</a>" : "", r.email) +
+      line("Téléphone", r.tel ? '<a href="tel:' + esc(telIntl(r.tel)) + '">' + esc(r.tel) + "</a>" : "", r.tel) +
+      line("Site web", r.site ? '<a href="' + esc(r.site) + '" target="_blank" rel="noopener">' + esc(r.site.replace(/^https?:\/\//, "")) + "</a>" : "") +
+      line("Dirigeant(s)", esc(r.dirigeants) + (r.qualite ? ' <span class="muted">(' + esc(r.qualite) + ")</span>" : "")) +
+      line("Adresse", esc([r.adresse].filter(Boolean).join(", ")), r.adresse) +
+    "</div>" +
+
+    '<p class="sect-t">Profil de l\'entreprise</p><div class="dl">' +
+      line("Effectif", esc(r.effectif)) +
+      line("Établissements", r.sitesOuverts != null ? fmt(r.sitesOuverts) + " ouvert(s)" + (r.sites ? " sur " + fmt(r.sites) : "") : "") +
+      line("Chiffre d'affaires", r.ca != null ? caTxt(r.ca) + ' <span class="muted">(' + r.caAnnee + ")</span>" : "") +
+      line("Évolution du CA", r.growth != null ? (r.growth >= 0 ? "+" : "") + Math.round(r.growth * 100) + " % sur un an" : "") +
+      line("Création", r.creation ? new Date(r.creation).toLocaleDateString("fr-FR") + (r.age ? " · " + Math.floor(r.age) + " ans" : "") : "") +
+      line("Catégorie", esc(r.categorie)) +
+      line("Code NAF", esc(r.naf)) +
+      line("SIREN", '<span class="num">' + esc(r.siren) + "</span>", r.siren) +
+      line("Qualifications RGE", r.rgeQualifs ? fmt(r.rgeQualifs) + " · " + (r.rgeActif ? "en cours" : "expirée" + (r.rgeFin ? " le " + r.rgeFin : "")) : "") +
+      line("Domaines RGE", esc(r.rgeDomaines)) +
+    "</div>" +
+
+    '<p class="sect-t">Score Piloz — ' + r.score.total + "/100 · " + esc(r.score.label) + "</p>" + sc +
+    '<p class="note" style="margin-top:12px">Le score estime un <b>profil d\'achat</b> à partir de données publiques. Il ne mesure pas une intention de recherche réelle : aucune source ouverte ne l\'indique.</p>';
+
+  $("mF").innerHTML =
+    '<div class="lnks">' +
+    '<a href="' + esc(r.fiche) + '" target="_blank" rel="noopener">Fiche officielle</a>' +
+    '<a href="https://www.google.com/search?q=' + q + '" target="_blank" rel="noopener">Google</a>' +
+    '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.adresse || r.nom) + '" target="_blank" rel="noopener">Maps</a>' +
+    '<a href="https://www.linkedin.com/search/results/companies/?keywords=' + encodeURIComponent(r.nom) + '" target="_blank" rel="noopener">LinkedIn</a>' +
+    "</div>";
+  $("ov").classList.add("on");
+}
+$("mX").addEventListener("click", () => $("ov").classList.remove("on"));
+$("ov").addEventListener("click", ev => { if (ev.target === $("ov")) $("ov").classList.remove("on"); });
+document.addEventListener("keydown", ev => { if (ev.key === "Escape") $("ov").classList.remove("on"); });
+$("mB").addEventListener("click", ev => {
+  const t = ev.target.closest("[data-copy]");
+  if (!t) return;
+  const v = t.getAttribute("data-copy");
+  navigator.clipboard.writeText(v).then(() => toast("Copié : " + v), () => toast("Copie impossible."));
+});
+
+/* ============================================================
+   CARTE
+   ============================================================ */
+function drawMap(){
+  const pts = rows.filter(r => !isNaN(r.lat) && !isNaN(r.lng));
+  if (!map){
+    map = L.map("map", { scrollWheelZoom: true }).setView([46.6, 2.4], 6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18, attribution: "© OpenStreetMap"
+    }).addTo(map);
   }
-  let histSet=new Set(hist.map(h=>h.siren));
-
-  function saveHist(){
-    try{ localStorage.setItem(HIST_KEY,JSON.stringify(hist)); }
-    catch(e){ setStatus("L'historique n'a pas pu être enregistré (stockage du navigateur indisponible).","warn"); }
-    histSet=new Set(hist.map(h=>h.siren));
-    renderHist();
+  setTimeout(() => map.invalidateSize(), 60);
+  if (layer) layer.remove();
+  layer = L.layerGroup().addTo(map);
+  const color = { prio: "#e08a2c", bon: "#17a06a", qual: "#b9bacd" };
+  for (const r of pts){
+    L.circleMarker([r.lat, r.lng], {
+      radius: r.score.tier === "prio" ? 7 : 5.5,
+      color: "#fff", weight: 1.5, fillColor: color[r.score.tier], fillOpacity: .92
+    }).addTo(layer)
+      .bindPopup('<b>' + esc(r.nom) + "</b><br>" + esc(r.metier || "") + "<br>" + esc(r.cp + " " + r.commune) +
+        "<br>Score " + r.score.total + "/100" +
+        (r.email ? "<br>" + esc(r.email) : ""))
+      .on("click", () => openCard(r.siren));
   }
+  if (pts.length) map.fitBounds(L.latLngBounds(pts.map(r => [r.lat, r.lng])), { padding: [30, 30], maxZoom: 11 });
+}
 
-  function renderHist(){
-    $("btnHist").textContent="Historique ("+hist.length.toLocaleString("fr-FR")+")";
-    const body=$("histBody");
-    if(!hist.length){
-      body.innerHTML='<tr><td colspan="5" class="muted" style="padding:18px">Aucun export pour le moment.</td></tr>';
-      return;
-    }
-    body.innerHTML=hist.slice().reverse().map(h=>
-      '<tr><td class="nowrap">'+esc(h.date)+"</td><td>"+esc(h.nom)+"</td><td>"+esc(h.email)+"</td>"+
-      '<td class="nowrap">'+esc(h.siren)+'</td>'+
-      '<td><button type="button" class="btn-ghost btn-sm" data-del="'+esc(h.siren)+'">Retirer</button></td></tr>'
-    ).join("");
-  }
+/* ============================================================
+   EXPORTS
+   ============================================================ */
+function exportList(){
+  const base = sel.size ? rows.filter(r => sel.has(r.siren)) : rows;
+  return base;
+}
 
-  $("btnHist").addEventListener("click",()=>{ $("histWrap").style.display="block"; });
-  $("histClose").addEventListener("click",()=>{ $("histWrap").style.display="none"; });
-  $("histWrap").addEventListener("click",ev=>{ if(ev.target===$("histWrap")) $("histWrap").style.display="none"; });
-  $("histBody").addEventListener("click",ev=>{
-    const s=ev.target.getAttribute&&ev.target.getAttribute("data-del");
-    if(!s) return;
-    hist=hist.filter(h=>h.siren!==s); saveHist();
-  });
-  $("histClear").addEventListener("click",()=>{
-    if(!hist.length) return;
-    if(confirm("Vider tout l'historique ? Les "+hist.length+" entreprises pourront réapparaître dans les recherches.")){
-      hist=[]; saveHist();
-    }
-  });
-  $("histCsv").addEventListener("click",()=>{
-    if(!hist.length) return;
-    downloadCsv("historique-prospection-",[["date","Date d'export"],["nom","Entreprise"],["email","E-mail"],["siren","SIREN"]],hist);
-  });
+function downloadCsv(prefix, cols, list){
+  const cell = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const lines = ["sep=;", cols.map(c => cell(c[1])).join(";")]
+    .concat(list.map(x => cols.map(c => cell(typeof c[2] === "function" ? c[2](x) : x[c[0]])).join(";")));
+  const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = prefix + new Date().toISOString().slice(0, 10) + ".csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
-  /* ================= API ================= */
-  const API_SIRENE="https://recherche-entreprises.api.gouv.fr/search";
-  const API_RGE="https://data.ademe.fr/data-fair/api/v1/datasets/liste-des-entreprises-rge-2/lines";
-  const PER_PAGE=25, MAX_PAGES=400, DELAY=170;
-  const RGE_BATCH=25, RGE_DELAY=200;
-  const CHUNK_PAGES=10;   // 250 entreprises analysées par cycle
+$("bBrevo").addEventListener("click", () => {
+  const list = exportList().filter(r => r.email);
+  if (!list.length) return toast("Aucune adresse e-mail dans la sélection.");
 
-  const EFF={"00":"0 salarié","01":"1 à 2","02":"3 à 5","03":"6 à 9","11":"10 à 19","12":"20 à 49",
-    "21":"50 à 99","22":"100 à 199","31":"200 à 249","32":"250 à 499","41":"500 à 999",
-    "42":"1 000 à 1 999","51":"2 000 à 4 999","52":"5 000 à 9 999","53":"10 000 et +"};
+  const data = list.map(r => ({
+    EMAIL: r.email, PRENOM: r.prenom, NOM: r.nomDir, ENTREPRISE: r.nom,
+    SMS: telIntl(r.tel), TELEPHONE: r.tel, VILLE: r.commune, CODE_POSTAL: r.cp,
+    DEPARTEMENT: r.dep, ADRESSE: r.adresse, EFFECTIF: r.effectif, SCORE_PILOZ: r.score.total,
+    METIER_RGE: r.rgeDomaines, CODE_NAF: r.naf, FONCTION: r.qualite, SITE_WEB: r.site, SIREN: r.siren,
+    METIER: r.metier, PROFIL: r.score.label, CA: r.ca == null ? "" : r.ca, CA_ANNEE: r.caAnnee || "",
+    ETABLISSEMENTS: r.sitesOuverts == null ? "" : r.sitesOuverts, RGE: r.rgeActif ? "actif" : r.rgeQualifs ? "expiré" : ""
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws["!cols"] = [{wch:32},{wch:14},{wch:16},{wch:34},{wch:15},{wch:15},{wch:18},{wch:11},{wch:12},{wch:38},{wch:14},{wch:11},{wch:30},{wch:10},{wch:20},{wch:28},{wch:11},{wch:26},{wch:18},{wch:12},{wch:10},{wch:14},{wch:9}];
+  XLSX.utils.book_append_sheet(wb, ws, "Contacts");
+  XLSX.writeFile(wb, "brevo-btp-" + new Date().toISOString().slice(0, 10) + ".xlsx");
 
-  /* ================= SCORE PILOZ =================
-     Estime le profil d'achat à partir de signaux publics corrélés au besoin
-     d'un outil comme Piloz : taille d'équipe proche des offres Piloz,
-     coordination multi-chantiers (nombre d'établissements ouverts), capacité
-     budgétaire (chiffre d'affaires quand il est publié) et maturité de la
-     structure. Ce n'est PAS une mesure d'intention de recherche réelle :
-     aucune donnée publique ne l'indique. */
-  function latestCA(finances){
-    if(!finances) return {ca:null,annee:null};
-    const years=Object.keys(finances).filter(y=>/^\d{4}$/.test(y)).sort().reverse();
-    if(!years.length) return {ca:null,annee:null};
-    const y=years[0], v=finances[y];
-    return {ca:(v&&typeof v.ca==="number")?v.ca:null, annee:y};
-  }
-  function ageYears(dateStr){
-    if(!dateStr) return null;
-    const d=new Date(dateStr);
-    if(isNaN(d)) return null;
-    return (Date.now()-d.getTime())/(365.25*24*3600*1000);
-  }
-  function scoreEffectif(code){
-    const m={"00":5,"01":15,"02":25,"03":33,"11":35,"12":32,"21":24,"22":14,"31":8,"32":6,"41":4,"42":2,"51":1,"52":1,"53":1};
-    return m[code]!=null?m[code]:10;
-  }
-  function scoreSites(n){
-    if(n==null) return 10;
-    if(n<=1) return 6;
-    if(n<=3) return 16;
-    if(n<=9) return 26;
-    return 30;
-  }
-  function scoreCA(ca){
-    if(ca==null) return 10;
-    if(ca<50000) return 3;
-    if(ca<200000) return 8;
-    if(ca<1000000) return 16;
-    if(ca<5000000) return 20;
-    if(ca<15000000) return 14;
-    return 8;
-  }
-  function scoreAge(years){
-    if(years==null) return 8;
-    if(years<1) return 5;
-    if(years<2) return 9;
-    if(years<5) return 14;
-    if(years<15) return 15;
-    if(years<25) return 11;
-    return 7;
-  }
-  function computeScore(row){
-    const sEff=scoreEffectif(row.effCode), sSite=scoreSites(row.etablissementsOuverts),
-          sCa=scoreCA(row.ca), sAge=scoreAge(row.age);
-    const total=Math.round(sEff+sSite+sCa+sAge);
-    const tier=total>=65?"prio":total>=40?"bon":"qualif";
-    const label=tier==="prio"?"🔥 Profil prioritaire":tier==="bon"?"Bon profil":"À qualifier";
-    const detail="Effectif "+row.effectif+" : "+sEff+"/35 · "+
-      (row.etablissementsOuverts!=null?row.etablissementsOuverts+" site(s) ouvert(s)":"Sites inconnus")+" : "+sSite+"/30 · "+
-      (row.ca!=null?"CA "+Math.round(row.ca/1000).toLocaleString("fr-FR")+" k€ ("+row.caAnnee+")":"CA non publié")+" : "+sCa+"/20 · "+
-      (row.age!=null?Math.floor(row.age)+" an(s) d'existence":"Ancienneté inconnue")+" : "+sAge+"/15";
-    return {total,tier,label,detail};
-  }
+  const d = new Date().toLocaleDateString("fr-FR");
+  for (const r of list) if (!histSet.has(r.siren)) hist.push({ date: d, nom: r.nom, email: r.email, siren: r.siren });
+  saveHist();
 
-  /* ---- Métier réel à partir du code NAF (nomenclature officielle Rev.2) ---- */
-  const NAF_METIER={
-    "41.20A":"construction de maisons individuelles","41.20B":"construction de bâtiments",
-    "42.11Z":"travaux de voirie","42.12Z":"construction de voies ferrées","42.13A":"construction d'ouvrages d'art","42.13B":"construction de lignes électriques et de télécommunications",
-    "42.21Z":"construction de réseaux pour fluides","42.22Z":"construction de réseaux électriques et de télécommunications",
-    "42.91Z":"construction d'ouvrages maritimes et fluviaux","42.99Z":"génie civil",
-    "43.11Z":"démolition","43.12A":"terrassement courants","43.12B":"terrassement spécialisés","43.13Z":"forages et sondages",
-    "43.21A":"installation électrique","43.21B":"installation électrique",
-    "43.22A":"installation d'eau et de gaz","43.22B":"installation de chauffage et de climatisation",
-    "43.29A":"travaux d'isolation","43.29B":"installations diverses",
-    "43.31Z":"plâtrerie","43.32A":"menuiserie","43.32B":"menuiserie","43.32C":"agencement de lieux de vente",
-    "43.33Z":"revêtement des sols et des murs","43.34Z":"peinture et vitrerie","43.39Z":"travaux de finition",
-    "43.91A":"charpente","43.91B":"couverture",
-    "43.99A":"étanchéification","43.99B":"montage de structures métalliques","43.99C":"travaux de maçonnerie générale et gros œuvre","43.99D":"autres travaux spécialisés de construction"
-  };
-  function metierFor(nafCode){
-    if(!nafCode) return "";
-    return NAF_METIER[nafCode]||"";
-  }
+  const done = new Set(list.map(r => r.siren));
+  rows = rows.filter(r => !done.has(r.siren));
+  sel.clear();
+  refresh();
+  if (map && $("v-map").classList.contains("on")) drawMap();
+  toast(fmt(list.length) + " contact(s) exporté(s) et archivé(s).");
+  setMsg(fmt(list.length) + " contact(s) exporté(s) vers Brevo et archivé(s) dans l'historique. Ils n'apparaîtront plus dans les prochaines recherches.", "ok");
+});
 
-  const form=$("searchForm"), tbody=$("tbody"), statusEl=$("status");
-  const bar=$("bar"), barFill=bar.querySelector("i");
-  const btnSearch=$("btnSearch"), btnStop=$("btnStop"), btnBrevo=$("btnBrevo"), btnCsv=$("btnCsv");
-  const countEl=$("count");
+$("bCsv").addEventListener("click", () => {
+  const list = exportList();
+  if (!list.length) return toast("Rien à exporter.");
+  downloadCsv("prospection-btp-", [
+    ["nom", "Entreprise"], ["metier", "Métier"], ["tel", "Téléphone"], ["email", "E-mail"], ["site", "Site web"],
+    ["score", "Score Piloz", x => x.score.total], ["profil", "Profil", x => x.score.label],
+    ["effectif", "Effectif"], ["sitesOuverts", "Établissements ouverts"],
+    ["ca", "CA (€)"], ["caAnnee", "CA année"], ["growth", "Évolution CA (%)", x => x.growth == null ? "" : Math.round(x.growth * 100)],
+    ["naf", "Code NAF"], ["rgeDomaines", "Domaines RGE"], ["rge", "Statut RGE", x => x.rgeActif ? "actif" : x.rgeQualifs ? "expiré" : ""],
+    ["adresse", "Adresse siège"], ["cp", "Code postal"], ["commune", "Commune"], ["dep", "Département"],
+    ["prenom", "Prénom dirigeant"], ["nomDir", "Nom dirigeant"], ["qualite", "Fonction"], ["dirigeants", "Tous les dirigeants"],
+    ["siren", "SIREN"], ["siret", "SIRET siège"], ["creation", "Création"], ["fiche", "Fiche officielle"]
+  ], list);
+  toast(fmt(list.length) + " ligne(s) exportée(s).");
+});
 
-  let rows=[], aborter=null;
+/* ============================================================
+   ACTIONS DE L'EN-TÊTE
+   ============================================================ */
+$("topAct").innerHTML = '<button type="button" class="b b-out b-sm" id="bHelp">Comment ça marche</button>';
+$("bHelp").addEventListener("click", () => {
+  $("mT").textContent = "Comment fonctionne Chantier Prospect";
+  $("mS").textContent = "Sources, limites et cadre légal";
+  $("mB").innerHTML =
+    '<p class="sect-t">D\'où viennent les entreprises</p>' +
+    '<p class="note"><b>API Recherche d\'entreprises</b> (base SIRENE de l\'INSEE et Registre National des Entreprises) : raison sociale, effectif, chiffre d\'affaires publié, dirigeants, établissements, coordonnées GPS. Toutes les entreprises françaises actives y figurent.</p>' +
+    '<p class="sect-t" style="margin-top:20px">D\'où viennent les e-mails</p>' +
+    '<p class="note">Seules les entreprises <b>qualifiées RGE</b> publient leurs coordonnées en open data, via l\'ADEME (Licence Ouverte Etalab). Deux bases sont interrogées : la liste des <b>RGE actuels</b> (60 200 entreprises) et l\'<b>historique depuis 2014</b> (173 400 entreprises, qualification parfois expirée mais coordonnées souvent toujours valables).</p>' +
+    '<p class="note">C\'est pourquoi le mode « RGE actifs » filtre la recherche en amont sur ces entreprises : quasiment toutes ont un e-mail, au lieu d\'une sur quatre en balayant tout le BTP.</p>' +
+    '<p class="sect-t" style="margin-top:20px">Le balayage</p>' +
+    '<p class="note">L\'API plafonne chaque requête à 10 000 résultats. Au-delà, l\'outil découpe automatiquement la recherche <b>département par département</b>, dans un ordre aléatoire, afin de couvrir toute la France sans se limiter aux mêmes régions à chaque lancement.</p>' +
+    '<p class="sect-t" style="margin-top:20px">Le score</p>' +
+    '<p class="note">Six signaux publics, corrélés au besoin d\'un outil de pilotage de chantiers : taille d\'équipe, nombre d\'établissements à coordonner, chiffre d\'affaires, croissance, ancienneté et qualifications RGE. <b>Le score n\'indique pas qu\'une entreprise cherche un logiciel</b> — aucune donnée ouverte ne le dit. Il classe des profils, il ne prédit pas une intention.</p>' +
+    '<p class="sect-t" style="margin-top:20px">RGPD</p>' +
+    '<p class="note">Ces coordonnées sont publiées pour aider les particuliers à trouver un artisan qualifié. Les réutiliser en prospection B2B suppose une base légale d\'intérêt légitime, l\'information des personnes dès le premier contact, un lien de désinscription et le respect immédiat de toute opposition.</p>';
+  $("mF").innerHTML = '<div class="lnks"><a href="https://annuaire-entreprises.data.gouv.fr" target="_blank" rel="noopener">Annuaire des entreprises</a><a href="https://data.ademe.fr/datasets/liste-des-entreprises-rge-2" target="_blank" rel="noopener">Jeu de données RGE</a></div>';
+  $("ov").classList.add("on");
+});
 
-  /* ---- Tout sélectionner / désélectionner les métiers précis ---- */
-  const metierBoxes=[...document.querySelectorAll('input[name=metier]')];
-  $("btnMetierAll").addEventListener("click",()=>{
-    const allChecked=metierBoxes.every(c=>c.checked);
-    metierBoxes.forEach(c=>{ c.checked=!allChecked; });
-    $("btnMetierAll").textContent=allChecked?"Tout sélectionner":"Tout désélectionner";
-  });
-
-  const setStatus=(m,c)=>{statusEl.textContent=m;statusEl.className=c||"";};
-  function esc(s){const d=document.createElement("span");d.textContent=s==null?"":String(s);return d.innerHTML;}
-
-  function readFilters(){
-    const sect=[...document.querySelectorAll('input[name=secteur]:checked')].map(c=>c.value);
-    if(!sect.length) throw new Error("Sélectionnez au moins un secteur d'activité.");
-    const metiers=[...document.querySelectorAll('input[name=metier]:checked')].flatMap(c=>c.value.split(","));
-    const effs=[...document.querySelectorAll('input[name=eff]:checked')].flatMap(c=>c.value.split(","));
-    if(!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
-    return {sect,metiers,effs,cible:parseInt($("limite").value,10)||300};
-  }
-
-  function urlSirene(f,page){
-    const p=new URLSearchParams();
-    if(f.metiers.length) p.set("activite_principale",f.metiers.join(","));
-    else if(f.sect.length===3) p.set("section_activite_principale","F");
-    else p.set("activite_principale",f.sect.join(","));
-    p.set("tranche_effectif_salarie",f.effs.join(","));
-    p.set("etat_administratif","A");
-    p.set("per_page",PER_PAGE); p.set("page",page);
-    return API_SIRENE+"?"+p.toString();
-  }
-
-  const capital=s=>String(s||"").toLowerCase().replace(/(^|[\s'\-])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
-  function telIntl(t){
-    const d=String(t||"").replace(/[^\d+]/g,"");
-    if(/^\+/.test(d)) return d;
-    if(/^0\d{9}$/.test(d)) return "+33"+d.slice(1);
-    return d;
-  }
-
-  function normalize(r){
-    const s=r.siege||{};
-    const pp=(r.dirigeants||[]).filter(d=>d.type_dirigeant==="personne physique");
-    const first=pp[0]||{};
-    const ca=latestCA(r.finances);
-    const row={
-      nom:r.nom_complet||r.nom_raison_sociale||"", siren:r.siren||"", siret:s.siret||"",
-      naf:r.activite_principale||"", effCode:r.tranche_effectif_salarie||"", effectif:EFF[r.tranche_effectif_salarie]||"n.c.",
-      adresse:s.adresse||"", cp:s.code_postal||"", commune:capital(s.libelle_commune||""),
-      dep:s.departement||"",
-      etablissements:r.nombre_etablissements!=null?r.nombre_etablissements:null,
-      etablissementsOuverts:r.nombre_etablissements_ouverts!=null?r.nombre_etablissements_ouverts:null,
-      ca:ca.ca, caAnnee:ca.annee, categorie:r.categorie_entreprise||"",
-      age:ageYears(r.date_creation),
-      prenom:capital((first.prenoms||"").split(" ")[0]||""), nomDir:capital(first.nom||""),
-      dirigeants:pp.map(d=>capital([(d.prenoms||"").split(" ")[0],d.nom].filter(Boolean).join(" "))).filter(Boolean).join(" ; "),
-      qualite:first.qualite||"", creation:r.date_creation||"",
-      tel:"", email:"", site:"", rge:"",
-      fiche:"https://annuaire-entreprises.data.gouv.fr/entreprise/"+(r.siren||"")
-    };
-    row.score=computeScore(row);
-    return row;
-  }
-
-  function render(){
-    rows.sort((a,b)=>b.score.total-a.score.total);
-    const mails=rows.filter(r=>r.email).length;
-    countEl.textContent = rows.length
-      ? rows.length.toLocaleString("fr-FR")+" fiche(s) avec contact • "+mails.toLocaleString("fr-FR")+" avec e-mail"
-      : "";
-    if(!rows.length){
-      tbody.innerHTML='<tr><td colspan="10" class="muted" style="padding:22px">Aucune fiche avec contact pour ces critères.</td></tr>';
-      return;
-    }
-    tbody.innerHTML=rows.map(x=>{
-      const site=x.site?'<a href="'+esc(x.site)+'" target="_blank" rel="noopener">lien</a>':'<span class="muted">—</span>';
-      const tel=x.tel?'<a href="tel:'+esc(telIntl(x.tel))+'">'+esc(x.tel)+'</a>':'<span class="muted">—</span>';
-      const mail=x.email?'<a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'<span class="muted">—</span>';
-      const score='<span class="score score-'+x.score.tier+'" title="'+esc(x.score.detail)+'">'+x.score.total+'</span>'+
-        '<span class="score-label">'+esc(x.score.label)+'</span>';
-      return '<tr class="'+(x.email?"has-mail":"")+'">'+
-        '<td class="nowrap">'+score+'</td>'+
-        "<td><strong>"+esc(x.nom)+"</strong>"+(metierFor(x.naf)?'<br><span class="naf">'+esc(metierFor(x.naf))+"</span>":"")+(x.rge?'<br><span class="naf">'+esc(x.rge)+"</span>":"")+"</td>"+
-        '<td class="nowrap">'+tel+"</td><td>"+mail+"</td><td>"+site+"</td>"+
-        '<td class="nowrap">'+esc(x.effectif)+"</td><td>"+esc(x.adresse)+"</td>"+
-        "<td>"+esc(x.dirigeants)+'</td><td class="nowrap">'+esc(x.siren)+"</td>"+
-        '<td class="nowrap"><a href="'+esc(x.fiche)+'" target="_blank" rel="noopener">Ouvrir</a></td></tr>';
-    }).join("");
-  }
-
-  /* ---- Coordonnées d'un lot d'entreprises via la base RGE ---- */
-  async function contactsFor(batchRows){
-    const sirens=[...new Set(batchRows.map(r=>r.siren).filter(Boolean))];
-    const found=new Map();
-    let errors=0;
-    for(let i=0;i<sirens.length;i+=RGE_BATCH){
-      const b=sirens.slice(i,i+RGE_BATCH);
-      const p=new URLSearchParams();
-      p.set("qs","siret:("+b.map(s=>s+"*").join(" OR ")+")");
-      p.set("size","200");
-      p.set("select","siret,telephone,email,site_internet,domaine");
-      try{
-        const resp=await fetch(API_RGE+"?"+p.toString(),{signal:aborter.signal});
-        if(resp.ok){
-          const d=await resp.json();
-          for(const l of (d.results||[])){
-            const sir=String(l.siret||"").slice(0,9);
-            if(!sir) continue;
-            const cur=found.get(sir)||{tel:"",email:"",site:"",dom:new Set()};
-            if(!cur.tel && l.telephone) cur.tel=l.telephone;
-            if(!cur.email && l.email) cur.email=l.email;
-            if(!cur.site && l.site_internet) cur.site=l.site_internet;
-            if(l.domaine) String(l.domaine).split(";").forEach(x=>{const t=x.trim(); if(t) cur.dom.add(t);});
-            found.set(sir,cur);
-          }
-        } else errors++;
-      }catch(err){ if(err.name==="AbortError") throw err; errors++; }
-      if(i+RGE_BATCH<sirens.length) await sleep(RGE_DELAY);
-    }
-    for(const r of batchRows){
-      const f=found.get(r.siren);
-      if(f){ r.tel=f.tel; r.email=f.email; r.site=f.site; r.rge=[...f.dom].slice(0,3).join(", "); }
-    }
-    return errors;
-  }
-
-  /* ---- Boucle principale : on scanne jusqu'à atteindre l'objectif ---- */
-  async function run(f){
-    rows=[]; render();
-    aborter=new AbortController();
-    btnSearch.disabled=true; btnStop.disabled=false; btnBrevo.disabled=true; btnCsv.disabled=true;
-    bar.style.display="block"; barFill.style.width="0";
-
-    let page=1, totalPages=1, total=0, scanned=0, ignored=0, errors=0, retried=false;
-    const seen=new Set();
-
-    try{
-      while(rows.filter(r=>r.email).length < f.cible && page<=totalPages && page<=MAX_PAGES){
-        // --- on récupère un cycle de pages ---
-        const buffer=[];
-        for(let k=0;k<CHUNK_PAGES && page<=totalPages && page<=MAX_PAGES;k++){
-          const resp=await fetch(urlSirene(f,page),{signal:aborter.signal});
-          if(resp.status===429){ if(retried) throw new Error("L'API limite le débit. Patientez une minute et relancez."); retried=true; await sleep(2500); continue; }
-          if(!resp.ok) throw new Error("L'API a répondu avec une erreur ("+resp.status+"). Réduisez les critères et réessayez.");
-          const d=await resp.json(); retried=false;
-          if(page===1){
-            total=d.total_results||0; totalPages=d.total_pages||1;
-            if(!total){ setStatus("Aucune entreprise ne correspond à ces critères."); return; }
-          }
-          for(const r of (d.results||[])){
-            scanned++;
-            const n=normalize(r);
-            if(!n.siren || seen.has(n.siren)) continue;
-            seen.add(n.siren);
-            if(histSet.has(n.siren)){ ignored++; continue; }   // déjà exportée
-            buffer.push(n);
-          }
-          page++;
-          setStatus("Analyse : "+scanned.toLocaleString("fr-FR")+" entreprise(s) parcourue(s)…");
-          if(page<=totalPages) await sleep(DELAY);
-        }
-
-        if(!buffer.length) continue;
-
-        // --- coordonnées du cycle ---
-        errors += await contactsFor(buffer);
-        for(const r of buffer) if(r.email||r.tel) rows.push(r);
-
-        const mails=rows.filter(r=>r.email).length;
-        barFill.style.width=Math.min(100,Math.round(mails/f.cible*100))+"%";
-        setStatus("Objectif "+mails.toLocaleString("fr-FR")+" / "+f.cible.toLocaleString("fr-FR")+" e-mails — "+scanned.toLocaleString("fr-FR")+" entreprise(s) analysée(s)"+(ignored?", "+ignored.toLocaleString("fr-FR")+" déjà exportée(s) écartée(s)":"")+"…");
-        render();
-      }
-
-      // --- on ne garde que le nombre demandé ---
-      const withMail=rows.filter(r=>r.email);
-      if(withMail.length>f.cible){
-        const keep=new Set(withMail.slice(0,f.cible).map(r=>r.siren));
-        rows=rows.filter(r=>!r.email || keep.has(r.siren));
-      }
-      const mails=rows.filter(r=>r.email).length;
-
-      if(mails>=f.cible){
-        setStatus("Objectif atteint : "+mails.toLocaleString("fr-FR")+" contacts avec e-mail, obtenus en analysant "+scanned.toLocaleString("fr-FR")+" entreprise(s)"+(ignored?" ("+ignored.toLocaleString("fr-FR")+" déjà exportée(s) écartée(s))":"")+".","ok");
-      }else{
-        setStatus("Stock épuisé : "+mails.toLocaleString("fr-FR")+" e-mail(s) trouvé(s) sur les "+f.cible.toLocaleString("fr-FR")+" demandés, après analyse de "+scanned.toLocaleString("fr-FR")+" entreprise(s)"+(ignored?" et exclusion de "+ignored.toLocaleString("fr-FR")+" déjà exportée(s)":"")+". Décochez le métier précis ou élargissez les tranches d'effectif pour aller plus loin.","warn");
-      }
-      if(errors) setStatus(statusEl.textContent+" ("+errors+" lot(s) de coordonnées en erreur)",statusEl.className);
-    }catch(e){
-      if(e.name==="AbortError") setStatus("Recherche arrêtée : "+rows.filter(r=>r.email).length.toLocaleString("fr-FR")+" e-mail(s) déjà trouvé(s).");
-      else setStatus(e.message||"Erreur réseau. Vérifiez votre connexion.","err");
-    }finally{
-      aborter=null; btnSearch.disabled=false; btnStop.disabled=true;
-      btnBrevo.disabled=rows.filter(r=>r.email).length===0;
-      btnCsv.disabled=rows.length===0;
-      bar.style.display="none"; render();
-    }
-  }
-
-  form.addEventListener("submit",ev=>{
-    ev.preventDefault();
-    let f; try{ f=readFilters(); }catch(e){ setStatus(e.message,"err"); return; }
-    setStatus("Recherche en cours…"); run(f);
-  });
-  btnStop.addEventListener("click",()=>{ if(aborter) aborter.abort(); });
-
-  /* ---------- Export Brevo : télécharge puis archive ---------- */
-  btnBrevo.addEventListener("click",()=>{
-    const list=rows.filter(r=>r.email);
-    if(!list.length){ setStatus("Aucune adresse e-mail à exporter.","err"); return; }
-    const data=list.map(r=>({
-      EMAIL:r.email, PRENOM:r.prenom, NOM:r.nomDir, ENTREPRISE:r.nom,
-      SMS:telIntl(r.tel), TELEPHONE:r.tel, VILLE:r.commune, CODE_POSTAL:r.cp,
-      DEPARTEMENT:r.dep, ADRESSE:r.adresse, EFFECTIF:r.effectif, SCORE_PILOZ:r.score.total,
-      METIER_RGE:r.rge, CODE_NAF:r.naf, FONCTION:r.qualite, SITE_WEB:r.site, SIREN:r.siren
-    }));
-    const wb=XLSX.utils.book_new();
-    const ws=XLSX.utils.json_to_sheet(data);
-    ws["!cols"]=[{wch:32},{wch:14},{wch:16},{wch:34},{wch:15},{wch:15},{wch:18},{wch:11},{wch:12},{wch:38},{wch:14},{wch:11},{wch:30},{wch:10},{wch:20},{wch:28},{wch:11}];
-    XLSX.utils.book_append_sheet(wb,ws,"Contacts");
-    XLSX.writeFile(wb,"brevo-btp-"+new Date().toISOString().slice(0,10)+".xlsx");
-
-    // archivage + retrait des résultats
-    const d=new Date().toLocaleDateString("fr-FR");
-    for(const r of list){
-      if(!histSet.has(r.siren)) hist.push({date:d,nom:r.nom,email:r.email,siren:r.siren});
-    }
-    saveHist();
-    const exported=list.length;
-    rows=rows.filter(r=>!r.email);
-    render();
-    btnBrevo.disabled=true; btnCsv.disabled=rows.length===0;
-    setStatus(exported.toLocaleString("fr-FR")+" contact(s) exporté(s) et archivé(s) dans l'historique. Ils n'apparaîtront plus dans les prochaines recherches.","ok");
-  });
-
-  /* ---------- Export complet ---------- */
-  function downloadCsv(prefix,cols,list){
-    const cell=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
-    const lines=["sep=;",cols.map(c=>cell(c[1])).join(";")]
-      .concat(list.map(x=>cols.map(c=>cell(typeof c[2]==="function"?c[2](x):x[c[0]])).join(";")));
-    const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download=prefix+new Date().toISOString().slice(0,10)+".csv";
-    a.click(); URL.revokeObjectURL(a.href);
-  }
-
-  btnCsv.addEventListener("click",()=>{
-    downloadCsv("prospection-btp-",[["nom","Entreprise"],["tel","Téléphone"],["email","E-mail"],
-      ["site","Site web"],["effectif","Effectif"],
-      ["score","Score Piloz",x=>x.score.total],["scoreLabel","Profil",x=>x.score.label],
-      ["etablissementsOuverts","Établissements ouverts"],["ca","CA (€)"],["caAnnee","CA année"],
-      ["naf","Code NAF"],["rge","Domaines RGE"],
-      ["adresse","Adresse siège"],["cp","Code postal"],["commune","Commune"],["dep","Département"],
-      ["prenom","Prénom dirigeant"],["nomDir","Nom dirigeant"],["qualite","Fonction"],
-      ["dirigeants","Tous les dirigeants"],["siren","SIREN"],["siret","SIRET siège"],
-      ["creation","Création"],["fiche","Fiche officielle"]],rows);
-  });
-
-  renderHist();
+renderHist();
+refresh();
 })();
 </script>
 </body>
