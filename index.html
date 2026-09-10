@@ -50,8 +50,6 @@
   .chip{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:#fff;font-size:.92rem}
   .chip input{accent-color:var(--safety-dark)}
   .chip:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
 
   .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px}
   button{font:inherit;font-weight:700;cursor:pointer;border-radius:var(--radius);padding:11px 22px;border:1px solid transparent;transition:background .15s}
@@ -74,7 +72,7 @@
   .results-head h2{font-size:1.15rem}
   .count{color:var(--ink-soft);font-size:.92rem}
   .table-scroll{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
-  table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:1350px}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:1220px}
   th{text-align:left;background:var(--ink);color:#fff;font-weight:600;padding:10px 12px;white-space:nowrap}
   td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
   tbody tr:nth-child(even){background:#F7F9FA}
@@ -88,7 +86,6 @@
   .score-bon{background:#DCEEE1;color:var(--ok)}
   .score-qualif{background:#E7EAED;color:var(--ink-soft)}
   .score-label{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:2px;white-space:nowrap}
-  .row-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
 
   /* ---------- historique ---------- */
   #histWrap{display:none;position:fixed;inset:0;background:rgba(34,49,63,.55);z-index:40;padding:40px 20px;overflow:auto}
@@ -122,7 +119,7 @@
   <div class="wrap head-row">
     <div>
       <div class="brand">Chantier<em>Prospect</em></div>
-      <p class="tagline">Entreprises du BTP avec téléphone et e-mail, classées selon leur profil d'achat pour Piloz (taille d'équipe, multi-chantiers, chiffre d'affaires). Message de prospection prêt à copier, sans jamais renvoyer deux fois le même prospect.</p>
+      <p class="tagline">Entreprises du BTP avec téléphone et e-mail, classées selon leur profil d'achat pour Piloz (taille d'équipe, multi-chantiers, chiffre d'affaires). Export prêt pour Brevo, sans jamais renvoyer deux fois le même prospect.</p>
     </div>
     <button type="button" class="btn-hist" id="btnHist">Historique (0)</button>
   </div>
@@ -131,24 +128,17 @@
 
 <main class="wrap">
   <form class="panel" id="searchForm">
-    <div class="grid2">
-      <fieldset>
-        <legend>Départements <small>— séparés par des virgules</small></legend>
-        <input type="text" id="departements" placeholder="Ex : 68, 67, 90" autocomplete="off">
-        <p class="hint">Laissez vide pour chercher dans toute la France.</p>
-      </fieldset>
-      <fieldset>
-        <legend>Objectif <small>— nombre de contacts avec e-mail à réunir</small></legend>
-        <select id="limite">
-          <option value="50">50 contacts avec e-mail</option>
-          <option value="100">100 contacts avec e-mail</option>
-          <option value="300" selected>300 contacts avec e-mail</option>
-          <option value="500">500 contacts avec e-mail</option>
-          <option value="1000">1 000 contacts avec e-mail</option>
-        </select>
-        <p class="hint">L'outil continue de chercher jusqu'à atteindre ce nombre. Environ une entreprise sur quatre dispose d'un e-mail public.</p>
-      </fieldset>
-    </div>
+    <fieldset>
+      <legend>Objectif <small>— nombre de contacts avec e-mail à réunir, recherche sur toute la France</small></legend>
+      <select id="limite">
+        <option value="50">50 contacts avec e-mail</option>
+        <option value="100">100 contacts avec e-mail</option>
+        <option value="300" selected>300 contacts avec e-mail</option>
+        <option value="500">500 contacts avec e-mail</option>
+        <option value="1000">1 000 contacts avec e-mail</option>
+      </select>
+      <p class="hint">L'outil continue de chercher jusqu'à atteindre ce nombre. Environ une entreprise sur quatre dispose d'un e-mail public.</p>
+    </fieldset>
 
     <fieldset>
       <legend>Secteur d'activité</legend>
@@ -156,6 +146,42 @@
         <label class="chip"><input type="checkbox" name="secteur" value="41" checked> Construction de bâtiments (41)</label>
         <label class="chip"><input type="checkbox" name="secteur" value="42" checked> Génie civil (42)</label>
         <label class="chip"><input type="checkbox" name="secteur" value="43" checked> Travaux spécialisés (43)</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Métier précis <small>— optionnel, remplace le secteur ci-dessus si coché</small></legend>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="metier" value="41.20A"> Maisons individuelles</label>
+        <label class="chip"><input type="checkbox" name="metier" value="41.20B"> Autres bâtiments</label>
+        <label class="chip"><input type="checkbox" name="metier" value="42.11Z"> Voirie</label>
+        <label class="chip"><input type="checkbox" name="metier" value="42.12Z"> Voies ferrées</label>
+        <label class="chip"><input type="checkbox" name="metier" value="42.13A"> Ouvrages d'art</label>
+        <label class="chip"><input type="checkbox" name="metier" value="42.13B"> Lignes électriques (génie civil)</label>
+        <label class="chip"><input type="checkbox" name="metier" value="42.21Z"> Réseaux fluides</label>
+        <label class="chip"><input type="checkbox" name="metier" value="42.22Z"> Réseaux électriques / télécoms</label>
+        <label class="chip"><input type="checkbox" name="metier" value="42.91Z"> Ouvrages maritimes et fluviaux</label>
+        <label class="chip"><input type="checkbox" name="metier" value="42.99Z"> Génie civil (autres ouvrages)</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.11Z"> Démolition</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.12A,43.12B"> Terrassement</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.13Z"> Forages et sondages</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.21A,43.21B"> Installation électrique</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.22A"> Plomberie (eau et gaz)</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.22B"> Chauffage et climatisation</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.29A"> Isolation</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.29B"> Installations diverses</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.31Z"> Plâtrerie</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.32A,43.32B"> Menuiserie</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.32C"> Agencement de lieux de vente</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.33Z"> Revêtement sols et murs</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.34Z"> Peinture et vitrerie</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.39Z"> Travaux de finition</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.91A"> Charpente</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.91B"> Couverture</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.99A"> Étanchéité</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.99B"> Structures métalliques</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.99C"> Maçonnerie / gros œuvre</label>
+        <label class="chip"><input type="checkbox" name="metier" value="43.99D"> Autres travaux spécialisés</label>
       </div>
     </fieldset>
 
@@ -196,18 +222,18 @@
         <tr>
           <th title="Estime l'intérêt probable pour Piloz à partir de données publiques (effectif, multi-établissements, chiffre d'affaires, ancienneté). Ne mesure pas une intention de recherche réelle.">Score Piloz</th>
           <th>Entreprise</th><th>Téléphone</th><th>E-mail</th><th>Site web</th>
-          <th>Effectif</th><th>Adresse du siège</th><th>Dirigeant(s)</th><th>SIREN</th><th>Fiche</th><th>Prospection</th>
+          <th>Effectif</th><th>Adresse du siège</th><th>Dirigeant(s)</th><th>SIREN</th><th>Fiche</th>
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr><td colspan="11" class="muted" style="padding:22px">Aucune recherche lancée. Seules les entreprises disposant d'un téléphone ou d'un e-mail sont conservées, et celles déjà dans le pipeline sont automatiquement écartées.</td></tr>
+        <tr><td colspan="10" class="muted" style="padding:22px">Aucune recherche lancée. Seules les entreprises disposant d'un téléphone ou d'un e-mail sont conservées, et celles déjà dans l'historique sont automatiquement écartées.</td></tr>
       </tbody>
     </table>
   </div>
 
   <footer>
     <p><strong>Sources.</strong> API Recherche d'entreprises (base SIRENE de l'INSEE et Registre National des Entreprises) pour les entreprises, jeu de données « Liste des entreprises RGE » de l'ADEME (Licence Ouverte Etalab) pour les coordonnées.</p>
-    <p><strong>Pourquoi il faut scanner beaucoup d'entreprises.</strong> Seules les entreprises qualifiées RGE publient leurs coordonnées en open data, soit environ 60 000 établissements sur toute la France. L'outil parcourt donc la liste SIRENE et ne retient que celles qui ont un contact : comptez environ quatre entreprises analysées pour un e-mail obtenu. Sur un département peu dense, le stock disponible peut être inférieur à votre objectif.</p>
+    <p><strong>Pourquoi il faut scanner beaucoup d'entreprises.</strong> Seules les entreprises qualifiées RGE publient leurs coordonnées en open data, soit environ 60 000 établissements sur toute la France. L'outil parcourt donc la liste SIRENE (sur toute la France) et ne retient que celles qui ont un contact : comptez environ quatre entreprises analysées pour un e-mail obtenu. Sur un métier très précis, le stock disponible peut être inférieur à votre objectif.</p>
     <p><strong>Historique.</strong> Les entreprises exportées vers Brevo sont mémorisées dans ce navigateur et exclues des recherches suivantes. L'historique n'est pas partagé entre plusieurs ordinateurs ou navigateurs : exportez-le en CSV si vous voulez le conserver.</p>
     <p><strong>RGPD.</strong> Ces coordonnées sont publiées pour aider les particuliers à trouver un artisan qualifié. Leur réutilisation en prospection B2B suppose une base légale d'intérêt légitime, l'information des personnes dès le premier contact, un lien de désinscription et le respect immédiat des oppositions.</p>
   </footer>
@@ -271,9 +297,20 @@
   });
 
   /* ================= HISTORIQUE (mémorisé dans ce navigateur) ================= */
-  const HIST_KEY="cp_pipeline"; // conserve le nom de clé pour ne pas perdre les données déjà enregistrées
+  const HIST_KEY="cp_historique";
+  const OLD_HIST_KEYS=["cp_pipeline"]; // clés utilisées par des versions précédentes de l'outil
   let hist=[];
-  try{ hist=JSON.parse(localStorage.getItem(HIST_KEY)||"[]"); }catch(e){ hist=[]; }
+  try{ hist=JSON.parse(localStorage.getItem(HIST_KEY)||"null"); }catch(e){ hist=null; }
+  if(!hist){
+    hist=[];
+    for(const k of OLD_HIST_KEYS){
+      try{
+        const legacy=JSON.parse(localStorage.getItem(k)||"[]");
+        for(const h of legacy) if(h&&h.siren) hist.push({date:h.date,nom:h.nom,email:h.email,siren:h.siren});
+      }catch(e){}
+    }
+    if(hist.length){ try{ localStorage.setItem(HIST_KEY,JSON.stringify(hist)); }catch(e){} }
+  }
   let histSet=new Set(hist.map(h=>h.siren));
 
   function saveHist(){
@@ -409,57 +446,6 @@
     return NAF_METIER[nafCode]||"";
   }
 
-  const CALENDLY="https://calendly.com/erp-piloz/30min";
-  const PILOZ_LINK="https://piloz.fr/?utm_source=prospection&utm_medium=email&utm_campaign=btp";
-
-  /* ---- Messages de prospection personnalisés (multi-contact) ---- */
-  function pitchFor(r){
-    const greeting=r.prenom?"Bonjour "+r.prenom+",":"Bonjour,";
-    const metier=metierFor(r.naf);
-    const activite=metier?"en "+metier:"dans le BTP";
-    const pain=(r.etablissementsOuverts&&r.etablissementsOuverts>1)
-      ? "Avec "+r.etablissementsOuverts+" établissements à coordonner, centraliser le planning et le suivi des équipes n'est pas toujours simple."
-      : "Entre le commercial, le planning des chantiers et le pointage des équipes, ces sujets prennent vite un temps que vous n'avez pas forcément.";
-    return greeting+"\n\n"+pain+" Piloz réunit CRM BTP, planning de chantier, pointage mobile des équipes et tableaux de bord de direction dans un seul outil, pensé pour des entreprises "+activite+" comme "+(r.nom||"la vôtre")+".\n\n"+
-      "Essai gratuit 14 jours, sans engagement (carte sécurisée par Stripe) : "+PILOZ_LINK+"\n"+
-      "Ou si vous préférez qu'on en parle directement, 15 minutes suffisent : "+CALENDLY+"\n\nBonne journée,";
-  }
-  function relanceFor(r){
-    const greeting=r.prenom?"Bonjour "+r.prenom+",":"Bonjour,";
-    const metier=metierFor(r.naf);
-    const outil=metier&&/couverture|charpente|maçonnerie|gros œuvre/.test(metier)
-      ? "le carnet ou le tableau blanc pour le planning, et les feuilles papier pour les heures"
-      : "le tableur du planning et les allers-retours pour valider les heures";
-    return greeting+"\n\nJe me permets de revenir vers vous — le quotidien sur les chantiers ne laisse pas forcément le temps de regarder un nouvel outil.\n\n"+
-      "En résumé, Piloz remplace "+outil+" par un seul outil : CRM, planning de chantier et pointage mobile, avec 14 jours d'essai gratuit et sans engagement.\n\n"+
-      "Si ça vous intéresse, 15 minutes suffisent pour vous montrer l'outil en direct : "+CALENDLY+"\n"+
-      "Sinon, dites-le-moi et je ne vous relance plus.\n\nBonne journée,";
-  }
-  function callScriptFor(r){
-    const metier=metierFor(r.naf);
-    const activite=metier?" ("+metier+")":"";
-    return "SCRIPT D'APPEL — "+(r.nom||"")+activite+"\n\n"+
-      "1. Accroche : « Bonjour, je vous appelle au sujet de la gestion de vos chantiers"+(r.commune?" à "+r.commune:"")+" — vous avez 2 minutes ? »\n\n"+
-      "2. Qualifier : « Aujourd'hui, comment vous gérez le planning et le pointage de vos équipes ? »\n\n"+
-      "3. Pitch court : « Piloz réunit CRM, planning de chantier et pointage mobile dans un seul outil pensé pour le BTP. »\n\n"+
-      "4. Objection « on a déjà un outil » : « Piloz se connecte à vos outils de facturation existants, il ne les remplace pas — il pilote le commercial, les chantiers et les équipes. »\n\n"+
-      "5. Objection « pas le temps » : « L'essai est gratuit 14 jours, sans engagement, et la prise en main se fait en général le jour même. »\n\n"+
-      "6. Call to action : « Je vous propose 15 minutes pour vous montrer l'outil, quel jour vous arrange ? » (lien direct : "+CALENDLY+")\n\n"+
-      "7. Repli : « Je vous envoie un lien par e-mail pour réserver un créneau quand vous voulez. »";
-  }
-  async function copyText(t){
-    try{ await navigator.clipboard.writeText(t); return true; }
-    catch(e){
-      try{
-        const ta=document.createElement("textarea");
-        ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
-        document.body.appendChild(ta); ta.focus(); ta.select();
-        const ok=document.execCommand("copy"); document.body.removeChild(ta);
-        return ok;
-      }catch(e2){ return false; }
-    }
-  }
-
   const form=$("searchForm"), tbody=$("tbody"), statusEl=$("status");
   const bar=$("bar"), barFill=bar.querySelector("i");
   const btnSearch=$("btnSearch"), btnStop=$("btnStop"), btnBrevo=$("btnBrevo"), btnCsv=$("btnCsv");
@@ -471,23 +457,20 @@
   function esc(s){const d=document.createElement("span");d.textContent=s==null?"":String(s);return d.innerHTML;}
 
   function readFilters(){
-    const deps=$("departements").value.split(",").map(s=>s.trim()).filter(Boolean)
-      .map(s=>/^\d$/.test(s)?"0"+s:s.toUpperCase());
-    const bad=deps.find(d=>!/^(\d{2}|2A|2B|9[7-8]\d)$/.test(d));
-    if(bad) throw new Error("Département invalide : « "+bad+" ». Utilisez des codes à 2 chiffres (ou 2A/2B, 971…).");
     const sect=[...document.querySelectorAll('input[name=secteur]:checked')].map(c=>c.value);
     if(!sect.length) throw new Error("Sélectionnez au moins un secteur d'activité.");
+    const metiers=[...document.querySelectorAll('input[name=metier]:checked')].flatMap(c=>c.value.split(","));
     const effs=[...document.querySelectorAll('input[name=eff]:checked')].flatMap(c=>c.value.split(","));
     if(!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
-    return {deps,sect,effs,cible:parseInt($("limite").value,10)||300};
+    return {sect,metiers,effs,cible:parseInt($("limite").value,10)||300};
   }
 
   function urlSirene(f,page){
     const p=new URLSearchParams();
-    if(f.sect.length===3) p.set("section_activite_principale","F");
+    if(f.metiers.length) p.set("activite_principale",f.metiers.join(","));
+    else if(f.sect.length===3) p.set("section_activite_principale","F");
     else p.set("activite_principale",f.sect.join(","));
     p.set("tranche_effectif_salarie",f.effs.join(","));
-    if(f.deps.length) p.set("departement",f.deps.join(","));
     p.set("etat_administratif","A");
     p.set("per_page",PER_PAGE); p.set("page",page);
     return API_SIRENE+"?"+p.toString();
@@ -532,7 +515,7 @@
       ? rows.length.toLocaleString("fr-FR")+" fiche(s) avec contact • "+mails.toLocaleString("fr-FR")+" avec e-mail"
       : "";
     if(!rows.length){
-      tbody.innerHTML='<tr><td colspan="11" class="muted" style="padding:22px">Aucune fiche avec contact pour ces critères.</td></tr>';
+      tbody.innerHTML='<tr><td colspan="10" class="muted" style="padding:22px">Aucune fiche avec contact pour ces critères.</td></tr>';
       return;
     }
     tbody.innerHTML=rows.map(x=>{
@@ -541,37 +524,15 @@
       const mail=x.email?'<a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'<span class="muted">—</span>';
       const score='<span class="score score-'+x.score.tier+'" title="'+esc(x.score.detail)+'">'+x.score.total+'</span>'+
         '<span class="score-label">'+esc(x.score.label)+'</span>';
-      const actions='<div class="row-actions">'+
-        '<button type="button" class="btn-ghost btn-sm" data-msg="'+esc(x.siren)+'">✉ 1er contact</button>'+
-        '<button type="button" class="btn-ghost btn-sm" data-relance="'+esc(x.siren)+'">✉ Relance</button>'+
-        '<button type="button" class="btn-ghost btn-sm" data-call="'+esc(x.siren)+'">☎ Script d\'appel</button>'+
-        '</div>';
       return '<tr class="'+(x.email?"has-mail":"")+'">'+
         '<td class="nowrap">'+score+'</td>'+
-        "<td><strong>"+esc(x.nom)+"</strong>"+(x.rge?'<br><span class="naf">'+esc(x.rge)+"</span>":"")+"</td>"+
+        "<td><strong>"+esc(x.nom)+"</strong>"+(metierFor(x.naf)?'<br><span class="naf">'+esc(metierFor(x.naf))+"</span>":"")+(x.rge?'<br><span class="naf">'+esc(x.rge)+"</span>":"")+"</td>"+
         '<td class="nowrap">'+tel+"</td><td>"+mail+"</td><td>"+site+"</td>"+
         '<td class="nowrap">'+esc(x.effectif)+"</td><td>"+esc(x.adresse)+"</td>"+
         "<td>"+esc(x.dirigeants)+'</td><td class="nowrap">'+esc(x.siren)+"</td>"+
-        '<td class="nowrap"><a href="'+esc(x.fiche)+'" target="_blank" rel="noopener">Ouvrir</a></td>'+
-        '<td class="nowrap">'+actions+'</td></tr>';
+        '<td class="nowrap"><a href="'+esc(x.fiche)+'" target="_blank" rel="noopener">Ouvrir</a></td></tr>';
     }).join("");
   }
-
-  /* ---- Actions par ligne : copie du message, de la relance ou du script d'appel ---- */
-  tbody.addEventListener("click",async ev=>{
-    const t=ev.target;
-    const msg=t.getAttribute&&t.getAttribute("data-msg");
-    const relance=t.getAttribute&&t.getAttribute("data-relance");
-    const call=t.getAttribute&&t.getAttribute("data-call");
-    const siren=msg||relance||call;
-    if(!siren) return;
-    const row=rows.find(r=>r.siren===siren);
-    if(!row) return;
-    const text = msg?pitchFor(row) : relance?relanceFor(row) : callScriptFor(row);
-    const what = msg?"Message":relance?"Message de relance":"Script d'appel";
-    const ok=await copyText(text);
-    setStatus(ok?what+" copié pour "+row.nom+" — collez-le où vous en avez besoin.":"Impossible de copier automatiquement. Sélectionnez le texte manuellement.", ok?"ok":"err");
-  });
 
   /* ---- Coordonnées d'un lot d'entreprises via la base RGE ---- */
   async function contactsFor(batchRows){
@@ -668,7 +629,7 @@
       if(mails>=f.cible){
         setStatus("Objectif atteint : "+mails.toLocaleString("fr-FR")+" contacts avec e-mail, obtenus en analysant "+scanned.toLocaleString("fr-FR")+" entreprise(s)"+(ignored?" ("+ignored.toLocaleString("fr-FR")+" déjà exportée(s) écartée(s))":"")+".","ok");
       }else{
-        setStatus("Stock épuisé : "+mails.toLocaleString("fr-FR")+" e-mail(s) trouvé(s) sur les "+f.cible.toLocaleString("fr-FR")+" demandés, après analyse de "+scanned.toLocaleString("fr-FR")+" entreprise(s)"+(ignored?" et exclusion de "+ignored.toLocaleString("fr-FR")+" déjà exportée(s)":"")+". Élargissez les départements ou les tranches d'effectif pour aller plus loin.","warn");
+        setStatus("Stock épuisé : "+mails.toLocaleString("fr-FR")+" e-mail(s) trouvé(s) sur les "+f.cible.toLocaleString("fr-FR")+" demandés, après analyse de "+scanned.toLocaleString("fr-FR")+" entreprise(s)"+(ignored?" et exclusion de "+ignored.toLocaleString("fr-FR")+" déjà exportée(s)":"")+". Décochez le métier précis ou élargissez les tranches d'effectif pour aller plus loin.","warn");
       }
       if(errors) setStatus(statusEl.textContent+" ("+errors+" lot(s) de coordonnées en erreur)",statusEl.className);
     }catch(e){
