@@ -150,8 +150,10 @@
     </fieldset>
 
     <fieldset>
-      <legend>Métier précis <small>— optionnel, remplace le secteur ci-dessus si coché</small></legend>
-      <div class="chips">
+      <legend>Métier précis <small>— optionnel, remplace le secteur ci-dessus si coché</small>
+        <button type="button" class="btn-ghost btn-sm" id="btnMetierAll" style="margin-left:10px">Tout sélectionner</button>
+      </legend>
+      <div class="chips" id="metierChips">
         <label class="chip"><input type="checkbox" name="metier" value="41.20A"> Maisons individuelles</label>
         <label class="chip"><input type="checkbox" name="metier" value="41.20B"> Autres bâtiments</label>
         <label class="chip"><input type="checkbox" name="metier" value="42.11Z"> Voirie</label>
@@ -452,6 +454,14 @@
   const countEl=$("count");
 
   let rows=[], aborter=null;
+
+  /* ---- Tout sélectionner / désélectionner les métiers précis ---- */
+  const metierBoxes=[...document.querySelectorAll('input[name=metier]')];
+  $("btnMetierAll").addEventListener("click",()=>{
+    const allChecked=metierBoxes.every(c=>c.checked);
+    metierBoxes.forEach(c=>{ c.checked=!allChecked; });
+    $("btnMetierAll").textContent=allChecked?"Tout sélectionner":"Tout désélectionner";
+  });
 
   const setStatus=(m,c)=>{statusEl.textContent=m;statusEl.className=c||"";};
   function esc(s){const d=document.createElement("span");d.textContent=s==null?"":String(s);return d.innerHTML;}
