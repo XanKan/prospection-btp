@@ -88,22 +88,16 @@
   .score-bon{background:#DCEEE1;color:var(--ok)}
   .score-qualif{background:#E7EAED;color:var(--ink-soft)}
   .score-label{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:2px;white-space:nowrap}
-  .row-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
-  .pipe-select{font:inherit;font-size:.78rem;padding:5px 6px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;max-width:140px}
-  select.pipe-select.is-set{border-color:var(--ok);color:var(--ok);font-weight:600}
 
   /* ---------- historique ---------- */
   #histWrap{display:none;position:fixed;inset:0;background:rgba(34,49,63,.55);z-index:40;padding:40px 20px;overflow:auto}
   #histBox{background:var(--panel);max-width:860px;margin:0 auto;border-radius:var(--radius);padding:26px}
   .hist-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
   .hist-head h2{font-size:1.2rem}
-  .hist-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;align-items:center}
+  .hist-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
   #histTable{min-width:0;font-size:.85rem}
   #histTable th{position:static}
   .hist-scroll{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:var(--radius)}
-  .pipe-stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
-  .pipe-stat{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.8rem;color:var(--ink-soft)}
-  .pipe-stat b{color:var(--ink)}
 
   footer{padding:36px 0 44px;color:var(--ink-soft);font-size:.85rem;max-width:80ch}
   footer p{margin-bottom:8px}
@@ -127,9 +121,9 @@
   <div class="wrap head-row">
     <div>
       <div class="brand">Chantier<em>Prospect</em></div>
-      <p class="tagline">Entreprises du BTP avec téléphone et e-mail, classées selon leur profil d'achat pour Piloz (taille d'équipe, multi-chantiers, chiffre d'affaires). Message de prospection prêt à copier, pipeline de suivi, sans jamais retravailler deux fois le même prospect.</p>
+      <p class="tagline">Entreprises du BTP avec téléphone et e-mail, classées selon leur profil d'achat pour Piloz (taille d'équipe, multi-chantiers, chiffre d'affaires). Message de prospection prêt à copier, sans jamais renvoyer deux fois le même prospect.</p>
     </div>
-    <button type="button" class="btn-hist" id="btnHist">Pipeline (0)</button>
+    <button type="button" class="btn-hist" id="btnHist">Historique (0)</button>
   </div>
 </header>
 <div class="hazard" aria-hidden="true"></div>
@@ -223,28 +217,17 @@
 <div id="histWrap">
   <div id="histBox">
     <div class="hist-head">
-      <h2>Pipeline de prospection</h2>
+      <h2>Historique des exports</h2>
       <button type="button" class="btn-ghost btn-sm" id="histClose">Fermer</button>
     </div>
-    <p class="muted" style="font-size:.9rem">Toute entreprise contactée, exportée vers Brevo ou marquée manuellement entre ici et sort des recherches suivantes.</p>
-    <div class="pipe-stats" id="pipeStats"></div>
+    <p class="muted" style="font-size:.9rem">Ces entreprises ont déjà été exportées vers Brevo. Elles sont automatiquement retirées des recherches suivantes.</p>
     <div class="hist-actions">
-      <label style="font-size:.85rem;font-weight:600">Filtrer :
-        <select id="pipeFilter" style="font:inherit;font-size:.85rem;padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);margin-left:6px">
-          <option value="">Tous les statuts</option>
-          <option value="Contacté">Contacté</option>
-          <option value="Relancé">Relancé</option>
-          <option value="RDV programmé">RDV programmé</option>
-          <option value="Client">Client</option>
-          <option value="Perdu">Perdu</option>
-        </select>
-      </label>
-      <button type="button" class="btn-ghost btn-sm" id="histCsv">Exporter le pipeline (CSV)</button>
-      <button type="button" class="btn-ghost btn-sm" id="histClear">Vider le pipeline</button>
+      <button type="button" class="btn-ghost btn-sm" id="histCsv">Exporter l'historique (CSV)</button>
+      <button type="button" class="btn-ghost btn-sm" id="histClear">Vider l'historique</button>
     </div>
     <div class="hist-scroll">
       <table id="histTable">
-        <thead><tr><th>Date</th><th>Entreprise</th><th>Score</th><th>Statut</th><th>E-mail</th><th>SIREN</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Entreprise</th><th>E-mail</th><th>SIREN</th><th></th></tr></thead>
         <tbody id="histBody"></tbody>
       </table>
     </div>
@@ -286,20 +269,11 @@
     else { $("gateErr").textContent="Mot de passe incorrect."; $("pwd").select(); }
   });
 
-  /* ================= PIPELINE (mémorisé dans ce navigateur) ================= */
-  const HIST_KEY="cp_pipeline";
-  const OLD_HIST_KEY="cp_historique"; // migration depuis l'ancienne version "historique d'export"
+  /* ================= HISTORIQUE (mémorisé dans ce navigateur) ================= */
+  const HIST_KEY="cp_pipeline"; // conserve le nom de clé pour ne pas perdre les données déjà enregistrées
   let hist=[];
-  try{ hist=JSON.parse(localStorage.getItem(HIST_KEY)||"null"); }catch(e){ hist=null; }
-  if(!hist){
-    try{
-      const legacy=JSON.parse(localStorage.getItem(OLD_HIST_KEY)||"[]");
-      hist=legacy.map(h=>({date:h.date,nom:h.nom,email:h.email,tel:"",siren:h.siren,score:null,statut:"Contacté"}));
-    }catch(e){ hist=[]; }
-  }
+  try{ hist=JSON.parse(localStorage.getItem(HIST_KEY)||"[]"); }catch(e){ hist=[]; }
   let histSet=new Set(hist.map(h=>h.siren));
-  const PIPE_STATUSES=["Contacté","Relancé","RDV programmé","Client","Perdu"];
-  let pipeFilter="";
 
   function saveHist(){
     try{ localStorage.setItem(HIST_KEY,JSON.stringify(hist)); }
@@ -309,47 +283,17 @@
   }
 
   function renderHist(){
-    $("btnHist").textContent="Pipeline ("+hist.length.toLocaleString("fr-FR")+")";
-
-    const statsEl=$("pipeStats");
-    if(statsEl){
-      const counts={};
-      for(const s of PIPE_STATUSES) counts[s]=0;
-      for(const h of hist) counts[h.statut]=(counts[h.statut]||0)+1;
-      statsEl.innerHTML=hist.length
-        ? PIPE_STATUSES.map(s=>'<span class="pipe-stat"><b>'+counts[s]+'</b> '+esc(s)+'</span>').join("")
-        : "";
-    }
-
+    $("btnHist").textContent="Historique ("+hist.length.toLocaleString("fr-FR")+")";
     const body=$("histBody");
-    const list=hist.filter(h=>!pipeFilter||h.statut===pipeFilter);
-    if(!list.length){
-      body.innerHTML='<tr><td colspan="7" class="muted" style="padding:18px">'+(hist.length?"Aucune entrée pour ce filtre.":"Le pipeline est vide pour le moment.")+'</td></tr>';
+    if(!hist.length){
+      body.innerHTML='<tr><td colspan="5" class="muted" style="padding:18px">Aucun export pour le moment.</td></tr>';
       return;
     }
-    body.innerHTML=list.slice().reverse().map(h=>
-      '<tr><td class="nowrap">'+esc(h.date)+"</td><td>"+esc(h.nom)+"</td>"+
-      '<td class="nowrap">'+(h.score!=null?scoreBadge(h.score):'<span class="muted">—</span>')+"</td>"+
-      '<td class="nowrap"><select class="pipe-select is-set" data-pipe-siren="'+esc(h.siren)+'">'+
-        PIPE_STATUSES.map(s=>'<option value="'+esc(s)+'"'+(s===h.statut?" selected":"")+'>'+esc(s)+"</option>").join("")+
-      "</select></td>"+
-      "<td>"+esc(h.email)+"</td>"+
+    body.innerHTML=hist.slice().reverse().map(h=>
+      '<tr><td class="nowrap">'+esc(h.date)+"</td><td>"+esc(h.nom)+"</td><td>"+esc(h.email)+"</td>"+
       '<td class="nowrap">'+esc(h.siren)+'</td>'+
       '<td><button type="button" class="btn-ghost btn-sm" data-del="'+esc(h.siren)+'">Retirer</button></td></tr>'
     ).join("");
-  }
-
-  function scoreBadge(score){
-    const tier = score>=65?"prio":score>=40?"bon":"qualif";
-    return '<span class="score score-'+tier+'">'+score+"</span>";
-  }
-
-  function upsertPipeline(row,statut){
-    const d=new Date().toLocaleDateString("fr-FR");
-    const existing=hist.find(h=>h.siren===row.siren);
-    if(existing){ existing.statut=statut; existing.date=d; }
-    else hist.push({date:d,nom:row.nom,email:row.email,tel:row.tel,siren:row.siren,score:row.score?row.score.total:null,statut});
-    saveHist();
   }
 
   $("btnHist").addEventListener("click",()=>{ $("histWrap").style.display="block"; });
@@ -360,22 +304,15 @@
     if(!s) return;
     hist=hist.filter(h=>h.siren!==s); saveHist();
   });
-  $("histBody").addEventListener("change",ev=>{
-    const siren=ev.target.getAttribute&&ev.target.getAttribute("data-pipe-siren");
-    if(!siren) return;
-    const h=hist.find(x=>x.siren===siren);
-    if(h){ h.statut=ev.target.value; saveHist(); }
-  });
-  $("pipeFilter").addEventListener("change",ev=>{ pipeFilter=ev.target.value; renderHist(); });
   $("histClear").addEventListener("click",()=>{
     if(!hist.length) return;
-    if(confirm("Vider tout le pipeline ? Les "+hist.length+" entreprises pourront réapparaître dans les recherches.")){
+    if(confirm("Vider tout l'historique ? Les "+hist.length+" entreprises pourront réapparaître dans les recherches.")){
       hist=[]; saveHist();
     }
   });
   $("histCsv").addEventListener("click",()=>{
     if(!hist.length) return;
-    downloadCsv("pipeline-prospection-",[["date","Date"],["nom","Entreprise"],["score","Score Piloz"],["statut","Statut"],["email","E-mail"],["tel","Téléphone"],["siren","SIREN"]],hist);
+    downloadCsv("historique-prospection-",[["date","Date d'export"],["nom","Entreprise"],["email","E-mail"],["siren","SIREN"]],hist);
   });
 
   /* ================= API ================= */
@@ -555,12 +492,7 @@
       const mail=x.email?'<a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a>':'<span class="muted">—</span>';
       const score='<span class="score score-'+x.score.tier+'" title="'+esc(x.score.detail)+'">'+x.score.total+'</span>'+
         '<span class="score-label">'+esc(x.score.label)+'</span>';
-      const actions='<div class="row-actions">'+
-        '<button type="button" class="btn-ghost btn-sm" data-msg="'+esc(x.siren)+'">✉ Message</button>'+
-        '<select class="pipe-select" data-siren="'+esc(x.siren)+'">'+
-          '<option value="" selected disabled>Ajouter au pipeline…</option>'+
-          PIPE_STATUSES.map(s=>'<option value="'+esc(s)+'">'+esc(s)+"</option>").join("")+
-        '</select></div>';
+      const actions='<button type="button" class="btn-ghost btn-sm" data-msg="'+esc(x.siren)+'">✉ Message</button>';
       return '<tr class="'+(x.email?"has-mail":"")+'">'+
         '<td class="nowrap">'+score+'</td>'+
         "<td><strong>"+esc(x.nom)+"</strong>"+(x.rge?'<br><span class="naf">'+esc(x.rge)+"</span>":"")+"</td>"+
@@ -580,19 +512,6 @@
     if(!row) return;
     const ok=await copyText(pitchFor(row));
     setStatus(ok?"Message copié pour "+row.nom+" — collez-le dans votre e-mail.":"Impossible de copier automatiquement. Sélectionnez le texte manuellement.", ok?"ok":"err");
-  });
-  tbody.addEventListener("change",ev=>{
-    const siren=ev.target.getAttribute&&ev.target.getAttribute("data-siren");
-    if(!siren || !ev.target.classList.contains("pipe-select")) return;
-    const row=rows.find(r=>r.siren===siren);
-    if(!row) return;
-    const statut=ev.target.value;
-    upsertPipeline(row,statut);
-    rows=rows.filter(r=>r.siren!==siren);
-    render();
-    btnBrevo.disabled=rows.filter(r=>r.email).length===0;
-    btnCsv.disabled=rows.length===0;
-    setStatus(row.nom+" ajouté au pipeline avec le statut « "+statut+" ».","ok");
   });
 
   /* ---- Coordonnées d'un lot d'entreprises via la base RGE ---- */
@@ -727,13 +646,17 @@
     XLSX.utils.book_append_sheet(wb,ws,"Contacts");
     XLSX.writeFile(wb,"brevo-btp-"+new Date().toISOString().slice(0,10)+".xlsx");
 
-    // ajout au pipeline (statut "Contacté") + retrait des résultats
-    for(const r of list) upsertPipeline(r,"Contacté");
+    // archivage + retrait des résultats
+    const d=new Date().toLocaleDateString("fr-FR");
+    for(const r of list){
+      if(!histSet.has(r.siren)) hist.push({date:d,nom:r.nom,email:r.email,siren:r.siren});
+    }
+    saveHist();
     const exported=list.length;
     rows=rows.filter(r=>!r.email);
     render();
     btnBrevo.disabled=true; btnCsv.disabled=rows.length===0;
-    setStatus(exported.toLocaleString("fr-FR")+" contact(s) exporté(s) et ajouté(s) au pipeline avec le statut « Contacté ». Ils n'apparaîtront plus dans les prochaines recherches.","ok");
+    setStatus(exported.toLocaleString("fr-FR")+" contact(s) exporté(s) et archivé(s) dans l'historique. Ils n'apparaîtront plus dans les prochaines recherches.","ok");
   });
 
   /* ---------- Export complet ---------- */
