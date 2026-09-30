@@ -22,10 +22,33 @@ L'outil exploite le fait que l'API SIRENE expose un indicateur `est_rge` : la re
 
 Mesuré en conditions réelles : **189 entreprises analysées pour 188 contacts avec e-mail** (99 %), contre environ quatre entreprises analysées par e-mail obtenu avant ce filtrage.
 
-Deux modes au choix :
+En balayage classique, deux sources au choix :
 
 - **RGE actifs** (par défaut) — 60 200 entreprises, coordonnées à jour, recherche rapide.
 - **+ anciens RGE** — 173 400 entreprises. La qualification a pu expirer mais les coordonnées restent souvent valables. Presque trois fois plus de stock, recherche plus lente.
+
+## Signaux chauds : contacter au bon moment
+
+Mode par défaut. Au lieu de balayer tout le BTP, l'outil part des **qualifications RGE délivrées ces derniers mois** (1, 3, 6 ou 12 mois), les plus récentes d'abord. L'ADEME date chaque qualification.
+
+Une entreprise qui vient d'obtenir une qualification ouvre un nouveau marché (pompe à chaleur, isolation par l'extérieur, photovoltaïque…) : nouveaux chantiers, nouvelles équipes à organiser. C'est le moment où elle change d'outils.
+
+Chaque qualification récente est comparée à tout l'historique RGE de l'entreprise depuis 2014 :
+
+| Signal | Signification |
+| --- | --- |
+| Première qualification RGE | Aucune qualification RGE auparavant : l'entreprise entre dans le réseau |
+| Nouvelle qualification RGE | Déjà RGE, mais sur une autre qualification : nouveau marché |
+| Qualification renouvelée | Même qualification qu'avant (écartée par défaut) |
+| Qualification RGE récente | Historique indisponible, type non déterminé |
+
+L'ADEME ne publie ni code NAF ni effectif : chaque entreprise est ensuite vérifiée dans SIRENE (active, métier et tranche d'effectif demandés). Cette vérification coûte une requête par entreprise, d'où une recherche un peu plus lente que le balayage classique.
+
+### Accroche personnalisée
+
+Chaque prospect reçoit une première phrase d'e-mail qui parle de lui : sa qualification récente, à défaut sa croissance de CA, ses établissements, ou son métier et sa ville. Elle est exportée dans Brevo sous l'attribut `ACCROCHE` (avec `SIGNAL`, `SIGNAL_DETAIL`, `SIGNAL_DATE`). Placez `{{ contact.ACCROCHE }}` en tête du modèle Brevo : une seule campagne, un message personnalisé par destinataire.
+
+Les attributs doivent exister dans Brevo (Contacts → Paramètres → Attributs) pour que l'import les remplisse.
 
 ## Couverture nationale réelle
 

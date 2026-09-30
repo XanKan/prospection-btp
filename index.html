@@ -142,8 +142,9 @@
   .kpi .lab{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px}
   .kpi .val{font-size:1.75rem;font-weight:850;letter-spacing:-.03em;margin-top:5px;line-height:1.1}
   .kpi .foot{font-size:.79rem;color:var(--muted);margin-top:2px}
-  .kpi.a{border-left:3px solid var(--violet)} .kpi.b{border-left:3px solid var(--ok)}
-  .kpi.c{border-left:3px solid var(--warn)} .kpi.d{border-left:3px solid var(--blue)}
+  .kpi.k-a{border-left:3px solid var(--violet)} .kpi.k-b{border-left:3px solid var(--ok)}
+  .kpi.k-c{border-left:3px solid var(--warn)} .kpi.k-d{border-left:3px solid var(--blue)}
+  .kpi.k-e{border-left:3px solid var(--danger)}
 
   /* ================= CHARTS ================= */
   .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
@@ -185,6 +186,10 @@
   .tag.rge{background:var(--ok-soft);color:var(--ok)}
   .tag.ex{background:var(--warn-soft);color:var(--warn)}
   .tag.gr{background:var(--violet-soft);color:var(--violet)}
+  .tag.hot{background:var(--danger-soft);color:var(--danger)}
+  .sig{font-size:.8rem;font-weight:700;line-height:1.3}
+  .sig.premiere,.sig.nouvelle{color:var(--danger)} .sig.renouv,.sig.recente{color:#b96c14}
+  .hook{background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--violet);border-radius:var(--r-sm);padding:12px 14px;font-size:.9rem;margin-bottom:20px}
   .sc{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:9px;font-weight:850;font-size:.92rem;font-variant-numeric:tabular-nums}
   .sc-prio{background:var(--warn-soft);color:#b96c14} .sc-bon{background:var(--ok-soft);color:var(--ok)} .sc-qual{background:var(--line-2);color:var(--muted)}
   .ic{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:6px;color:var(--muted);transition:background .12s,color .12s}
@@ -295,6 +300,29 @@
 
           <div class="fset">
             <div class="fset-h">
+              <h3>Méthode</h3>
+              <span class="sub">prospecter au moment où l'entreprise a une raison de changer d'organisation</span>
+            </div>
+            <div class="seg" id="segMode">
+              <label><input type="radio" name="mode" value="signal" checked> Signaux chauds</label>
+              <label><input type="radio" name="mode" value="classic"> Balayage classique</label>
+            </div>
+            <p class="note" style="margin-top:10px" id="modeNote"></p>
+            <div id="sigOpts" style="display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:12px">
+              <label class="swi" style="gap:10px">Qualification délivrée depuis
+                <select class="inp" id="sigMois" style="min-width:0">
+                  <option value="1">1 mois</option>
+                  <option value="3" selected>3 mois</option>
+                  <option value="6">6 mois</option>
+                  <option value="12">12 mois</option>
+                </select>
+              </label>
+              <label class="swi"><input type="checkbox" id="optRenouv" checked><i></i> Écarter les simples renouvellements</label>
+            </div>
+          </div>
+
+          <div class="fset">
+            <div class="fset-h">
               <h3>Objectif</h3>
               <span class="sub">nombre de contacts avec e-mail à réunir — recherche sur toute la France</span>
             </div>
@@ -308,7 +336,7 @@
             </select>
           </div>
 
-          <div class="fset">
+          <div class="fset" id="fsSrc">
             <div class="fset-h">
               <h3>Source des contacts</h3>
               <span class="sub">seules les entreprises qualifiées RGE publient leurs coordonnées en open data</span>
@@ -381,7 +409,7 @@
               <div>Avec contact<b class="num" id="pHit">0</b></div>
               <div>Avec e-mail<b class="num" id="pMail">0</b></div>
               <div>Déjà exportées<b class="num" id="pSkip">0</b></div>
-              <div>Départements couverts<b id="pZone">—</b></div>
+              <div><span id="pZoneL">Départements couverts</span><b id="pZone">—</b></div>
             </div>
             <div class="bar"><i id="pBar"></i></div>
             <p class="msg" id="msg"></p>
@@ -392,10 +420,11 @@
       <!-- ==================== VUE PROSPECTS ==================== -->
       <section class="view" id="v-pros">
         <div class="kpis">
-          <div class="kpi a"><div class="lab">Prospects</div><div class="val num" id="kTot">0</div><div class="foot" id="kTotF">aucune recherche lancée</div></div>
-          <div class="kpi b"><div class="lab">Avec e-mail</div><div class="val num" id="kMail">0</div><div class="foot" id="kMailF">prêts pour Brevo</div></div>
-          <div class="kpi c"><div class="lab">Profils prioritaires</div><div class="val num" id="kPrio">0</div><div class="foot">score 65 et plus</div></div>
-          <div class="kpi d"><div class="lab">Score moyen</div><div class="val num" id="kAvg">—</div><div class="foot">sur 100</div></div>
+          <div class="kpi k-a"><div class="lab">Prospects</div><div class="val num" id="kTot">0</div><div class="foot" id="kTotF">aucune recherche lancée</div></div>
+          <div class="kpi k-b"><div class="lab">Avec e-mail</div><div class="val num" id="kMail">0</div><div class="foot" id="kMailF">prêts pour Brevo</div></div>
+          <div class="kpi k-c"><div class="lab">Profils prioritaires</div><div class="val num" id="kPrio">0</div><div class="foot">score 65 et plus</div></div>
+          <div class="kpi k-e"><div class="lab">Signaux chauds</div><div class="val num" id="kSig">0</div><div class="foot">qualification RGE récente</div></div>
+          <div class="kpi k-d"><div class="lab">Score moyen</div><div class="val num" id="kAvg">—</div><div class="foot">sur 100</div></div>
         </div>
 
         <div class="charts">
@@ -429,6 +458,7 @@
                 <th style="width:34px"><input type="checkbox" class="cbx" id="cbAll" title="Tout sélectionner"></th>
                 <th class="srt act" data-k="score" style="width:74px">Score <span id="sh-score">▼</span></th>
                 <th class="srt" data-k="nom">Entreprise <span id="sh-nom"></span></th>
+                <th class="srt" data-k="signal" style="width:150px">Signal <span id="sh-signal"></span></th>
                 <th style="width:92px">Contact</th>
                 <th class="srt" data-k="eff" style="width:96px">Effectif <span id="sh-eff"></span></th>
                 <th class="srt" data-k="ca" style="width:104px">CA connu <span id="sh-ca"></span></th>
@@ -436,7 +466,7 @@
                 <th style="width:60px"></th>
               </tr></thead>
               <tbody id="tbody">
-                <tr><td colspan="8" class="empty"><b>Aucun prospect pour le moment</b>Lancez une recherche pour remplir cette vue.</td></tr>
+                <tr><td colspan="9" class="empty"><b>Aucun prospect pour le moment</b>Lancez une recherche pour remplir cette vue.</td></tr>
               </tbody>
             </table>
           </div>
@@ -787,7 +817,7 @@ const caTxt = c => c == null ? "—" : c >= 1e6 ? (c / 1e6).toFixed(c >= 1e7 ? 0
    ============================================================ */
 const VIEWS = {
   search: { t:"Recherche", s:"Cibler les entreprises du BTP qui ont un contact public exploitable." },
-  pros:   { t:"Prospects", s:"Résultats de la dernière recherche, classés par score Piloz." },
+  pros:   { t:"Prospects", s:"Résultats de la dernière recherche : signaux les plus récents ou meilleur score Piloz d'abord." },
   map:    { t:"Carte",     s:"Répartition géographique des prospects trouvés." },
   hist:   { t:"Historique","s":"Entreprises déjà exportées, exclues des recherches suivantes." }
 };
@@ -824,6 +854,18 @@ function srcNote(){
 document.querySelectorAll("input[name=src]").forEach(r => r.addEventListener("change", srcNote));
 srcNote();
 
+const isSignal = () => document.querySelector("input[name=mode]:checked").value === "signal";
+function modeNote(){
+  const sig = isSignal();
+  $("modeNote").innerHTML = sig
+    ? "<b>Le bon moment.</b> Part des qualifications RGE délivrées ces derniers mois, les plus récentes d'abord. Une entreprise qui vient d'ouvrir un nouveau marché (pompe à chaleur, rénovation globale…) doit organiser de nouveaux chantiers et de nouvelles équipes : c'est à ce moment qu'elle change d'outils. Chaque prospect reçoit une accroche personnalisée, exportée dans Brevo."
+    : "<b>Le volume.</b> Parcourt toutes les entreprises du BTP qui ont un contact public, réparties sur toute la France, classées par score Piloz.";
+  $("sigOpts").style.display = sig ? "flex" : "none";
+  $("fsSrc").style.display = sig ? "none" : "";
+}
+document.querySelectorAll("input[name=mode]").forEach(r => r.addEventListener("change", modeNote));
+modeNote();
+
 function readFilters(){
   const sect = [...document.querySelectorAll("input[name=secteur]:checked")].map(c => c.value);
   const metiers = [...document.querySelectorAll("input[name=metier]:checked")].flatMap(c => c.value.split(","));
@@ -833,6 +875,9 @@ function readFilters(){
   return {
     sect, metiers, effs,
     cible: parseInt($("cible").value, 10) || 300,
+    signal: isSignal(),
+    mois: parseInt($("sigMois").value, 10) || 3,
+    skipRenouv: $("optRenouv").checked,
     tousRge: document.querySelector("input[name=src]:checked").value === "tous",
     exclHist: $("optHist").checked,
     mailOnly: $("optMail").checked,
@@ -887,6 +932,7 @@ function normalize(r){
     rgeFlag: !!(r.complements && r.complements.est_rge),
     qualiopi: !!(r.complements && r.complements.est_qualiopi),
     tel: "", email: "", site: "", rgeDomaines: "", rgeQualifs: 0, rgeActif: false, rgeFin: "",
+    signal: null, accroche: "",
     fiche: "https://annuaire-entreprises.data.gouv.fr/entreprise/" + (r.siren || "")
   };
   row.metier = NAF_METIER[row.naf] || "";
@@ -900,7 +946,7 @@ async function askRge(endpoint, sirens, fields){
   const p = new URLSearchParams();
   p.set("qs", "siret:(" + sirens.map(s => s + "*").join(" OR ") + ")");
   p.set("size", "1000");
-  p.set("select", fields);
+  if (fields) p.set("select", fields);
   const resp = await fetch(endpoint + "?" + p.toString(), { signal: aborter.signal });
   if (!resp.ok) throw new Error("ADEME " + resp.status);
   return (await resp.json()).results || [];
@@ -974,116 +1020,329 @@ function shuffled(a){
 
 async function run(f){
   rows = []; sel.clear(); running = true;
+  sortK = f.signal ? "signal" : "score"; sortD = -1;
   aborter = new AbortController();
   $("bRun").disabled = true; $("bStop").disabled = false;
   $("prog").classList.add("on");
-  $("pBar").style.width = "0"; setMsg("", "");
-  let scan = 0, skip = 0, errors = 0;
-  const seen = new Set(), mails = new Set();
-  const stat = () => {
-    $("pScan").textContent = fmt(scan);
+  $("pBar").style.width = "0"; setMsg("", ""); $("planNote").textContent = "";
+  $("pZoneL").textContent = f.signal ? "Remonté jusqu'au" : "Départements couverts";
+  $("pZone").textContent = "—";
+
+  const ctx = { scan:0, skip:0, errors:0, seen:new Set(), mails:new Set() };
+  const nMail = () => rows.filter(r => r.email).length;
+  ctx.stat = () => {
+    $("pScan").textContent = fmt(ctx.scan);
     $("pHit").textContent = fmt(rows.length);
-    $("pMail").textContent = fmt(rows.filter(r => r.email).length);
-    $("pSkip").textContent = fmt(skip);
-    const done = rows.filter(r => r.email).length;
-    $("pBar").style.width = Math.min(100, Math.round(done / f.cible * 100)) + "%";
+    $("pMail").textContent = fmt(nMail());
+    $("pSkip").textContent = fmt(ctx.skip);
+    $("pBar").style.width = Math.min(100, Math.round(nMail() / f.cible * 100)) + "%";
     $("pillPros").textContent = fmt(rows.length);
   };
-  const reached = () => rows.filter(r => r.email).length >= f.cible;
+  ctx.reached = () => nMail() >= f.cible;
+  /* Filtres communs aux deux modes, appliqués une fois les coordonnées connues. */
+  ctx.keep = r => {
+    if (f.mailOnly ? !r.email : !(r.email || r.tel)) return false;
+    if (f.dedupMail && r.email){
+      if (ctx.mails.has(r.email)) return false;
+      ctx.mails.add(r.email);
+    }
+    r.score = computeScore(r);
+    r.accroche = accroche(r);
+    rows.push(r);
+    return true;
+  };
 
   try {
-    // --- Plan de balayage : une seule requête, ou un découpage par département
-    //     quand le stock dépasse le plafond de 10 000 résultats de l'API.
-    const base = baseParams(f);
-    const probe = await getJson(sireneUrl(base, 1));
-    if (!probe.total_results){
-      setMsg("Aucune entreprise ne correspond à ces critères. Élargissez les métiers ou les tranches d'effectif.", "warn");
-      return;
-    }
-    const partition = probe.total_results >= API_CAP;
-    const plan = partition
-      ? shuffled(DEPS).map(d => ({ params: Object.assign({}, base, { departement: d }), zone: d, page: 1, pages: 1, done: false }))
-      : [{ params: base, zone: "France entière", page: 1, pages: 1, done: false }];
-    $("planNote").textContent = partition
-      ? "Stock supérieur au plafond de l'API : balayage réparti sur les " + DEPS.length + " départements, à tour de rôle."
-      : fmt(probe.total_results) + " entreprise(s) à parcourir.";
-
-    let buffer = [];
-    const zones = new Set();
-
-    async function flush(){
-      if (!buffer.length) return;
-      const batch = buffer;
-      buffer = [];
-      errors += await enrich(batch, f.tousRge);
-      for (const r of batch){
-        if (f.mailOnly ? !r.email : !(r.email || r.tel)) continue;
-        if (f.dedupMail && r.email){
-          if (mails.has(r.email)) continue;
-          mails.add(r.email);
-        }
-        r.score = computeScore(r);
-        rows.push(r);
-      }
-      stat(); refresh();
-    }
-
-    /* Balayage en tourniquet : une page dans chaque département à tour de rôle.
-       Sans cela, une recherche vide entièrement le premier département tiré et
-       tous les prospects viennent du même coin de France. */
-    while (!reached() && plan.some(s => !s.done)){
-      for (const step of plan){
-        if (reached() || step.done) continue;
-        const d = await getJson(sireneUrl(step.params, step.page));
-        if (step.page === 1){
-          step.pages = Math.min(d.total_pages || 1, Math.ceil(API_CAP / PER_PAGE));
-          if (!d.total_results){ step.done = true; continue; }
-        }
-        for (const raw of (d.results || [])){
-          scan++;
-          const n = normalize(raw);
-          if (!n.siren || seen.has(n.siren)) continue;
-          seen.add(n.siren);
-          if (f.exclHist && histSet.has(n.siren)){ skip++; continue; }
-          buffer.push(n);
-        }
-        zones.add(step.zone);
-        step.page++;
-        if (step.page > step.pages) step.done = true;
-        $("pZone").textContent = partition ? fmt(zones.size) + " dép." : "France entière";
-        stat();
-        if (buffer.length >= BUFFER) await flush();
-        await sleep(DELAY);
-      }
-    }
-    await flush();
+    const res = f.signal ? await scanSignal(f, ctx) : await scanClassic(f, ctx);
+    if (res === "vide") return;
 
     // L'objectif sert de condition d'arrêt du balayage : les contacts trouvés
     // au-delà sont conservés, ils ont déjà coûté les mêmes appels d'API.
-    const got = rows.filter(r => r.email).length;
-
+    const got = nMail();
+    const skipTxt = n => n ? " et en écartant " + fmt(n) + " déjà exportée(s)" : "";
     if (got >= f.cible){
       setMsg("Objectif atteint : " + fmt(got) + " contact(s) avec e-mail" +
         (got > f.cible ? ", soit " + fmt(got - f.cible) + " de plus que demandé (trouvés dans le même balayage, conservés)" : "") +
-        ", en analysant " + fmt(scan) + " entreprise(s)" +
-        (skip ? " et en écartant " + fmt(skip) + " déjà exportée(s)" : "") + ".", "ok");
+        ", en analysant " + fmt(ctx.scan) + " entreprise(s)" + skipTxt(ctx.skip) + ".", "ok");
+    } else if (f.signal){
+      setMsg("Toutes les qualifications délivrées sur " + f.mois + " mois ont été parcourues : " + fmt(got) + " e-mail(s) sur les " + fmt(f.cible) + " demandés, après analyse de " + fmt(ctx.scan) + " entreprise(s)" + skipTxt(ctx.skip) + ". " +
+        (res === "plafond" ? "La base ADEME ne laisse pas remonter plus loin en une recherche : réduisez la période ou ciblez des métiers." : "Allongez la période, élargissez les métiers ou gardez les renouvellements."), "warn");
     } else {
-      setMsg("Stock épuisé : " + fmt(got) + " e-mail(s) sur les " + fmt(f.cible) + " demandés, après analyse de " + fmt(scan) + " entreprise(s)" +
-        (skip ? " et exclusion de " + fmt(skip) + " déjà exportée(s)" : "") + ". " +
+      setMsg("Stock épuisé : " + fmt(got) + " e-mail(s) sur les " + fmt(f.cible) + " demandés, après analyse de " + fmt(ctx.scan) + " entreprise(s)" + skipTxt(ctx.skip) + ". " +
         (f.tousRge ? "Élargissez les métiers ou les tranches d'effectif." : "Passez la source sur « + anciens RGE » pour tripler le stock disponible."), "warn");
     }
-    if (errors) setMsg($("msg").textContent + " — " + errors + " lot(s) de coordonnées en erreur.", $("msg").className.replace("msg ", ""));
+    if (ctx.errors) setMsg($("msg").textContent + " — " + ctx.errors + " lot(s) en erreur.", $("msg").className.replace("msg ", ""));
     if (rows.length) showView("pros");
 
   } catch(e){
-    if (e.name === "AbortError") setMsg("Recherche arrêtée : " + fmt(rows.filter(r => r.email).length) + " e-mail(s) déjà trouvé(s).", "warn");
+    if (e.name === "AbortError") setMsg("Recherche arrêtée : " + fmt(nMail()) + " e-mail(s) déjà trouvé(s).", "warn");
     else setMsg(e.message || "Erreur réseau. Vérifiez votre connexion.", "err");
   } finally {
     running = false; aborter = null;
     $("bRun").disabled = false; $("bStop").disabled = true;
-    $("pZone").textContent = "terminé";
-    stat(); refresh();
+    if (!f.signal) $("pZone").textContent = "terminé";
+    ctx.stat(); refresh();
   }
+}
+
+/* ------------------------------------------------------------
+   MODE CLASSIQUE : balayage SIRENE filtré sur les RGE
+   ------------------------------------------------------------ */
+async function scanClassic(f, ctx){
+  // --- Plan de balayage : une seule requête, ou un découpage par département
+  //     quand le stock dépasse le plafond de 10 000 résultats de l'API.
+  const base = baseParams(f);
+  const probe = await getJson(sireneUrl(base, 1));
+  if (!probe.total_results){
+    setMsg("Aucune entreprise ne correspond à ces critères. Élargissez les métiers ou les tranches d'effectif.", "warn");
+    return "vide";
+  }
+  const partition = probe.total_results >= API_CAP;
+  const plan = partition
+    ? shuffled(DEPS).map(d => ({ params: Object.assign({}, base, { departement: d }), zone: d, page: 1, pages: 1, done: false }))
+    : [{ params: base, zone: "France entière", page: 1, pages: 1, done: false }];
+  $("planNote").textContent = partition
+    ? "Stock supérieur au plafond de l'API : balayage réparti sur les " + DEPS.length + " départements, à tour de rôle."
+    : fmt(probe.total_results) + " entreprise(s) à parcourir.";
+
+  let buffer = [];
+  const zones = new Set();
+
+  async function flush(){
+    if (!buffer.length) return;
+    const batch = buffer;
+    buffer = [];
+    ctx.errors += await enrich(batch, f.tousRge);
+    for (const r of batch) ctx.keep(r);
+    ctx.stat(); refresh();
+  }
+
+  /* Balayage en tourniquet : une page dans chaque département à tour de rôle.
+     Sans cela, une recherche vide entièrement le premier département tiré et
+     tous les prospects viennent du même coin de France. */
+  while (!ctx.reached() && plan.some(s => !s.done)){
+    for (const step of plan){
+      if (ctx.reached() || step.done) continue;
+      const d = await getJson(sireneUrl(step.params, step.page));
+      if (step.page === 1){
+        step.pages = Math.min(d.total_pages || 1, Math.ceil(API_CAP / PER_PAGE));
+        if (!d.total_results){ step.done = true; continue; }
+      }
+      for (const raw of (d.results || [])){
+        ctx.scan++;
+        const n = normalize(raw);
+        if (!n.siren || ctx.seen.has(n.siren)) continue;
+        ctx.seen.add(n.siren);
+        if (f.exclHist && histSet.has(n.siren)){ ctx.skip++; continue; }
+        buffer.push(n);
+      }
+      zones.add(step.zone);
+      step.page++;
+      if (step.page > step.pages) step.done = true;
+      $("pZone").textContent = partition ? fmt(zones.size) + " dép." : "France entière";
+      ctx.stat();
+      if (buffer.length >= BUFFER) await flush();
+      await sleep(DELAY);
+    }
+  }
+  await flush();
+}
+
+/* ------------------------------------------------------------
+   MODE SIGNAUX : qualifications RGE délivrées récemment
+   Une entreprise qui vient d'obtenir une qualification ouvre un nouveau
+   marché : nouveaux chantiers, nouvelles équipes à organiser. C'est le
+   moment où elle change d'outils, et l'ADEME date chaque qualification.
+   ------------------------------------------------------------ */
+const SIG = {
+  premiere: "Première qualification RGE",
+  nouvelle: "Nouvelle qualification RGE",
+  recente:  "Qualification RGE récente",
+  renouv:   "Qualification renouvelée"
+};
+const SIG_RANK = { premiere:4, nouvelle:3, recente:2, renouv:1 };
+const ADEME_PAGE = 500;
+const ADEME_CAP = 10000;     // fenêtre maximale de pagination par numéro de page
+
+async function ademe(url){
+  const resp = await fetch(url, { signal: aborter.signal });
+  if (resp.status === 429){ await sleep(2600); return ademe(url); }
+  if (!resp.ok) throw new Error("La base RGE de l'ADEME a répondu " + resp.status + ". Réessayez dans un instant ou passez en balayage classique.");
+  return resp.json();
+}
+
+/* Les noms de colonnes de l'ADEME ont varié selon les versions du jeu de
+   données : ils sont détectés sur un échantillon plutôt que supposés. */
+async function ademeFields(endpoint){
+  const d = await ademe(endpoint + "?size=50");
+  const keys = new Set();
+  for (const l of d.results || []) for (const k of Object.keys(l)) keys.add(k);
+  const pick = list => list.find(k => keys.has(k)) || "";
+  return {
+    debut: pick(["date_debut", "lien_date_debut", "date_debut_validite"]),
+    code:  pick(["code_qualification", "nom_qualification", "nom_certificat"]),
+    quoi:  pick(["domaine", "nom_qualification", "nom_certificat"])
+  };
+}
+
+function nafOk(naf, f){
+  if (f.metiers.length) return f.metiers.includes(naf);
+  return f.sect.includes(String(naf).slice(0, 2));
+}
+
+async function scanSignal(f, ctx){
+  const FA = await ademeFields(RGE_ACTIF);
+  if (!FA.debut) throw new Error("La base RGE de l'ADEME ne publie pas la date de délivrance des qualifications : le mode signaux est indisponible. Passez en balayage classique.");
+  let FH = null;
+  try { FH = await ademeFields(RGE_HISTO); if (!FH.debut) FH = null; }
+  catch(e){ if (e.name === "AbortError") throw e; }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const since = new Date(Date.now() - f.mois * 30.44 * 864e5).toISOString().slice(0, 10);
+  $("planNote").textContent = "Qualifications délivrées depuis le " + frDate(since) + ", les plus récentes d'abord.";
+
+  const params = new URLSearchParams({ size: String(ADEME_PAGE), sort: "-" + FA.debut });
+  let url = RGE_ACTIF + "?" + params, page = 1, end = "fin";
+  let pending = new Map();   // SIREN -> ligne de qualification la plus récente
+
+  async function flush(){
+    if (!pending.size) return;
+    const batch = pending;
+    pending = new Map();
+    await processSignals(batch, f, ctx, FA, FH);
+    ctx.stat(); refresh();
+  }
+
+  while (!ctx.reached()){
+    const d = await ademe(url);
+    const res = d.results || [];
+    let past = false;
+    for (const l of res){
+      const dd = String(l[FA.debut] || "").slice(0, 10);
+      if (!dd || dd > today) continue;
+      if (dd < since){ past = true; break; }   // tri décroissant : tout le reste est plus ancien
+      $("pZone").textContent = frDate(dd);
+      const siren = String(l.siret || "").slice(0, 9);
+      if (!/^\d{9}$/.test(siren) || ctx.seen.has(siren)) continue;
+      ctx.seen.add(siren);
+      ctx.scan++;
+      if (f.exclHist && histSet.has(siren)){ ctx.skip++; continue; }
+      if (f.mailOnly && !(l.email && MAIL_RE.test(String(l.email).trim()))) continue;
+      pending.set(siren, l);
+      if (pending.size >= RGE_BATCH){
+        await flush();
+        if (ctx.reached()) break;
+      }
+    }
+    ctx.stat();
+    if (past || !res.length || ctx.reached()) break;
+    if (typeof d.next === "string" && d.next) url = d.next;
+    else {
+      page++;
+      if (page * ADEME_PAGE > ADEME_CAP){ end = "plafond"; break; }
+      params.set("page", String(page));
+      url = RGE_ACTIF + "?" + params;
+    }
+    await sleep(RGE_DELAY);
+  }
+  await flush();
+  return end;
+}
+
+async function processSignals(batch, f, ctx, FA, FH){
+  const sirens = [...batch.keys()];
+
+  // Tout le passé RGE de ces entreprises, pour distinguer une vraie
+  // nouveauté d'un simple renouvellement.
+  const lines = new Map(sirens.map(s => [s, []]));
+  let pastOk = !!FH;
+  const collect = (ls, F) => {
+    for (const l of ls){
+      const s = String(l.siret || "").slice(0, 9);
+      if (lines.has(s)) lines.get(s).push({ l, F });
+    }
+  };
+  try { collect(await askRge(RGE_ACTIF, sirens, null), FA); }
+  catch(e){ if (e.name === "AbortError") throw e; ctx.errors++; pastOk = false; }
+  await sleep(RGE_DELAY);
+  if (FH){
+    try { collect(await askRge(RGE_HISTO, sirens, null), FH); }
+    catch(e){ if (e.name === "AbortError") throw e; ctx.errors++; pastOk = false; }
+    await sleep(RGE_DELAY);
+  }
+
+  for (const [siren, top] of batch){
+    if (ctx.reached()) return;
+    const all = lines.get(siren);
+    const sigDate = String(top[FA.debut]).slice(0, 10);
+    const keyOf = (l, F) => String(l[F.code] || l[F.quoi] || "").trim().toLowerCase();
+    const topKey = keyOf(top, FA);
+    const prior = all.filter(({ l, F }) => { const d = String(l[F.debut] || "").slice(0, 10); return d && d < sigDate; });
+    let type;
+    if (!pastOk || !topKey) type = "recente";
+    else if (!prior.length) type = "premiere";
+    else if (prior.some(({ l, F }) => keyOf(l, F) === topKey)) type = "renouv";
+    else type = "nouvelle";
+    if (f.skipRenouv && type === "renouv") continue;
+
+    // L'ADEME ne donne ni code NAF ni effectif : filtre appliqué via SIRENE.
+    let raw = null;
+    try {
+      const d = await getJson(API_SIRENE + "?" + new URLSearchParams({ q: siren, per_page: "1" }));
+      raw = (d.results || []).find(x => x.siren === siren) || null;
+    } catch(e){ if (e.name === "AbortError") throw e; ctx.errors++; }
+    await sleep(DELAY);
+    if (!raw || (raw.etat_administratif && raw.etat_administratif !== "A")) continue;
+    const r = normalize(raw);
+    if (!nafOk(r.naf, f) || !f.effs.includes(r.effCode)) continue;
+
+    const found = new Map();
+    const act = all.filter(x => x.F === FA).map(x => x.l);
+    for (const l of act.length ? act : [top]) absorb(found, l, true);
+    const c = found.get(siren);
+    if (!c) continue;
+    if (!c.email){
+      for (const { l, F } of all){
+        if (F !== FA && l.email && MAIL_RE.test(String(l.email).trim())){ c.email = String(l.email).trim().toLowerCase(); break; }
+      }
+    }
+    r.tel = c.tel; r.email = c.email; r.site = c.site;
+    r.rgeDomaines = [...c.dom].slice(0, 4).join(", ");
+    r.rgeQualifs = c.qualifs; r.rgeActif = true; r.rgeFin = c.fin;
+    r.signal = {
+      type, label: SIG[type], date: sigDate,
+      quoi: String(top[FA.quoi] || top[FA.code] || "").split(";")[0].trim()
+    };
+    ctx.keep(r);
+    ctx.stat();
+  }
+}
+
+/* ------------------------------------------------------------
+   ACCROCHE : première phrase d'e-mail propre à chaque prospect, exportée
+   dans Brevo (attribut ACCROCHE). Une seule campagne, un message qui parle
+   de l'entreprise. Chaque formulation reste vraie même si un renouvellement
+   a été pris pour une nouveauté.
+   ------------------------------------------------------------ */
+const frDate = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR");
+const moisTxt = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+const deOf = m => /^[aeiouyàâéèêîïôûœ]/i.test(m) ? "d'" + m : "de " + m;
+
+function accroche(r){
+  const s = r.signal;
+  if (s && s.quoi){
+    return s.type === "renouv"
+      ? "J'ai vu que votre qualification RGE « " + s.quoi + " » a été renouvelée en " + moisTxt(s.date) + "."
+      : "Félicitations pour votre qualification RGE « " + s.quoi + " », obtenue en " + moisTxt(s.date) + ".";
+  }
+  if (r.growth != null && r.growth >= .10 && r.caAnnee)
+    return "Avec un chiffre d'affaires en hausse de " + Math.round(r.growth * 100) + " % en " + r.caAnnee + ", l'organisation de vos chantiers doit suivre le rythme.";
+  if (r.sitesOuverts >= 2)
+    return "Avec " + r.sitesOuverts + " établissements à coordonner, le suivi de vos chantiers se joue sur plusieurs fronts.";
+  const qui = "quelques entreprises " + (r.metier ? deOf(r.metier) : "du bâtiment");
+  return r.commune
+    ? "Je contacte " + qui + " de la région de " + r.commune + "."
+    : "Je contacte " + qui + " de votre secteur.";
 }
 function setMsg(m, c){ $("msg").textContent = m; $("msg").className = "msg" + (c ? " " + c : ""); }
 
@@ -1109,6 +1368,7 @@ function refresh(){
   const dir = sortD;
   const key = {
     score: r => r.score.total,
+    signal: r => r.signal ? r.signal.date + "|" + SIG_RANK[r.signal.type] + "|" + String(r.score.total).padStart(3, "0") : "",
     nom:   r => r.nom.toLowerCase(),
     eff:   r => sEff(r.effCode),
     ca:    r => r.ca == null ? -1 : r.ca,
@@ -1125,6 +1385,7 @@ function refresh(){
   $("kMailF").textContent = rows.length ? Math.round(mail / rows.length * 100) + " % des prospects" : "prêts pour Brevo";
   $("kPrio").textContent = fmt(prio);
   $("kAvg").textContent = avg == null ? "—" : avg;
+  $("kSig").textContent = fmt(rows.filter(r => r.signal && r.signal.type !== "renouv").length);
   $("pillPros").textContent = fmt(rows.length);
   $("tCount").textContent = term ? fmt(view.length) + " sur " + fmt(rows.length) : "";
   $("bBrevo").disabled = !mail;
@@ -1167,7 +1428,7 @@ function drawTable(){
   });
 
   if (!view.length){
-    $("tbody").innerHTML = '<tr><td colspan="8" class="empty"><b>' +
+    $("tbody").innerHTML = '<tr><td colspan="9" class="empty"><b>' +
       (rows.length ? "Aucun résultat" : "Aucun prospect pour le moment") + "</b>" +
       (rows.length ? "Aucun prospect ne correspond à ce filtre." : "Lancez une recherche pour remplir cette vue.") + "</td></tr>";
     return;
@@ -1191,6 +1452,9 @@ function drawTable(){
       '<td><span class="co" data-open="' + esc(r.siren) + '">' + esc(r.nom) + "</span>" +
         (r.metier ? '<div class="meta">' + esc(r.metier) + "</div>" : "") +
         (tags.length ? '<div class="tags">' + tags.join("") + "</div>" : "") + "</td>" +
+      "<td>" + (r.signal
+        ? '<div class="sig ' + r.signal.type + '">' + esc(r.signal.label) + '</div><div class="meta">' + esc(moisTxt(r.signal.date)) + "</div>"
+        : '<span class="muted">—</span>') + "</td>" +
       '<td class="nw">' + contact + "</td>" +
       '<td class="nw">' + esc(r.effectif) + "</td>" +
       '<td class="nw num">' + caTxt(r.ca) + (r.caAnnee ? '<div class="meta">' + r.caAnnee + "</div>" : "") + "</td>" +
@@ -1252,6 +1516,12 @@ function openCard(siren){
 
   const q = encodeURIComponent(r.nom + " " + r.commune);
   $("mB").innerHTML =
+    (r.signal
+      ? '<p class="sect-t">Signal d\'achat</p><p class="note" style="margin-bottom:16px"><b class="sig ' + r.signal.type + '">' + esc(r.signal.label) + "</b> · " +
+        esc(r.signal.quoi || "qualification RGE") + " · délivrée le " + esc(frDate(r.signal.date)) + "</p>"
+      : "") +
+    '<p class="sect-t">Accroche personnalisée <button type="button" class="cp" data-copy="' + esc(r.accroche).replace(/"/g, "&quot;") + '">copier</button></p>' +
+    '<div class="hook">' + esc(r.accroche) + "</div>" +
     '<p class="sect-t">Contact</p><div class="dl">' +
       line("E-mail", r.email ? '<a href="mailto:' + esc(r.email) + '">' + esc(r.email) + "</a>" : "", r.email) +
       line("Téléphone", r.tel ? '<a href="tel:' + esc(telIntl(r.tel)) + '">' + esc(r.tel) + "</a>" : "", r.tel) +
@@ -1317,6 +1587,7 @@ function drawMap(){
     }).addTo(layer)
       .bindPopup('<b>' + esc(r.nom) + "</b><br>" + esc(r.metier || "") + "<br>" + esc(r.cp + " " + r.commune) +
         "<br>Score " + r.score.total + "/100" +
+        (r.signal ? "<br><b>" + esc(r.signal.label) + "</b> · " + esc(moisTxt(r.signal.date)) : "") +
         (r.email ? "<br>" + esc(r.email) : ""))
       .on("click", () => openCard(r.siren));
   }
@@ -1353,11 +1624,13 @@ $("bBrevo").addEventListener("click", () => {
     DEPARTEMENT: r.dep, ADRESSE: r.adresse, EFFECTIF: r.effectif, SCORE_PILOZ: r.score.total,
     METIER_RGE: r.rgeDomaines, CODE_NAF: r.naf, FONCTION: r.qualite, SITE_WEB: r.site, SIREN: r.siren,
     METIER: r.metier, PROFIL: r.score.label, CA: r.ca == null ? "" : r.ca, CA_ANNEE: r.caAnnee || "",
-    ETABLISSEMENTS: r.sitesOuverts == null ? "" : r.sitesOuverts, RGE: r.rgeActif ? "actif" : r.rgeQualifs ? "expiré" : ""
+    ETABLISSEMENTS: r.sitesOuverts == null ? "" : r.sitesOuverts, RGE: r.rgeActif ? "actif" : r.rgeQualifs ? "expiré" : "",
+    ACCROCHE: r.accroche, SIGNAL: r.signal ? r.signal.label : "", SIGNAL_DETAIL: r.signal ? r.signal.quoi : "",
+    SIGNAL_DATE: r.signal ? frDate(r.signal.date) : ""
   }));
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(data);
-  ws["!cols"] = [{wch:32},{wch:14},{wch:16},{wch:34},{wch:15},{wch:15},{wch:18},{wch:11},{wch:12},{wch:38},{wch:14},{wch:11},{wch:30},{wch:10},{wch:20},{wch:28},{wch:11},{wch:26},{wch:18},{wch:12},{wch:10},{wch:14},{wch:9}];
+  ws["!cols"] = [{wch:32},{wch:14},{wch:16},{wch:34},{wch:15},{wch:15},{wch:18},{wch:11},{wch:12},{wch:38},{wch:14},{wch:11},{wch:30},{wch:10},{wch:20},{wch:28},{wch:11},{wch:26},{wch:18},{wch:12},{wch:10},{wch:14},{wch:9},{wch:70},{wch:26},{wch:30},{wch:12}];
   XLSX.utils.book_append_sheet(wb, ws, "Contacts");
   XLSX.writeFile(wb, "brevo-btp-" + new Date().toISOString().slice(0, 10) + ".xlsx");
 
@@ -1385,7 +1658,9 @@ $("bCsv").addEventListener("click", () => {
     ["naf", "Code NAF"], ["rgeDomaines", "Domaines RGE"], ["rge", "Statut RGE", x => x.rgeActif ? "actif" : x.rgeQualifs ? "expiré" : ""],
     ["adresse", "Adresse siège"], ["cp", "Code postal"], ["commune", "Commune"], ["dep", "Département"],
     ["prenom", "Prénom dirigeant"], ["nomDir", "Nom dirigeant"], ["qualite", "Fonction"], ["dirigeants", "Tous les dirigeants"],
-    ["siren", "SIREN"], ["siret", "SIRET siège"], ["creation", "Création"], ["fiche", "Fiche officielle"]
+    ["siren", "SIREN"], ["siret", "SIRET siège"], ["creation", "Création"], ["fiche", "Fiche officielle"],
+    ["signal", "Signal", x => x.signal ? x.signal.label : ""], ["signalDetail", "Qualification du signal", x => x.signal ? x.signal.quoi : ""],
+    ["signalDate", "Date du signal", x => x.signal ? frDate(x.signal.date) : ""], ["accroche", "Accroche"]
   ], list);
   toast(fmt(list.length) + " ligne(s) exportée(s).");
 });
@@ -1403,6 +1678,9 @@ $("bHelp").addEventListener("click", () => {
     '<p class="sect-t" style="margin-top:20px">D\'où viennent les e-mails</p>' +
     '<p class="note">Seules les entreprises <b>qualifiées RGE</b> publient leurs coordonnées en open data, via l\'ADEME (Licence Ouverte Etalab). Deux bases sont interrogées : la liste des <b>RGE actuels</b> (60 200 entreprises) et l\'<b>historique depuis 2014</b> (173 400 entreprises, qualification parfois expirée mais coordonnées souvent toujours valables).</p>' +
     '<p class="note">C\'est pourquoi le mode « RGE actifs » filtre la recherche en amont sur ces entreprises : quasiment toutes ont un e-mail, au lieu d\'une sur quatre en balayant tout le BTP.</p>' +
+    '<p class="sect-t" style="margin-top:20px">Les signaux chauds</p>' +
+    '<p class="note">L\'ADEME date chaque qualification RGE. Le mode « Signaux chauds » part des qualifications délivrées récemment, les plus récentes d\'abord, puis compare avec tout l\'historique RGE de l\'entreprise depuis 2014 : <b>première qualification</b> (entrée dans le réseau RGE), <b>nouvelle qualification</b> (nouveau marché, par exemple la pompe à chaleur), ou <b>simple renouvellement</b>. Une entreprise qui ouvre un nouveau marché doit organiser de nouveaux chantiers : c\'est le moment où elle change d\'outils.</p>' +
+    '<p class="note">Chaque prospect reçoit une <b>accroche</b> : une première phrase d\'e-mail qui parle de lui (sa qualification, sa croissance, ses établissements). Elle part dans l\'export Brevo sous l\'attribut <b>ACCROCHE</b> : insérez <code>{{ contact.ACCROCHE }}</code> en tête de votre modèle et chaque destinataire reçoit un message personnalisé.</p>' +
     '<p class="sect-t" style="margin-top:20px">Le balayage</p>' +
     '<p class="note">L\'API plafonne chaque requête à 10 000 résultats. Au-delà, l\'outil découpe automatiquement la recherche <b>département par département</b>, dans un ordre aléatoire, afin de couvrir toute la France sans se limiter aux mêmes régions à chaque lancement.</p>' +
     '<p class="sect-t" style="margin-top:20px">Le score</p>' +
