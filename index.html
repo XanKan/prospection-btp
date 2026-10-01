@@ -296,6 +296,7 @@
   .mail-h b{font-weight:800}
   .mail-b{padding:16px;font:14.5px/1.6 Arial,Helvetica,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;color:#1f2030}
   .mail-b .foot{display:block;margin-top:16px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:#8a8ca0;line-height:1.5}
+  .mail-frame{display:block;width:100%;border:0;min-height:320px;background:#fff}
 
   /* ================= MODALE ================= */
   .ov{display:none;position:fixed;inset:0;background:rgba(21,22,31,.5);z-index:100;padding:32px 16px;overflow-y:auto;backdrop-filter:blur(2px)}
@@ -500,8 +501,10 @@
             <div class="chips" id="metChips"></div>
           </div>
           <div class="fset">
-            <div class="fset-h"><h3>Effectif salarié</h3><span class="sub">tranches INSEE</span></div>
+            <div class="fset-h"><h3>Effectif salarié</h3><span class="sub">tranches INSEE — près d'une entreprise sur trois n'a pas d'effectif renseigné</span></div>
             <div class="chips">
+              <label class="chip"><input type="checkbox" name="eff" value="NN"> Non renseigné</label>
+              <label class="chip"><input type="checkbox" name="eff" value="00"> 0 salarié</label>
               <label class="chip"><input type="checkbox" name="eff" value="01"> 1 à 2</label>
               <label class="chip"><input type="checkbox" name="eff" value="02"> 3 à 5</label>
               <label class="chip"><input type="checkbox" name="eff" value="03"> 6 à 9</label>
@@ -521,8 +524,13 @@
               <label><input type="radio" name="minscore" value="65"> Prioritaires (65 et +)</label>
             </div>
           </div>
+          <div class="fset">
+            <div class="fset-h"><h3>Personnalisation</h3></div>
+            <label class="swi"><input type="checkbox" id="tReqFirst" checked><i></i> Contacter uniquement les entreprises dont le prénom du dirigeant est connu, pour toujours écrire « Bonjour Prénom »</label>
+          </div>
           <div class="run">
             <button type="submit" class="b b-main" id="bTargetSave">Enregistrer le ciblage</button>
+            <button type="button" class="b b-out" id="bTargetMax" title="Tout le BTP, toutes tailles, RGE actuels et anciens">Volume maximum</button>
             <span class="note" id="targetEstimate"></span>
           </div>
         </form>
@@ -642,10 +650,13 @@
             <div class="card-h"><h2>Expéditeur</h2><span class="sub">les messages partent de votre boîte Hostinger, comme si vous les écriviez</span></div>
             <div class="card-b">
               <div class="fields">
-                <div class="fld"><label for="sName">Nom affiché</label><input class="inp" id="sName" maxlength="80" placeholder="ex. Quentin de Piloz"></div>
+                <div class="fld"><label for="sName">Nom affiché</label><input class="inp" id="sName" maxlength="80" placeholder="Service commercial Piloz"></div>
                 <div class="fld"><label for="sEmail">Adresse d'envoi (Hostinger)</label><input class="inp" type="email" id="sEmail" placeholder="ex. quentin@piloz.fr"></div>
                 <div class="fld"><label for="sReply">Adresse de réponse</label><input class="inp" type="email" id="sReply" placeholder="facultatif — par défaut l'adresse d'envoi"></div>
-                <div class="fld full"><label for="sSig">Signature</label><textarea class="inp" id="sSig" rows="4" maxlength="1000" placeholder="Quentin Jernot&#10;Fondateur de Piloz&#10;06 00 00 00 00 · piloz.fr"></textarea></div>
+                <div class="fld full"><label for="sSig">Signature</label><textarea class="inp" id="sSig" rows="4" maxlength="1000" placeholder="Service commercial Piloz&#10;Logiciel de gestion pour les entreprises du BTP&#10;https://piloz.fr"></textarea>
+                  <p class="help">Affichée à côté du logo Piloz ; la première ligne est en gras. Un numéro de téléphone ou un lien ajouté ici devient cliquable.</p></div>
+                <div class="fld full"><label for="sVideo">Vidéo de présentation (lien YouTube)</label><input class="inp" id="sVideo" maxlength="300" placeholder="https://www.youtube.com/watch?v=…">
+                  <p class="help">Insérée dans chaque message sous forme d'image cliquable, à l'emplacement <code class="k">{video}</code> du modèle (sinon après le texte). Laissez vide pour ne pas mettre de vidéo.</p></div>
                 <div class="fld full"><label for="sFooter">Identification de l'expéditeur</label><input class="inp" id="sFooter" maxlength="300">
                   <p class="help">Affichée en bas de chaque message avec la source des données et le lien de désinscription (obligatoire en prospection B2B).</p></div>
               </div>
@@ -883,8 +894,8 @@ document.addEventListener("click", ev => {
 /* ============================================================
    PERSONNALISATION — miroir de supabase/functions/_shared/prospection-core.ts
    ============================================================ */
-const VARS = ["bonjour", "prenom", "nom", "entreprise", "ville", "metier", "departement", "effectif"];
-const VAR_HELP = { bonjour:"« Bonjour Jean » ou « Bonjour »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif" };
+const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif"];
+const VAR_HELP = { bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -912,24 +923,50 @@ function renderTpl(t, v){
     return v[k] || (fb == null ? "" : fb);
   });
 }
-function composePreview(tpl, s, data){
+// Miroir exact de composeEmail() côté serveur : l'aperçu est le vrai HTML envoyé.
+const LOGO_URL = "https://piloz.fr/assets/images/email/piloz-logo-112.png";
+const VIDEO_THUMBNAILS = { UycAnUQzzYg: "https://piloz.fr/assets/images/email/presentation-video.jpg" };
+const hesc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[c]));
+const linkify = e => e.replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, u => '<a href="' + u + '" style="color:#4f46e5">' + u + "</a>");
+const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>").join("");
+function youtubeId(url){ const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; }
+function buildEmail(tpl, s, data){
+  s = s || {};
   const v = templateVars(data);
-  const company = v.entreprise || "votre entreprise";
-  return {
-    subject: clean(renderTpl(tpl.subject, v), 200),
-    body: renderTpl(tpl.body, v).replace(/\r\n/g, "\n").replace(/[ \t]+\n/g, "\n").trim(),
-    signature: String((s && s.signature) || "").trim(),
-    notice: "Vous recevez ce message car " + company + " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE). Ne plus recevoir de message : lien personnel de désinscription.",
-    identity: clean(s && s.footer_identity, 300)
-  };
+  const tidy = x => renderTpl(x, v).replace(/\r\n/g, "\n").replace(/[ \t]+\n/g, "\n").trim();
+  const parts = String(tpl.body || "").replace(/\r\n/g, "\n").split(/^[ \t]*\{video\}[ \t]*$/m);
+  const before = tidy(parts[0] || ""), after = tidy(parts.slice(1).join("\n"));
+  const url = s.video_url || "", id = youtubeId(url);
+  const thumb = id ? (VIDEO_THUMBNAILS[id] || "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg") : "";
+  const video = url ? (thumb ? '<p style="margin:4px 0 6px"><a href="' + hesc(url) + '" style="text-decoration:none"><img src="' + hesc(thumb) + '" width="480" alt="Vidéo : découvrez Piloz en 1 minute" style="display:block;width:100%;max-width:480px;height:auto;border:0;border-radius:12px"></a></p>' : "") +
+    '<p style="margin:0 0 16px;font-size:14px"><a href="' + hesc(url) + '" style="color:#4f46e5;font-weight:bold">▶ Découvrez Piloz en 1 minute</a></p>' : "";
+  const lines = String(s.signature || "").replace(/\r\n/g, "\n").split("\n").map(l => l.trim()).filter(Boolean);
+  const sig = lines.length ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;border-collapse:collapse"><tr>' +
+    '<td style="padding:0 14px 0 0;vertical-align:top"><img src="' + LOGO_URL + '" width="56" height="56" alt="Piloz" style="display:block;border:0;border-radius:12px"></td>' +
+    '<td style="vertical-align:middle;font:14px/1.5 Arial,Helvetica,sans-serif;color:#5b5d72;border-left:3px solid #6d5ef8;padding:2px 0 2px 14px">' +
+    lines.map((l, i) => i === 0 ? '<b style="color:#15161f;font-size:15px">' + hesc(l) + "</b>" : linkify(hesc(l))).join("<br>") + "</td></tr></table>" : "";
+  const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
+  const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
+    '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">Vous recevez ce message car ' + hesc(company) +
+    " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE). " +
+    '<a href="https://piloz.fr/desinscription.html" style="color:#8a8ca0">Ne plus recevoir de message</a>.' + (identity ? "<br>" + hesc(identity) : "") + "</p></div>";
+  return { subject: clean(renderTpl(tpl.subject, v), 200), html };
 }
-function mailHtml(p, s, to){
+function mailHtml(tpl, s, data, to){
+  const mail = buildEmail(tpl, s, data);
   const from = s && s.sender_email ? (s.sender_name || "Piloz") + " <" + s.sender_email + ">" : "adresse d'envoi à renseigner";
   return '<div class="mail-h"><div><span>De : </span>' + esc(from) + "</div><div><span>À : </span>" + esc(to || "contact@entreprise.fr") +
-    '</div><div><span>Objet : </span><b>' + esc(p.subject || "(objet vide)") + "</b></div></div>" +
-    '<div class="mail-b">' + esc(p.body) + (p.signature ? "\n\n" + esc(p.signature) : "") +
-    '<span class="foot">' + esc(p.notice) + (p.identity ? "<br>" + esc(p.identity) : "") + "</span></div>";
+    '</div><div><span>Objet : </span><b>' + esc(mail.subject || "(objet vide)") + "</b></div></div>" +
+    '<iframe class="mail-frame" sandbox="allow-same-origin" title="Aperçu du message" srcdoc="' + hesc('<!doctype html><html><head><meta charset="utf-8"><base target="_blank"></head><body style="margin:0;padding:18px;background:#fff">' + mail.html + "</body></html>") + '"></iframe>';
 }
+// Le cadre prend la hauteur du message une fois chargé.
+document.addEventListener("load", ev => {
+  const f = ev.target;
+  if (f && f.classList && f.classList.contains("mail-frame")){
+    try { f.style.height = (f.contentDocument.documentElement.scrollHeight + 4) + "px"; } catch(e){}
+    try { f.contentDocument.querySelectorAll("img").forEach(img => img.addEventListener("load", () => { f.style.height = (f.contentDocument.documentElement.scrollHeight + 4) + "px"; })); } catch(e){}
+  }
+}, true);
 
 /* ============================================================
    ÉTAT DE L'AUTOMATE
@@ -1065,7 +1102,7 @@ function renderState(){
   const cur = s.sourcing_cursor || {};
   const total = (cur.order || []).length, done = (cur.done || []).length;
   $("apBar").style.width = total ? Math.round(done / total * 100) + "%" : "0";
-  $("apProgress").textContent = total ? fmt(done) + " département(s) sur " + fmt(total) + " entièrement parcourus pour ce ciblage." : "Le parcours démarrera au premier passage.";
+  $("apProgress").textContent = total ? fmt(done) + " zone(s) de recherche sur " + fmt(total) + " entièrement parcourues (département × taille d'entreprise)." : "Le parcours démarrera au premier passage.";
   const rep = s.last_sourcing_report;
   $("apReport").innerHTML = rep
     ? "<b>Dernier passage " + esc(ago(rep.at)) + " :</b> " + fmt(rep.scanned) + " entreprises analysées, " + fmt(rep.added) + " ajoutée(s) à la file" + (rep.known ? ", " + fmt(rep.known) + " déjà connue(s)" : "") + (rep.lowScore ? ", " + fmt(rep.lowScore) + " sous le score minimum" : "") + "." + (rep.exhausted ? " <b>Toutes les entreprises du ciblage ont été parcourues</b> : élargissez-le pour continuer." : "")
@@ -1194,7 +1231,8 @@ function readTarget(){
   if (!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
   return {
     target: { sect, metiers, effs, deps: parseDeps($("deps").value), tousRge: document.querySelector("input[name=src]:checked").value === "tous" },
-    minScore: Number(document.querySelector("input[name=minscore]:checked").value)
+    minScore: Number(document.querySelector("input[name=minscore]:checked").value),
+    requireFirstName: $("tReqFirst").checked
   };
 }
 let targetDirty = false;
@@ -1208,6 +1246,7 @@ function fillTarget(){
   document.querySelectorAll("input[name=eff]").forEach(c => { c.checked = c.value.split(",").some(code => effs.includes(code)); });
   $("deps").value = (t.deps || []).join(", ");
   document.querySelectorAll("input[name=src]").forEach(r => { r.checked = r.value === (t.tousRge ? "tous" : "actifs"); });
+  $("tReqFirst").checked = state.settings.require_first_name !== false;
   const score = Number(state.settings.autopilot_min_score || 0);
   const scoreValue = score >= 65 ? "65" : score >= 40 ? "40" : "0";
   document.querySelectorAll("input[name=minscore]").forEach(r => { r.checked = r.value === scoreValue; });
@@ -1230,24 +1269,44 @@ async function estimate(){
   base.tranche_effectif_salarie = t.effs.join(",");
   base.etat_administratif = "A";
   if (!t.tousRge) base.est_rge = "true";
+  // Une requête par département : l'API plafonne chaque réponse à 10 000.
+  const zones = t.deps.length ? t.deps : DEPS;
+  let total = 0, capped = false, done = 0, failed = false;
+  const queue = zones.slice();
   $("targetEstimate").textContent = "Estimation du nombre d'entreprises…";
-  try {
-    const zones = t.deps.length ? t.deps : [null];
-    if (zones.length > 25){ $("targetEstimate").textContent = ""; return; }
-    let total = 0;
-    for (const dep of zones){
-      const p = new URLSearchParams(Object.assign({}, base, dep ? { departement: dep } : {}, { per_page: "1", page: "1" }));
-      const r = await fetch(API_SIRENE + "?" + p.toString());
-      if (!r.ok) throw new Error();
-      total += Number((await r.json()).total_results || 0);
-      if (run !== estimateRun) return;
-      if (dep) await sleep(160);
+  async function worker(){
+    while (queue.length && run === estimateRun){
+      const dep = queue.shift();
+      try {
+        const r = await fetch(API_SIRENE + "?" + new URLSearchParams(Object.assign({}, base, { departement: dep, per_page: "1", page: "1" })).toString());
+        if (r.status === 429){ queue.push(dep); await sleep(1500); continue; }
+        if (!r.ok) throw new Error();
+        const n = Number((await r.json()).total_results || 0);
+        total += n; if (n >= 10000) capped = true;
+      } catch(e){ failed = true; }
+      done++;
+      if (run === estimateRun && zones.length > 3) $("targetEstimate").textContent = "Estimation… " + done + " / " + zones.length + " départements";
+      await sleep(250);
     }
-    if (run !== estimateRun) return;
-    const perDay = state ? Math.max(1, state.settings.daily_cap) : 200;
-    $("targetEstimate").innerHTML = "≈ <b>" + fmt(total) + "</b> entreprises correspondent" + (total ? ", soit environ " + fmt(Math.ceil(total / perDay)) + " jours d'envoi au quota maximum" : "") + ".";
-  } catch(e){ if (run === estimateRun) $("targetEstimate").textContent = ""; }
+  }
+  await Promise.all([worker(), worker(), worker()]);
+  if (run !== estimateRun) return;
+  if (failed && !total){ $("targetEstimate").textContent = ""; return; }
+  const perDay = state ? Math.max(1, state.settings.daily_cap) : 200;
+  $("targetEstimate").innerHTML = t.tousRge
+    ? (capped ? "Au moins " : "≈ ") + "<b>" + fmt(total) + "</b> entreprises du BTP correspondent ; seules celles passées par la qualification RGE (≈ 173 000 en France, actuelles et anciennes) ont une adresse e-mail publiée."
+    : (capped ? "Au moins " : "≈ ") + "<b>" + fmt(total) + "</b> entreprises correspondent, soit environ " + fmt(Math.ceil(total / perDay)) + " jours d'envoi au quota maximum.";
 }
+$("bTargetMax").addEventListener("click", () => {
+  document.querySelectorAll("input[name=secteur]").forEach(c => { c.checked = true; });
+  metBoxes().forEach(c => { c.checked = false; });
+  document.querySelectorAll("input[name=eff]").forEach(c => { c.checked = true; });
+  document.querySelectorAll("input[name=src]").forEach(r => { r.checked = r.value === "tous"; });
+  document.querySelectorAll("input[name=minscore]").forEach(r => { r.checked = r.value === "0"; });
+  $("deps").value = "";
+  targetChanged();
+  toast("Volume maximum : tout le BTP, toutes tailles, RGE actuels et anciens. Pensez à enregistrer.", 5000);
+});
 $("targetForm").addEventListener("input", targetChanged);
 $("targetForm").addEventListener("change", targetChanged);
 $("targetForm").addEventListener("submit", async ev => {
@@ -1257,7 +1316,7 @@ $("targetForm").addEventListener("submit", async ev => {
   const btn = $("bTargetSave");
   busy(btn, true, "Enregistrement…");
   try {
-    const { settings, replaced } = await api("settings.save", { autopilot_target: t.target, autopilot_min_score: t.minScore });
+    const { settings, replaced } = await api("settings.save", { autopilot_target: t.target, autopilot_min_score: t.minScore, require_first_name: t.requireFirstName });
     state.settings = settings;
     targetDirty = false;
     await loadState();
@@ -1339,7 +1398,7 @@ function sampleData(){ const m = sampleMessage(); return m ? (m.data || {}) : SA
 function renderPreview(){
   const tpl = { subject: $("tSubject").value, body: $("tBody").value };
   const m = sampleMessage();
-  $("tplPreview").innerHTML = mailHtml(composePreview(tpl, state && state.settings, sampleData()), state && state.settings, m ? m.email : "j.dupont@dupont-batiment.fr");
+  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, sampleData(), m ? m.email : "j.dupont@dupont-batiment.fr");
 }
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
 $("tplSample").addEventListener("change", renderPreview);
@@ -1353,7 +1412,7 @@ $("tplList").addEventListener("click", ev => {
 $("bTplNew").addEventListener("click", () => {
   tplId = "";
   document.querySelectorAll(".tpl-item").forEach(x => x.classList.remove("on"));
-  fillTemplate({ name: "", subject: "{entreprise} : ", body: "{bonjour},\n\n", active: true });
+  fillTemplate({ name: "", subject: "{entreprise} : ", body: "Bonjour {prenom},\n\n\n\n{video}\n\nBien cordialement,", active: true });
   $("tName").dataset.dirty = "1";
   renderPreview();
   $("tName").focus();
@@ -1459,7 +1518,7 @@ async function openMessage(id){
       body = '<div class="mail"><div class="mail-h"><div><span>À : </span>' + esc(m.email) + "</div><div><span>Objet : </span><b>" + esc(m.subject) + '</b></div></div><div class="mail-b">' + esc(m.body) + "</div></div>";
     } else {
       const tpl = state && state.templates.find(t => t.active);
-      body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(composePreview(tpl, state.settings, d), state.settings, m.email) + "</div>"
+      body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(tpl, state.settings, d, m.email) + "</div>"
         : '<p class="note">Aucun modèle actif pour l\'aperçu.</p>';
     }
     openModal(niceCompany(m.company) || m.email, (BADGE[m.status] || m.status) + (m.sent_at ? " le " + dateTimeFr(m.sent_at) : " · ajouté le " + dateTimeFr(m.created_at)),
@@ -1571,7 +1630,7 @@ function fillSettings(){
   if (!state) return;
   const s = state.settings;
   $("sName").value = s.sender_name || ""; $("sEmail").value = s.sender_email || ""; $("sReply").value = s.reply_to || "";
-  $("sSig").value = s.signature || ""; $("sFooter").value = s.footer_identity || "";
+  $("sSig").value = s.signature || ""; $("sFooter").value = s.footer_identity || ""; $("sVideo").value = s.video_url || "";
   $("sCap").value = s.daily_cap; $("sWarm").checked = !!s.warmup_enabled; $("sWarmStart").value = s.warmup_start; $("sWarmStep").value = s.warmup_step;
   $("sWinStart").value = hm(s.window_start); $("sWinEnd").value = hm(s.window_end);
   $("sGapMin").value = Math.round(s.min_gap_seconds / 60); $("sGapMax").value = Math.round(s.max_gap_seconds / 60);
@@ -1602,7 +1661,7 @@ $("setForm").addEventListener("submit", async ev => {
   const days = [...document.querySelectorAll("input[name=day]:checked")].map(c => Number(c.value));
   const payload = {
     sender_name: $("sName").value, sender_email: $("sEmail").value, reply_to: $("sReply").value,
-    signature: $("sSig").value, footer_identity: $("sFooter").value,
+    signature: $("sSig").value, footer_identity: $("sFooter").value, video_url: $("sVideo").value.trim(),
     daily_cap: $("sCap").value, warmup_enabled: $("sWarm").checked, warmup_start: $("sWarmStart").value, warmup_step: $("sWarmStep").value,
     window_start: $("sWinStart").value, window_end: $("sWinEnd").value, send_days: days,
     min_gap_seconds: Math.round(Number($("sGapMin").value) * 60), max_gap_seconds: Math.round(Number($("sGapMax").value) * 60),

@@ -28,7 +28,9 @@ Connexion avec le compte **super administrateur Piloz** (le même que sur admin.
 - Quota journalier en **montée en charge** : 10 messages le premier jour d'envoi, +5 par jour d'envoi, jusqu'à 60.
 - **Pause automatique** après 3 erreurs consécutives ou si la boîte refuse la connexion. Une adresse refusée est exclue automatiquement.
 - **Pilote automatique** (facultatif) : quand la file passe sous deux jours d'envoi, le serveur va chercher seul de nouvelles entreprises avec le ciblage enregistré et un score minimum.
-- Pas de pixel de suivi ni de lien traqué : les messages ressemblent à un e-mail écrit à la main.
+- Messages au nom du **Service commercial Piloz** (jamais d'un nom de personne), signature graphique avec le logo, vidéo de présentation d'une minute en image cliquable (emplacement `{video}` du modèle).
+- « Bonjour Prénom » systématique : par défaut, seules les entreprises dont le prénom du dirigeant est connu sont contactées.
+- Pas de pixel de suivi ni de lien traqué.
 
 ## Cadre légal (prospection B2B)
 
