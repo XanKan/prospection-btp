@@ -1,82 +1,57 @@
-# Chantier Prospect — Prospection B2B BTP pour vendre Piloz
+# Piloz Prospection
 
-Application web de prospection qui trouve, note et cartographie les entreprises du BTP (construction, génie civil, travaux spécialisés) les plus susceptibles d'acheter **Piloz**, sur toute la France, à partir de données publiques et gratuites.
+Outil interne publié sur https://prospection.piloz.fr (GitHub Pages). Il trouve des entreprises du BTP dans les données publiques puis **envoie automatiquement un e-mail de prospection personnalisé à chacune**, depuis la boîte Hostinger de Piloz, au rythme réglé.
 
-- 100 % statique : un seul fichier `index.html`, aucun serveur, aucune clé API.
-- Accès protégé par mot de passe (contrôle côté navigateur, voir plus bas), non indexé.
-- Recherche toujours sur toute la France : aucun filtre géographique n'est proposé.
+La page est statique ; tout ce qui touche à l'envoi tourne côté serveur Supabase (projet PILOZ-APP). L'ordinateur peut rester éteint : l'automate continue d'envoyer.
+
+## Accès
+
+Connexion avec le compte **super administrateur Piloz** (le même que sur admin.piloz.fr), double authentification comprise. Aucun mot de passe n'est stocké dans la page.
+
+## Écrans
+
+| Écran | Rôle |
+|---|---|
+| Automate | État en direct (en marche, en pause, hors créneau, quota atteint…), envois du jour, file d'attente, 14 derniers jours, pilote automatique |
+| Recherche | Ciblage par métier (NAF), effectif, zone (départements) et source RGE ; balayage en tourniquet département par département |
+| Résultats | Prospects classés par score Piloz, fiche détaillée avec l'e-mail exact qui partira, bouton « Envoyer à l'automate », export CSV |
+| Carte | Répartition géographique des résultats |
+| Messages | Modèles d'e-mail avec variables (`{bonjour}`, `{prenom}`, `{entreprise}`, `{ville}`, `{metier}`…), aperçu en direct, envoi de test |
+| Envois | File d'attente et historique (envoyés, échecs, ignorés), contenu exact de chaque message envoyé |
+| Exclusions | Désinscriptions, adresses refusées, ajouts manuels, import de l'ancien historique Brevo du navigateur |
+| Réglages | Expéditeur, signature, cadence (quota, montée en charge, créneau, jours, intervalle), pilote automatique |
+
+## Fonctionnement de l'automate
+
+- Chaque entreprise (SIREN) et chaque adresse ne reçoivent **qu'un seul message, pour toujours**.
+- Un message à la fois, espacé au hasard (4 à 10 minutes par défaut), du lundi au vendredi de 8 h 30 à 17 h 30, heure de Paris.
+- Quota journalier en **montée en charge** : 10 messages le premier jour d'envoi, +5 par jour d'envoi, jusqu'à 60.
+- **Pause automatique** après 3 erreurs consécutives ou si la boîte refuse la connexion. Une adresse refusée est exclue automatiquement.
+- **Pilote automatique** (facultatif) : quand la file passe sous deux jours d'envoi, le serveur va chercher seul de nouvelles entreprises avec le ciblage enregistré et un score minimum.
+- Pas de pixel de suivi ni de lien traqué : les messages ressemblent à un e-mail écrit à la main.
+
+## Cadre légal (prospection B2B)
+
+Chaque message identifie l'expéditeur, indique l'origine des données (annuaire RGE de l'ADEME, base SIRENE) et contient un lien de désinscription vers https://piloz.fr/desinscription.html. Les en-têtes `List-Unsubscribe` et `List-Unsubscribe-Post` permettent la désinscription en un clic depuis Gmail et Outlook. Une adresse désinscrite n'est plus jamais contactée.
+
+## Architecture
+
+| Élément | Emplacement |
+|---|---|
+| Interface | `index.html` (ce dépôt) |
+| Tables, file, quota, planificateur pg_cron | `PILOZ-APP/supabase/migrations/202610010100_prospection_automate.sql` |
+| API de l'outil (super admin + MFA) | `PILOZ-APP/supabase/functions/prospection-api` |
+| Envoi SMTP, réveillé par pg_cron | `PILOZ-APP/supabase/functions/prospection-sender` |
+| Désinscription publique | `PILOZ-APP/supabase/functions/prospection-unsubscribe` + `PILOZ-SITE/desinscription.html` |
+| Logique partagée | `PILOZ-APP/supabase/functions/_shared/prospection-*.ts` |
+
+Secrets des fonctions Supabase : `PROSPECTION_SMTP_PASSWORD` (obligatoire, mot de passe de la boîte Hostinger). Facultatifs : `PROSPECTION_SMTP_HOST` (défaut `smtp.hostinger.com`), `PROSPECTION_SMTP_PORT` (défaut `465` ; les ports 25 et 587 sont bloqués par Supabase), `PROSPECTION_SMTP_USER` (défaut : l'adresse d'envoi).
+
+**Ordre de mise en production** : migration et fonctions Supabase d'abord, page `desinscription.html` du site ensuite, et cette interface en dernier (sinon elle appelle une API qui n'existe pas encore).
 
 ## Sources de données
 
-| Source | Ce qu'elle apporte |
-| --- | --- |
-| [API Recherche d'entreprises](https://recherche-entreprises.api.gouv.fr) (SIRENE / RNE) | Raison sociale, effectif, chiffre d'affaires publié et son évolution, dirigeants, nombre d'établissements, coordonnées GPS, code NAF |
-| [Liste des entreprises RGE](https://data.ademe.fr/datasets/liste-des-entreprises-rge-2) (ADEME) | Téléphone, e-mail, site web des **60 200** entreprises actuellement qualifiées RGE |
-| [Historique des entreprises RGE](https://data.ademe.fr/datasets/historique-rge) (ADEME) | Les mêmes coordonnées pour **173 400** entreprises depuis 2014, qualification parfois expirée |
+- **API Recherche d'entreprises** (SIRENE + RNE) : raison sociale, effectif, chiffre d'affaires, dirigeants, établissements, coordonnées GPS.
+- **ADEME RGE** (Licence Ouverte Etalab) : e-mail, téléphone et site des entreprises qualifiées RGE — liste actuelle (≈ 60 200 entreprises) et historique depuis 2014 (≈ 173 400).
 
-## Le point clé : trouver des e-mails, pas des noms
-
-En France, **seules les entreprises qualifiées RGE publient leurs coordonnées en open data**. Toutes les autres n'ont ni e-mail ni téléphone accessible gratuitement.
-
-L'outil exploite le fait que l'API SIRENE expose un indicateur `est_rge` : la recherche est donc **filtrée en amont sur les entreprises qui ont un contact**, au lieu de balayer tout le BTP en espérant tomber dessus.
-
-Mesuré en conditions réelles : **189 entreprises analysées pour 188 contacts avec e-mail** (99 %), contre environ quatre entreprises analysées par e-mail obtenu avant ce filtrage.
-
-Deux modes au choix :
-
-- **RGE actifs** (par défaut) — 60 200 entreprises, coordonnées à jour, recherche rapide.
-- **+ anciens RGE** — 173 400 entreprises. La qualification a pu expirer mais les coordonnées restent souvent valables. Presque trois fois plus de stock, recherche plus lente.
-
-## Couverture nationale réelle
-
-L'API plafonne chaque requête à 10 000 résultats. Au-delà, l'outil découpe automatiquement la recherche par département et les balaie **en tourniquet** — une page dans chacun, à tour de rôle, dans un ordre aléatoire.
-
-Sans ce tourniquet, une recherche vidait entièrement le premier département tiré et tous les prospects venaient du même coin de France. Mesuré : une recherche de 100 contacts ramène des prospects répartis sur **27 départements**.
-
-## Score Piloz (0–100)
-
-Six signaux publics, corrélés au besoin d'un outil de pilotage de chantiers :
-
-| Signal | Poids | Pourquoi |
-| --- | --- | --- |
-| Effectif salarié | 30 | Cœur de cible : les équipes de 3 à 20 personnes |
-| Établissements ouverts | 22 | Plusieurs sites = coordination à organiser |
-| Chiffre d'affaires | 16 | Capacité budgétaire |
-| Croissance du CA | 12 | Une entreprise qui grossit change d'outils |
-| Ancienneté | 10 | Structure installée, mais pas figée |
-| Qualifications RGE | 10 | Activité réelle et diversifiée |
-
-⚠️ **Le score n'indique pas qu'une entreprise cherche un logiciel.** Aucune donnée ouverte ne le dit. Il classe des profils de correspondance avec la cible Piloz, à vérifier au contact.
-
-Le détail du calcul, signal par signal, est affiché dans la fiche de chaque prospect.
-
-## Fonctionnalités
-
-- **Dashboard** : indicateurs (prospects, contacts avec e-mail, profils prioritaires, score moyen) et répartition par profil et par taille d'équipe.
-- **Tableau triable** par score, nom, effectif, chiffre d'affaires ou ville, avec filtre texte instantané et sélection par cases à cocher.
-- **Fiche prospect** : toutes les données, détail du score, boutons de copie de l'e-mail / du téléphone / du SIREN, et liens directs vers la fiche officielle, Google, Maps et LinkedIn.
-- **Carte de France** des prospects, colorés par profil, cliquables.
-- **Filtre métier précis** : une trentaine de métiers basés sur les vrais codes NAF, plus un raccourci « métiers à fort potentiel ».
-- **Export Brevo (.xlsx)** prêt à importer, et **export complet (CSV)** avec tous les signaux. Si des lignes sont sélectionnées, l'export ne porte que sur elles.
-- **Historique** : chaque export Brevo archive les entreprises envoyées ; elles sont ensuite écartées automatiquement des recherches suivantes. Importable et exportable en CSV pour être sauvegardé ou transféré sur un autre poste.
-
-L'objectif de contacts sert de **condition d'arrêt** du balayage : les contacts trouvés au-delà sont conservés, puisqu'ils ont déjà coûté les mêmes appels d'API.
-
-## Mise en ligne
-
-Le dépôt est relié à `prospection.piloz.fr` (fichier `CNAME`). Un `git push` sur la branche par défaut met à jour le site via GitHub Pages.
-
-## Limites à connaître
-
-- **Pas de contact hors RGE.** Une entreprise du BTP qui n'a jamais été qualifiée RGE n'a aucune coordonnée publique gratuite. Sur un métier très précis, le stock peut être inférieur à l'objectif demandé.
-- **Le chiffre d'affaires n'est pas toujours publié** (micro-entreprises, dépôts récents) : le score neutralise ce facteur au lieu de pénaliser l'entreprise.
-- L'effectif est la tranche déclarée à l'INSEE, généralement datée de 2 à 3 ans.
-- Limite de débit de 7 requêtes/seconde côté SIRENE : l'outil reste en dessous automatiquement.
-- **L'historique est local au navigateur.** Il n'est pas partagé entre postes. Exportez-le en CSV pour le conserver.
-- Le mot de passe est vérifié côté navigateur (hash SHA-256 dans le code source). Cela décourage un accès accidentel, ce n'est pas une protection contre quelqu'un qui lit le code. Aucune donnée sensible n'est protégée derrière : tout provient d'API publiques.
-
-Pour changer le mot de passe, ouvrez la page avec `?hash=votrenouveaupasse` : elle affiche le hash à recopier dans `PWD_HASH`.
-
-## RGPD
-
-Les noms de dirigeants et les coordonnées RGE sont publics, mais leur réutilisation en prospection reste soumise au RGPD : base légale d'intérêt légitime, information des personnes dès le premier contact, lien de désinscription, et respect immédiat du droit d'opposition.
+Le score Piloz (0-100) classe des profils à partir de six signaux publics (effectif, établissements, chiffre d'affaires, croissance, ancienneté, qualifications RGE). Il ne mesure pas une intention d'achat.
