@@ -788,10 +788,11 @@ function showLogin(message, mfa){
   setTimeout(() => (mfa ? $("lCode") : $("lEmail")).focus(), 30);
 }
 
+// Double authentification non exigée sur cet outil (choix du 1er octobre
+// 2026) : le mot de passe super administrateur suffit. Elle reste imposée
+// sur admin.piloz.fr. Le formulaire de code est conservé mais dormant.
 async function needsMfa(){
-  const { data, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (error) return false;
-  return data.nextLevel === "aal2" && data.currentLevel !== "aal2";
+  return false;
 }
 
 async function enter(){
