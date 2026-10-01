@@ -266,6 +266,7 @@
   .badge.skipped{background:var(--line-2);color:var(--muted)}
   .badge.open{background:var(--blue-soft);color:var(--blue)} .badge.video{background:var(--violet-soft);color:var(--violet)}
   .badge.clic{background:var(--ok-soft);color:var(--ok)} .badge.off{background:var(--line-2);color:var(--muted);font-weight:600}
+  .badge.unsub{background:var(--danger-soft);color:var(--danger)}
   .ic{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:6px;color:var(--muted);transition:background .12s,color .12s}
   .ic:hover{background:var(--line-2);color:var(--ink)}
   .ic.ok{color:var(--ok)}
@@ -1487,12 +1488,14 @@ function trackState(m){
     m.video_clicked_at ? "vidéo le " + dateTimeFr(m.video_clicked_at) : "",
     m.site_clicked_at ? "site le " + dateTimeFr(m.site_clicked_at) : "",
   ].filter(Boolean).join(" · ");
+  const SUPPRESSED = { desinscription: "Désinscrit", rebond: "Rebond", manuel: "Exclu", deja_contacte: "Exclu" };
   return " " + (m.opened_at
       ? '<span class="badge open" title="Ouvert le ' + esc(dateTimeFr(m.opened_at)) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") + '">Ouvert</span>'
       : '<span class="badge off">Pas ouvert</span>') +
     " " + (clicked
       ? '<span class="badge clic" title="' + esc(clickTitle) + '">' + (m.video_clicked_at ? "▶ " : "") + "Cliqué</span>"
-      : '<span class="badge off">Pas cliqué</span>');
+      : '<span class="badge off">Pas cliqué</span>') +
+    (m.suppressed ? ' <span class="badge unsub" title="Cette adresse ne sera plus jamais contactée">' + esc(SUPPRESSED[m.suppressed] || "Exclu") + "</span>" : "");
 }
 let logT = null;
 async function loadLog(){
