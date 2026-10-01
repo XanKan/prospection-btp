@@ -24,13 +24,13 @@ Connexion avec le compte **super administrateur Piloz** (le même que sur admin.
 ## Fonctionnement de l'automate
 
 - Chaque entreprise (SIREN) et chaque adresse ne reçoivent **qu'un seul message, pour toujours**.
-- Un message à la fois, espacé au hasard (4 à 10 minutes par défaut), du lundi au vendredi de 8 h 30 à 17 h 30, heure de Paris.
-- Quota journalier en **montée en charge** : 10 messages le premier jour d'envoi, +5 par jour d'envoi, jusqu'à 60.
+- Un message à la fois, espacé au hasard (20 à 45 secondes par défaut), du lundi au vendredi de 8 h 30 à 17 h 30, heure de Paris. L'automate enchaîne les envois à chaque réveil pour tenir les gros quotas.
+- Quota journalier réglable jusqu'à **3 000 messages** (le plafond de l'offre e-mail Hostinger), réglé à 1 000. La **montée en charge** progressive reste disponible dans les réglages (désactivée actuellement).
 - **Pause automatique** après 3 erreurs consécutives ou si la boîte refuse la connexion. Une adresse refusée est exclue automatiquement.
 - **Pilote automatique** (facultatif) : quand la file passe sous deux jours d'envoi, le serveur va chercher seul de nouvelles entreprises avec le ciblage enregistré et un score minimum.
 - Messages au nom du **Service commercial Piloz** (jamais d'un nom de personne), signature graphique avec le logo, vidéo de présentation d'une minute en image cliquable (emplacement `{video}` du modèle).
 - « Bonjour Prénom » systématique : par défaut, seules les entreprises dont le prénom du dirigeant est connu sont contactées.
-- Pas de pixel de suivi ni de lien traqué.
+- **Suivi des messages** : pixel d'ouverture et liens traqués dans la version HTML uniquement (fonction publique `prospection-track`, redirection limitée aux domaines piloz.fr, YouTube et Calendly). L'outil affiche qui a ouvert, regardé la vidéo ou cliqué un lien ; le lien de désinscription n'est jamais traqué.
 
 ## Cadre légal (prospection B2B)
 
@@ -45,6 +45,7 @@ Chaque message identifie l'expéditeur, indique l'origine des données (annuaire
 | API de l'outil (super admin + MFA) | `PILOZ-APP/supabase/functions/prospection-api` |
 | Envoi SMTP, réveillé par pg_cron | `PILOZ-APP/supabase/functions/prospection-sender` |
 | Désinscription publique | `PILOZ-APP/supabase/functions/prospection-unsubscribe` + `PILOZ-SITE/desinscription.html` |
+| Suivi (pixel + redirections) | `PILOZ-APP/supabase/functions/prospection-track` |
 | Logique partagée | `PILOZ-APP/supabase/functions/_shared/prospection-*.ts` |
 
 Secrets des fonctions Supabase : `PROSPECTION_SMTP_PASSWORD` (obligatoire, mot de passe de la boîte Hostinger). Facultatifs : `PROSPECTION_SMTP_HOST` (défaut `smtp.hostinger.com`), `PROSPECTION_SMTP_PORT` (défaut `465` ; les ports 25 et 587 sont bloqués par Supabase), `PROSPECTION_SMTP_USER` (défaut : l'adresse d'envoi).

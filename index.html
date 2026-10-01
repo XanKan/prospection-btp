@@ -264,6 +264,8 @@
   .badge.queued{background:var(--violet-soft);color:var(--violet)} .badge.sending{background:var(--blue-soft);color:var(--blue)}
   .badge.sent{background:var(--ok-soft);color:var(--ok)} .badge.failed{background:var(--danger-soft);color:var(--danger)}
   .badge.skipped{background:var(--line-2);color:var(--muted)}
+  .badge.open{background:var(--blue-soft);color:var(--blue)} .badge.video{background:var(--violet-soft);color:var(--violet)}
+  .badge.clic{background:var(--ok-soft);color:var(--ok)}
   .ic{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:6px;color:var(--muted);transition:background .12s,color .12s}
   .ic:hover{background:var(--line-2);color:var(--ink)}
   .ic.ok{color:var(--ok)}
@@ -676,16 +678,16 @@
             <div class="card-h"><h2>Cadence</h2><span class="sub">régulier, aux heures de bureau, avec une montée progressive : c'est ce qui préserve la réputation de piloz.fr</span></div>
             <div class="card-b">
               <div class="fields">
-                <div class="fld"><label for="sCap">Quota maximum par jour</label><input class="inp" type="number" id="sCap" min="1" max="1000">
-                  <p class="help">Plafond une fois la montée en charge terminée.</p></div>
+                <div class="fld"><label for="sCap">Quota maximum par jour</label><input class="inp" type="number" id="sCap" min="1" max="3000">
+                  <p class="help">Hostinger accepte jusqu'à 3 000 e-mails par jour. Plafond une fois la montée en charge terminée.</p></div>
                 <div class="fld"><label>Montée en charge</label>
                   <label class="swi" style="margin:4px 0 10px"><input type="checkbox" id="sWarm"><i></i> Augmenter le quota progressivement</label>
-                  <div class="inline">départ <input class="inp" type="number" id="sWarmStart" min="1" max="1000"> + <input class="inp" type="number" id="sWarmStep" min="0" max="200"> par jour d'envoi</div></div>
+                  <div class="inline">départ <input class="inp" type="number" id="sWarmStart" min="1" max="3000"> + <input class="inp" type="number" id="sWarmStep" min="0" max="1000"> par jour d'envoi</div></div>
                 <div class="fld"><label>Créneau d'envoi (heure de Paris)</label>
                   <div class="inline">de <input class="inp" type="time" id="sWinStart" style="width:120px"> à <input class="inp" type="time" id="sWinEnd" style="width:120px"></div></div>
                 <div class="fld"><label>Intervalle entre deux messages</label>
-                  <div class="inline">entre <input class="inp" type="number" id="sGapMin" min="1" max="120"> et <input class="inp" type="number" id="sGapMax" min="1" max="120"> minutes</div>
-                  <p class="help">Tiré au hasard à chaque envoi, comme un envoi à la main.</p></div>
+                  <div class="inline">entre <input class="inp" type="number" id="sGapMin" min="5" max="7200"> et <input class="inp" type="number" id="sGapMax" min="5" max="7200"> secondes</div>
+                  <p class="help">Tiré au hasard à chaque envoi. Pour 1 000 messages/jour sur un créneau de 10 h, visez 20 à 45 secondes.</p></div>
                 <div class="fld full"><label>Jours d'envoi</label>
                   <div class="chips" id="dayChips"></div></div>
                 <div class="fld"><label for="sErr">En cas d'erreurs répétées</label>
@@ -1066,7 +1068,9 @@ function renderState(){
   const perDayCap = Math.max(1, state.capToday || s.daily_cap);
   $("kQueueF").textContent = c.queued ? "≈ " + fmt(Math.ceil(c.queued / perDayCap)) + " jour(s) d'envoi d'avance" : "recherche en cours";
   $("kSent").textContent = fmt(c.sent);
-  $("kSentF").textContent = state.recent[0] ? "dernier " + ago(state.recent[0].sent_at) : "aucun envoi pour l'instant";
+  const tr = state.tracking || {};
+  $("kSentF").textContent = (state.recent[0] ? "dernier " + ago(state.recent[0].sent_at) : "aucun envoi pour l'instant") +
+    (tr.opened ? " · " + fmt(tr.opened) + " ouvert(s) · " + fmt((tr.video || 0) + (tr.site || 0)) + " clic(s)" : "");
   $("kSupp").textContent = fmt(c.suppressions);
   $("kFail").textContent = fmt(c.failed);
   $("tcQueued").textContent = fmt(c.queued); $("tcSent").textContent = fmt(c.sent);
@@ -1084,14 +1088,14 @@ function renderState(){
 
   // Derniers envois
   $("recent").innerHTML = state.recent.length
-    ? state.recent.map(r => '<li><span class="badge sent">Envoyé</span><div class="grow"><b>' + esc(niceCompany(r.company) || r.email) + "</b><span>" + esc(r.email) + "</span></div><span class=\"note\">" + esc(ago(r.sent_at)) + "</span></li>").join("")
+    ? state.recent.map(r => '<li><span class="badge sent">Envoyé</span>' + trackBadges(r) + '<div class="grow"><b>' + esc(niceCompany(r.company) || r.email) + "</b><span>" + esc(r.email) + "</span></div><span class=\"note\">" + esc(ago(r.sent_at)) + "</span></li>").join("")
     : '<li><div class="grow"><span>Aucun message envoyé pour l\'instant.</span></div></li>';
 
   // Cadence
   const days2 = s.send_days.map(d => DAY_NAMES[d]).join(", ");
   $("cadence").innerHTML =
     "<b>" + fmt(state.capToday) + " messages aujourd'hui</b> au maximum" + (s.warmup_enabled && state.capToday < s.daily_cap ? ", jusqu'à " + fmt(s.daily_cap) + " par jour une fois la montée en charge terminée (+" + s.warmup_step + " par jour d'envoi)" : "") + ".<br>" +
-    "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris), un message toutes les " + Math.round(s.min_gap_seconds / 60) + " à " + Math.round(s.max_gap_seconds / 60) + " minutes.<br>" +
+    "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris), un message toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ".<br>" +
     "Expéditeur : <b>" + esc(s.sender_email ? (s.sender_name + " <" + s.sender_email + ">") : "à renseigner") + "</b>";
 
   // Recherche automatique
@@ -1459,6 +1463,15 @@ $("bTplTest").addEventListener("click", async ev => {
 const LOG = { status: "queued", page: 1, total: 0, items: [], sel: new Set() };
 const ORIGIN = { manuel: "Recherche", autopilote: "Pilote auto" };
 const BADGE = { queued: "En file", sending: "Envoi…", sent: "Envoyé", failed: "Échec", skipped: "Ignoré" };
+function gapLabel(sec){ return sec < 120 ? sec + " seconde(s)" : Math.round(sec / 60) + " minute(s)"; }
+// Badges de suivi d'un message envoyé : ouverture, vidéo vue, lien cliqué.
+function trackBadges(m){
+  const b = [];
+  if (m.opened_at) b.push('<span class="badge open" title="Ouvert le ' + esc(dateTimeFr(m.opened_at)) + '">Ouvert</span>');
+  if (m.video_clicked_at) b.push('<span class="badge video" title="Vidéo ouverte le ' + esc(dateTimeFr(m.video_clicked_at)) + '">▶ Vidéo</span>');
+  if (m.site_clicked_at) b.push('<span class="badge clic" title="Lien cliqué le ' + esc(dateTimeFr(m.site_clicked_at)) + '">Clic</span>');
+  return b.length ? " " + b.join(" ") : "";
+}
 let logT = null;
 async function loadLog(){
   try {
@@ -1485,7 +1498,7 @@ function renderLog(){
     '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
     '<td class="nw">' + esc(ORIGIN[m.origin] || m.origin) + "</td>" +
     '<td class="nw">' + esc(dateTimeFr(LOG.status === "sent" ? m.sent_at : m.created_at)) + "</td>" +
-    '<td><span class="badge ' + esc(m.status) + '">' + esc(BADGE[m.status] || m.status) + "</span>" + (m.error && m.status !== "sent" ? '<div class="meta">' + esc(m.error) + "</div>" : "") + "</td></tr>"
+    '<td><span class="badge ' + esc(m.status) + '">' + esc(BADGE[m.status] || m.status) + "</span>" + (m.status === "sent" ? trackBadges(m) : "") + (m.error && m.status !== "sent" ? '<div class="meta">' + esc(m.error) + "</div>" : "") + "</td></tr>"
   ).join("") : '<tr><td colspan="6" class="empty"><b>Rien ici</b>' + esc(empty[LOG.status]) + "</td></tr>";
   logSel();
 }
@@ -1529,6 +1542,11 @@ async function openMessage(id){
         "<div><dt>Métier</dt><dd>" + esc(d.metier || "—") + "</dd></div>" +
         "<div><dt>SIREN</dt><dd>" + (m.siren ? '<a href="https://annuaire-entreprises.data.gouv.fr/entreprise/' + esc(m.siren) + '" target="_blank" rel="noopener">' + esc(m.siren) + "</a>" : "—") + "</dd></div>" +
         "<div><dt>Origine</dt><dd>" + esc(ORIGIN[m.origin] || m.origin) + (m.score != null ? " · score " + m.score : "") + "</dd></div>" +
+        (m.status === "sent" ? "<div><dt>Suivi</dt><dd>" + ([
+          m.opened_at ? "ouvert le " + dateTimeFr(m.opened_at) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") : "",
+          m.video_clicked_at ? "vidéo ouverte le " + dateTimeFr(m.video_clicked_at) : "",
+          m.site_clicked_at ? "lien cliqué le " + dateTimeFr(m.site_clicked_at) : "",
+        ].filter(Boolean).map(esc).join(" · ") || "pas encore ouvert") + "</dd></div>" : "") +
         (m.error ? '<div style="grid-column:1/-1"><dt>Détail</dt><dd>' + esc(m.error) + "</dd></div>" : "") +
       "</div>" + body);
   } catch(e){ toast(e.message, 5000); }
@@ -1633,7 +1651,7 @@ function fillSettings(){
   $("sSig").value = s.signature || ""; $("sFooter").value = s.footer_identity || ""; $("sVideo").value = s.video_url || "";
   $("sCap").value = s.daily_cap; $("sWarm").checked = !!s.warmup_enabled; $("sWarmStart").value = s.warmup_start; $("sWarmStep").value = s.warmup_step;
   $("sWinStart").value = hm(s.window_start); $("sWinEnd").value = hm(s.window_end);
-  $("sGapMin").value = Math.round(s.min_gap_seconds / 60); $("sGapMax").value = Math.round(s.max_gap_seconds / 60);
+  $("sGapMin").value = s.min_gap_seconds; $("sGapMax").value = s.max_gap_seconds;
   $("sErr").value = s.max_consecutive_errors;
   document.querySelectorAll("input[name=day]").forEach(c => { c.checked = s.send_days.includes(Number(c.value)); });
   const smtp = state.smtp;
@@ -1645,13 +1663,13 @@ function fillSettings(){
   $("setMsg").textContent = "";
   capacityNote();
 }
-// Capacité réelle du créneau : l'automate est réveillé au plus une fois par
-// minute et attend l'intervalle tiré au hasard entre deux messages.
+// Capacité réelle du créneau : l'automate enchaîne les envois en attendant
+// l'intervalle tiré au hasard entre deux messages.
 function capacityNote(){
   const [h1, m1] = ($("sWinStart").value || "08:00").split(":").map(Number), [h2, m2] = ($("sWinEnd").value || "18:30").split(":").map(Number);
-  const minutes = Math.max(0, (h2 * 60 + m2) - (h1 * 60 + m1));
-  const gap = Math.max(1, (Number($("sGapMin").value || 1) + Number($("sGapMax").value || 1)) / 2);
-  const capacity = Math.floor(minutes / gap), cap = Number($("sCap").value || 0);
+  const seconds = Math.max(0, ((h2 * 60 + m2) - (h1 * 60 + m1)) * 60);
+  const gap = Math.max(5, (Number($("sGapMin").value || 5) + Number($("sGapMax").value || 5)) / 2);
+  const capacity = Math.floor(seconds / gap), cap = Number($("sCap").value || 0);
   $("capNote").innerHTML = "Capacité de ce créneau : <b>≈ " + fmt(capacity) + " messages par jour</b>." +
     (cap > capacity ? " Le quota de " + fmt(cap) + " ne sera pas atteint : élargissez le créneau ou réduisez l'intervalle." : "");
 }
@@ -1664,7 +1682,7 @@ $("setForm").addEventListener("submit", async ev => {
     signature: $("sSig").value, footer_identity: $("sFooter").value, video_url: $("sVideo").value.trim(),
     daily_cap: $("sCap").value, warmup_enabled: $("sWarm").checked, warmup_start: $("sWarmStart").value, warmup_step: $("sWarmStep").value,
     window_start: $("sWinStart").value, window_end: $("sWinEnd").value, send_days: days,
-    min_gap_seconds: Math.round(Number($("sGapMin").value) * 60), max_gap_seconds: Math.round(Number($("sGapMax").value) * 60),
+    min_gap_seconds: Math.round(Number($("sGapMin").value)), max_gap_seconds: Math.round(Number($("sGapMax").value)),
     max_consecutive_errors: $("sErr").value
   };
   const btn = $("bSetSave");
