@@ -265,7 +265,7 @@
   .badge.sent{background:var(--ok-soft);color:var(--ok)} .badge.failed{background:var(--danger-soft);color:var(--danger)}
   .badge.skipped{background:var(--line-2);color:var(--muted)}
   .badge.open{background:var(--blue-soft);color:var(--blue)} .badge.video{background:var(--violet-soft);color:var(--violet)}
-  .badge.clic{background:var(--ok-soft);color:var(--ok)}
+  .badge.clic{background:var(--ok-soft);color:var(--ok)} .badge.off{background:var(--line-2);color:var(--muted);font-weight:600}
   .ic{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:6px;color:var(--muted);transition:background .12s,color .12s}
   .ic:hover{background:var(--line-2);color:var(--ink)}
   .ic.ok{color:var(--ok)}
@@ -591,6 +591,13 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
               <input type="search" id="lq" placeholder="Entreprise ou e-mail…">
             </div>
+            <select class="inp" id="lTrack" hidden style="width:auto">
+              <option value="">Suivi : tous</option>
+              <option value="opened">Ouverts</option>
+              <option value="unopened">Pas ouverts</option>
+              <option value="clicked">Cliqués</option>
+              <option value="unclicked">Pas cliqués</option>
+            </select>
             <span class="note" id="lCount"></span>
             <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
               <button type="button" class="b b-out b-sm" id="bLogRetry" hidden disabled>Réessayer</button>
@@ -1472,10 +1479,24 @@ function trackBadges(m){
   if (m.site_clicked_at) b.push('<span class="badge clic" title="Lien cliqué le ' + esc(dateTimeFr(m.site_clicked_at)) + '">Clic</span>');
   return b.length ? " " + b.join(" ") : "";
 }
+// État de suivi explicite d'un message envoyé : ouvert ou pas, cliqué ou pas.
+function trackState(m){
+  const clicked = m.video_clicked_at || m.site_clicked_at;
+  const clickTitle = [
+    m.video_clicked_at ? "vidéo le " + dateTimeFr(m.video_clicked_at) : "",
+    m.site_clicked_at ? "site le " + dateTimeFr(m.site_clicked_at) : "",
+  ].filter(Boolean).join(" · ");
+  return " " + (m.opened_at
+      ? '<span class="badge open" title="Ouvert le ' + esc(dateTimeFr(m.opened_at)) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") + '">Ouvert</span>'
+      : '<span class="badge off">Pas ouvert</span>') +
+    " " + (clicked
+      ? '<span class="badge clic" title="' + esc(clickTitle) + '">' + (m.video_clicked_at ? "▶ " : "") + "Cliqué</span>"
+      : '<span class="badge off">Pas cliqué</span>');
+}
 let logT = null;
 async function loadLog(){
   try {
-    const data = await api("queue.list", { status: LOG.status, page: LOG.page, search: $("lq").value });
+    const data = await api("queue.list", { status: LOG.status, page: LOG.page, search: $("lq").value, track: LOG.status === "sent" ? $("lTrack").value : "" });
     LOG.items = data.items; LOG.total = data.total; LOG.sel.clear();
     renderLog();
   } catch(e){ if (e.code !== "session") toast(e.message, 5000); }
@@ -1483,6 +1504,7 @@ async function loadLog(){
 function renderLog(){
   document.querySelectorAll("#logTabs .tab").forEach(t => t.classList.toggle("on", t.dataset.st === LOG.status));
   $("lDateH").textContent = LOG.status === "sent" ? "Envoyé le" : "Ajouté le";
+  $("lTrack").hidden = LOG.status !== "sent";
   $("bLogRetry").hidden = LOG.status !== "failed";
   $("bLogRemove").hidden = LOG.status === "sent";
   $("bLogRemove").textContent = LOG.status === "queued" ? "Retirer de la file" : "Supprimer";
@@ -1498,7 +1520,7 @@ function renderLog(){
     '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
     '<td class="nw">' + esc(ORIGIN[m.origin] || m.origin) + "</td>" +
     '<td class="nw">' + esc(dateTimeFr(LOG.status === "sent" ? m.sent_at : m.created_at)) + "</td>" +
-    '<td><span class="badge ' + esc(m.status) + '">' + esc(BADGE[m.status] || m.status) + "</span>" + (m.status === "sent" ? trackBadges(m) : "") + (m.error && m.status !== "sent" ? '<div class="meta">' + esc(m.error) + "</div>" : "") + "</td></tr>"
+    '<td><span class="badge ' + esc(m.status) + '">' + esc(BADGE[m.status] || m.status) + "</span>" + (m.status === "sent" ? trackState(m) : "") + (m.error && m.status !== "sent" ? '<div class="meta">' + esc(m.error) + "</div>" : "") + "</td></tr>"
   ).join("") : '<tr><td colspan="6" class="empty"><b>Rien ici</b>' + esc(empty[LOG.status]) + "</td></tr>";
   logSel();
 }
@@ -1510,6 +1532,7 @@ function logSel(){
 }
 $("logTabs").addEventListener("click", ev => { const t = ev.target.closest("[data-st]"); if (!t) return; LOG.status = t.dataset.st; LOG.page = 1; loadLog(); });
 $("lq").addEventListener("input", () => { clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
+$("lTrack").addEventListener("change", () => { LOG.page = 1; loadLog(); });
 $("lPrev").addEventListener("click", () => { LOG.page--; loadLog(); });
 $("lNext").addEventListener("click", () => { LOG.page++; loadLog(); });
 $("lAll").addEventListener("change", ev => {
