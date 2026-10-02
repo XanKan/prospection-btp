@@ -1027,7 +1027,7 @@ function renderReseau(){
     $("bRzDisconnect").hidden = false;
   } else if (li.connected){
     st.className = "st st-warn"; st.lastElementChild.textContent = "Page manquante";
-    $("rzLiInfo").innerHTML = "Profil <b>" + esc(li.member_name || "") + "</b> connecté, mais <b>aucune page entreprise reliée : rien ne sera publié</b> (le profil personnel est exclu).<br>1. Vérifiez que la page LinkedIn de Piloz existe et que vous en êtes administrateur.<br>2. Dans l'application LinkedIn → onglet <b>Products</b> → demandez « <b>Community Management API</b> ».<br>3. Une fois l'accès approuvé par LinkedIn, cliquez « Reconnecter LinkedIn » ci-dessous.";
+    $("rzLiInfo").innerHTML = "Connexion enregistrée" + (li.member_name ? " (" + esc(li.member_name) + ")" : "") + ", mais <b>aucune page entreprise reliée : rien ne sera publié</b> (le profil personnel est exclu).<br>1. Vérifiez que la page LinkedIn de Piloz existe et que vous en êtes administrateur.<br>2. Dans l'application LinkedIn → onglet <b>Products</b> → demandez « <b>Community Management API</b> ».<br>3. Une fois l'accès approuvé par LinkedIn, cliquez « Reconnecter LinkedIn » ci-dessous.";
     $("bRzConnect").textContent = "Reconnecter LinkedIn";
     $("bRzDisconnect").hidden = false;
   } else {
