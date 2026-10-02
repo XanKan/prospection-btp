@@ -894,7 +894,21 @@ async function enter(){
   if (!state) return;
   $("login").hidden = true;
   $("app").hidden = false;
+  // Retour de la connexion LinkedIn (fragment posé par linkedin-oauth).
+  if (liNotice){
+    const n = liNotice; liNotice = null;
+    showView("reseau");
+    toast(n.message || (n.ok ? "LinkedIn connecté." : "Connexion LinkedIn refusée."), 7000);
+  }
   if (!booted){ booted = true; startPolling(); }
+}
+
+let liNotice = null;
+if (location.hash.startsWith("#li=")){
+  const raw = location.hash.slice(4);
+  const dot = raw.indexOf(".");
+  try { liNotice = { ok: raw.slice(0, dot) === "ok", message: decodeURIComponent(raw.slice(dot + 1)) }; } catch(e){ liNotice = { ok: false, message: "" }; }
+  history.replaceState(null, "", location.pathname + location.search);
 }
 
 async function boot(){
@@ -993,7 +1007,7 @@ document.addEventListener("click", ev => {
    RÉSEAU — un post LinkedIn par jour
    ============================================================ */
 const RZ_DAYS = [[1,"Lundi"],[2,"Mardi"],[3,"Mercredi"],[4,"Jeudi"],[5,"Vendredi"],[6,"Samedi"],[7,"Dimanche"]];
-const RZ_IMG = n => "https://piloz.fr/assets/images/reseau/fond-" + (n || 1) + ".png";
+const RZ_IMG = n => "https://piloz.fr/assets/images/reseau/fond-" + (n || 1) + ".png?v=2";
 let RZ = null, rzEditId = null, rzConnectPoll = null;
 
 async function loadReseau(){
