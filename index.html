@@ -181,6 +181,21 @@
   .chip:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
   .chip:has(input:focus-visible){outline:2px solid var(--violet);outline-offset:2px}
   button.chip{font-family:inherit}
+  /* Rubrique Réseau (LinkedIn) */
+  .rz-thumbs{display:flex;gap:8px;flex-wrap:wrap}
+  .rz-th{cursor:pointer;position:relative}
+  .rz-th input{position:absolute;opacity:0;width:0;height:0}
+  .rz-th img{width:96px;height:50px;object-fit:cover;border-radius:8px;display:block;border:2px solid var(--line);transition:border-color .12s,transform .12s}
+  .rz-th:has(input:checked) img{border-color:var(--violet);transform:scale(1.05)}
+  .rz-th:has(input:focus-visible) img{outline:2px solid var(--violet);outline-offset:2px}
+  .rz-item{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--line-2);align-items:flex-start}
+  .rz-item:last-child{border-bottom:0}
+  .rz-item>img{width:88px;height:46px;object-fit:cover;border-radius:7px;flex:none;margin-top:2px;border:1px solid var(--line-2)}
+  .rz-item .txt{font-size:.86rem;white-space:pre-line;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+  .rz-item .meta{display:flex;gap:9px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+  .rz-item .meta .th{font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--violet)}
+  .rz-acts{display:flex;gap:6px;flex:none;flex-direction:column;align-items:stretch}
+  @media (max-width:760px){ .rz-item{flex-wrap:wrap} .rz-acts{flex-direction:row;width:100%} }
   .seg{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px;gap:3px;flex-wrap:wrap}
   .seg label{cursor:pointer;padding:6px 13px;border-radius:6px;font-size:.85rem;font-weight:700;color:var(--muted);transition:background .12s,color .12s;position:relative}
   .seg input{position:absolute;opacity:0;width:0;height:0}
@@ -390,6 +405,7 @@
     </div>
     <nav class="side-nav">
       <button class="nav-b on" data-view="auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg><span class="t">Automate</span></button>
+      <button class="nav-b" data-view="reseau"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/></svg><span class="t">Réseau</span></button>
       <div class="nav-sep">Paramètres</div>
       <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
       <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
@@ -468,6 +484,75 @@
           <div class="card">
             <div class="card-h"><h2>Cadence</h2><div class="right"><button type="button" class="b b-out b-xs" data-go="settings">Modifier</button></div></div>
             <div class="card-b"><div id="cadence" class="note"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== RÉSEAU (LinkedIn) ==================== -->
+      <section class="view" id="v-reseau">
+        <div id="rzBanners"></div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h"><h2>Compte LinkedIn</h2><span class="st" id="rzLiSt"><i></i><span>—</span></span></div>
+            <div class="card-b">
+              <p class="note" id="rzLiInfo">Chargement…</p>
+              <div class="run" style="margin-top:14px">
+                <button type="button" class="b b-main" id="bRzConnect">Connecter LinkedIn</button>
+                <button type="button" class="b b-out" id="bRzRefresh">Actualiser</button>
+                <button type="button" class="b b-out" id="bRzDisconnect" hidden>Déconnecter</button>
+              </div>
+              <p class="note" style="margin-top:12px">LinkedIn limite chaque connexion à environ 60 jours : quand elle expire, un clic sur « Connecter LinkedIn » la renouvelle. Le jeton reste côté serveur, jamais dans ce navigateur.</p>
+            </div>
+          </div>
+          <form class="card" id="rzForm">
+            <div class="card-h"><h2>Publication automatique</h2>
+              <div class="right"><label class="swi"><input type="checkbox" id="rzEnabled"><i></i> Activée</label></div>
+            </div>
+            <div class="card-b">
+              <div class="fields">
+                <div class="fld" style="max-width:170px"><label for="rzTime">Heure de publication</label><input class="inp" type="time" id="rzTime" value="09:00"></div>
+              </div>
+              <div class="fset" style="margin-top:14px">
+                <div class="fset-h"><h3>Jours de publication</h3></div>
+                <div class="chips" id="rzDays"></div>
+              </div>
+              <div class="fld" style="margin-top:14px"><label for="rzNote">Consignes permanentes de rédaction — Claude les lit à chaque rechargement de la file</label>
+                <textarea class="inp" id="rzNote" rows="3" maxlength="2000" placeholder="ex. parler souvent du pointage, cibler les couvreurs, éviter l'humour…"></textarea></div>
+              <div class="run" style="margin-top:14px">
+                <button type="submit" class="b b-main" id="bRzSave">Enregistrer</button>
+                <span class="note">Chaque jour choisi, le premier brouillon de la file est publié à l'heure indiquée (au plus tard dans les 3 heures qui suivent).</span>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2>File de posts à publier</h2>
+            <div class="right">
+              <button type="button" class="b b-out b-sm" id="bRzGen" hidden>Générer un post</button>
+              <button type="button" class="b b-main b-sm" id="bRzNew">+ Écrire un post</button>
+            </div>
+          </div>
+          <div class="card-b">
+            <div id="rzEditor" hidden style="border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px">
+              <div class="fld"><label for="rzEdTheme">Thème (deux ou trois mots, pour varier les sujets)</label><input class="inp" id="rzEdTheme" maxlength="80" placeholder="ex. pointage papier" style="max-width:340px"></div>
+              <div class="fld" style="margin-top:12px"><label for="rzEdText">Texte du post</label><textarea class="inp" id="rzEdText" rows="9" maxlength="2900" placeholder="Accroche en première ligne…"></textarea></div>
+              <div class="fld" style="margin-top:12px"><label>Visuel joint</label><div class="rz-thumbs" id="rzThumbs"></div></div>
+              <div class="run" style="margin-top:14px">
+                <button type="button" class="b b-main" id="bRzEdSave">Enregistrer le brouillon</button>
+                <button type="button" class="b b-out" id="bRzEdCancel">Annuler</button>
+              </div>
+            </div>
+            <ul id="rzDrafts" style="list-style:none;margin:0;padding:0"></ul>
+            <p class="note" id="rzEmpty" hidden>Aucun brouillon en attente. Demandez à Claude Code : « recharge les posts LinkedIn » — ou écrivez le vôtre.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2>Historique</h2></div>
+          <div class="card-b" style="padding-top:6px;padding-bottom:6px">
+            <ul class="list" id="rzHistory"></ul>
+            <p class="note" id="rzHistEmpty" hidden style="padding:10px 0">Rien de publié pour le moment.</p>
           </div>
         </div>
       </section>
@@ -875,6 +960,7 @@ async function api(action, payload){
    ============================================================ */
 const VIEWS = {
   auto:     { t:"Automate",   s:"Recherche d'entreprises et envoi des e-mails de prospection, en continu et sans intervention." },
+  reseau:   { t:"Réseau",     s:"Un post LinkedIn publié automatiquement chaque jour : file de brouillons préparée avec Claude, visuels Piloz." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
   log:      { t:"Envois",     s:"File d'attente et historique de tout ce que l'automate a envoyé." },
@@ -895,11 +981,176 @@ function showView(v){
   if (v === "tpl"){ renderTemplates(); loadSamples(); }
   if (v === "settings") fillSettings();
   if (v === "auto") loadState().catch(() => {});
+  if (v === "reseau") loadReseau().catch(e => toast(e.message || "Chargement de la rubrique Réseau impossible."));
 }
 document.querySelectorAll(".nav-b").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]");
   if (g){ ev.preventDefault(); showView(g.getAttribute("data-go")); }
+});
+
+/* ============================================================
+   RÉSEAU — un post LinkedIn par jour
+   ============================================================ */
+const RZ_DAYS = [[1,"Lundi"],[2,"Mardi"],[3,"Mercredi"],[4,"Jeudi"],[5,"Vendredi"],[6,"Samedi"],[7,"Dimanche"]];
+const RZ_IMG = n => "https://piloz.fr/assets/images/reseau/fond-" + (n || 1) + ".png";
+let RZ = null, rzEditId = null, rzConnectPoll = null;
+
+async function loadReseau(){
+  RZ = await api("reseau.state");
+  renderReseau();
+}
+
+function renderReseau(){
+  if (!RZ) return;
+  const s = RZ.settings, li = RZ.linkedin;
+  const st = $("rzLiSt");
+  if (li.connected){
+    const days = Math.max(0, Math.round((new Date(li.expires_at) - Date.now()) / 864e5));
+    st.className = "st st-ok"; st.lastElementChild.textContent = "Connecté";
+    $("rzLiInfo").innerHTML = "Connecté en tant que <b>" + esc(li.member_name || "profil LinkedIn") + "</b> — connexion valable encore <b>" + days + " jour(s)</b>.";
+    $("bRzConnect").textContent = "Reconnecter LinkedIn";
+    $("bRzDisconnect").hidden = false;
+  } else {
+    st.className = "st st-warn"; st.lastElementChild.textContent = "Non connecté";
+    $("rzLiInfo").innerHTML = RZ.oauthReady
+      ? "Aucun compte connecté. Cliquez sur « Connecter LinkedIn », validez dans l'onglet qui s'ouvre, puis revenez ici."
+      : "L'application LinkedIn n'est pas encore configurée côté serveur : transmettez à Claude Code le <b>Client ID</b> et le <b>Client Secret</b> de votre application LinkedIn pour terminer l'installation.";
+    $("bRzConnect").textContent = "Connecter LinkedIn";
+    $("bRzDisconnect").hidden = true;
+  }
+
+  $("rzEnabled").checked = !!s.enabled;
+  $("rzTime").value = String(s.post_time || "09:00").slice(0, 5);
+  $("rzDays").innerHTML = RZ_DAYS.map(([v, l]) => '<label class="chip"><input type="checkbox" name="rzday" value="' + v + '"' + ((s.post_days || []).includes(v) ? " checked" : "") + "> " + l + "</label>").join("");
+  if (document.activeElement !== $("rzNote")) $("rzNote").value = s.topics_note || "";
+  $("bRzGen").hidden = !RZ.canGenerate;
+
+  const posts = RZ.posts || [];
+  const drafts = posts.filter(p => p.status === "brouillon").sort((a, b) => (a.position - b.position) || String(a.created_at).localeCompare(String(b.created_at)));
+  const history = posts.filter(p => p.status !== "brouillon").sort((a, b) => String(b.published_at || b.created_at).localeCompare(String(a.published_at || a.created_at)));
+
+  const banners = [];
+  if (li.connected){
+    const days = Math.round((new Date(li.expires_at) - Date.now()) / 864e5);
+    if (days <= 7) banners.push('<div class="banner warn"><div class="grow"><b>La connexion LinkedIn expire dans ' + Math.max(0, days) + ' jour(s).</b> Cliquez sur « Reconnecter LinkedIn » pour repartir sur 60 jours.</div></div>');
+  }
+  if (s.enabled && !li.connected) banners.push('<div class="banner err"><div class="grow"><b>Publication activée mais LinkedIn non connecté :</b> rien ne partira tant que le compte n\'est pas relié.</div></div>');
+  if (s.enabled && drafts.length === 0) banners.push('<div class="banner err"><div class="grow"><b>File vide :</b> plus rien à publier. Demandez à Claude Code « recharge les posts LinkedIn », ou écrivez un post ci-dessous.</div></div>');
+  else if (s.enabled && drafts.length < 5) banners.push('<div class="banner warn"><div class="grow"><b>Plus que ' + drafts.length + ' brouillon(s) en réserve</b> — pensez à demander à Claude Code « recharge les posts LinkedIn ».</div></div>');
+  $("rzBanners").innerHTML = banners.join("");
+
+  $("rzEmpty").hidden = drafts.length > 0;
+  $("rzDrafts").innerHTML = drafts.map((p, i) => '<li class="rz-item">' +
+    '<img src="' + RZ_IMG(p.visuel) + '" alt="Visuel ' + p.visuel + '" loading="lazy">' +
+    '<div class="grow" style="flex:1;min-width:0"><div class="meta">' +
+      '<span class="st st-blue" style="padding:2px 9px;font-size:.72rem">' + (i === 0 ? "prochain publié" : "n° " + (i + 1)) + "</span>" +
+      (p.theme ? '<span class="th">' + esc(p.theme) + "</span>" : "") +
+      '<span class="note" style="margin:0">' + dateFr(p.created_at) + "</span></div>" +
+    '<div class="txt">' + esc(p.texte) + "</div></div>" +
+    '<div class="rz-acts">' +
+      '<button type="button" class="b b-main b-xs" data-rz-pub="' + p.id + '">Publier maintenant</button>' +
+      '<button type="button" class="b b-out b-xs" data-rz-edit="' + p.id + '">Modifier</button>' +
+      '<button type="button" class="b b-out b-xs" data-rz-del="' + p.id + '">Supprimer</button>' +
+    "</div></li>").join("");
+
+  $("rzHistEmpty").hidden = history.length > 0;
+  $("rzHistory").innerHTML = history.slice(0, 40).map(p => {
+    const ok = p.status === "publie";
+    return '<li><span class="st ' + (ok ? "st-ok" : "st-danger") + '" style="padding:3px 10px;font-size:.72rem">' + (ok ? "Publié" : "Échec") + "</span>" +
+      '<div class="grow"><b>' + esc(p.theme || p.texte.split("\n")[0].slice(0, 70)) + "</b><span>" +
+      (ok ? "le " + dateFr(p.published_at) + " à " + timeFr(p.published_at) : esc(p.error || "Erreur inconnue")) + "</span></div>" +
+      (ok && p.linkedin_post_id
+        ? '<a class="b b-out b-xs" href="https://www.linkedin.com/feed/update/' + encodeURIComponent(p.linkedin_post_id) + '" target="_blank" rel="noopener">Voir ↗</a>'
+        : (!ok && p.texte !== "(aucun post publié)" ? '<button type="button" class="b b-out b-xs" data-rz-pub="' + p.id + '">Réessayer</button>' : "")) +
+      "</li>";
+  }).join("");
+}
+
+$("bRzRefresh").addEventListener("click", () => loadReseau().then(() => toast("Actualisé.")).catch(e => toast(e.message || "Actualisation impossible.")));
+
+$("bRzConnect").addEventListener("click", async () => {
+  busy($("bRzConnect"), true);
+  try {
+    const { url } = await api("reseau.connect.start");
+    window.open(url, "_blank", "noopener");
+    toast("Validez la connexion dans l'onglet LinkedIn qui vient de s'ouvrir.");
+    clearInterval(rzConnectPoll);
+    let tries = 0;
+    rzConnectPoll = setInterval(async () => {
+      if (++tries > 45 || current !== "reseau"){ clearInterval(rzConnectPoll); return; }
+      try { await loadReseau(); if (RZ.linkedin.connected){ clearInterval(rzConnectPoll); toast("LinkedIn connecté ✓"); } } catch(e){}
+    }, 4000);
+  } catch(e){ toast(e.message || "Impossible de démarrer la connexion LinkedIn."); }
+  busy($("bRzConnect"), false);
+});
+
+$("bRzDisconnect").addEventListener("click", async () => {
+  if (!confirm("Déconnecter LinkedIn ? La publication automatique s'arrêtera jusqu'à la prochaine connexion.")) return;
+  try { await api("reseau.disconnect"); toast("LinkedIn déconnecté."); await loadReseau(); } catch(e){ toast(e.message || "Déconnexion impossible."); }
+});
+
+$("rzForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const days = [...document.querySelectorAll('input[name="rzday"]:checked')].map(i => Number(i.value));
+  busy($("bRzSave"), true);
+  try {
+    const { settings } = await api("reseau.settings.save", { enabled: $("rzEnabled").checked, post_time: $("rzTime").value, post_days: days, topics_note: $("rzNote").value });
+    RZ.settings = settings; renderReseau(); toast("Réglages enregistrés.");
+  } catch(e){ toast(e.message || "Enregistrement impossible."); }
+  busy($("bRzSave"), false);
+});
+
+function rzOpenEditor(post){
+  rzEditId = post ? post.id : null;
+  $("rzEdTheme").value = post ? post.theme || "" : "";
+  $("rzEdText").value = post ? post.texte : "";
+  const sel = post ? post.visuel : 1 + Math.floor(Math.random() * 8);
+  let thumbs = "";
+  for (let i = 1; i <= 8; i++) thumbs += '<label class="rz-th"><input type="radio" name="rzVis" value="' + i + '"' + (i === sel ? " checked" : "") + '><img src="' + RZ_IMG(i) + '" alt="Visuel ' + i + '" loading="lazy"></label>';
+  $("rzThumbs").innerHTML = thumbs;
+  $("rzEditor").hidden = false;
+  $("rzEdText").focus();
+  $("rzEditor").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+$("bRzNew").addEventListener("click", () => rzOpenEditor(null));
+$("bRzEdCancel").addEventListener("click", () => { $("rzEditor").hidden = true; rzEditId = null; });
+$("bRzEdSave").addEventListener("click", async () => {
+  const visuel = Number((document.querySelector('input[name="rzVis"]:checked') || {}).value || 1);
+  busy($("bRzEdSave"), true);
+  try {
+    await api("reseau.draft.save", { id: rzEditId || undefined, texte: $("rzEdText").value, theme: $("rzEdTheme").value, visuel });
+    $("rzEditor").hidden = true; rzEditId = null;
+    toast("Brouillon enregistré.");
+    await loadReseau();
+  } catch(e){ toast(e.message || "Enregistrement impossible."); }
+  busy($("bRzEdSave"), false);
+});
+
+$("bRzGen").addEventListener("click", async () => {
+  const instruction = prompt("Consigne pour ce post (facultatif) :", "");
+  if (instruction === null) return;
+  busy($("bRzGen"), true);
+  try { await api("reseau.generate", { instruction }); toast("Post généré et ajouté à la file."); await loadReseau(); }
+  catch(e){ toast(e.message || "Génération impossible."); }
+  busy($("bRzGen"), false);
+});
+
+$("v-reseau").addEventListener("click", async ev => {
+  const pub = ev.target.closest("[data-rz-pub]"), edit = ev.target.closest("[data-rz-edit]"), del = ev.target.closest("[data-rz-del]");
+  if (edit){ const p = (RZ && RZ.posts || []).find(x => x.id === edit.dataset.rzEdit); if (p) rzOpenEditor(p); return; }
+  if (del){
+    if (!confirm("Supprimer ce brouillon ?")) return;
+    try { await api("reseau.draft.delete", { id: del.dataset.rzDel }); toast("Brouillon supprimé."); await loadReseau(); } catch(e){ toast(e.message || "Suppression impossible."); }
+    return;
+  }
+  if (pub){
+    if (!confirm("Publier ce post maintenant sur votre profil LinkedIn ?")) return;
+    busy(pub, true);
+    try { await api("reseau.publish", { id: pub.dataset.rzPub }); toast("Publié sur LinkedIn ✓"); }
+    catch(e){ toast(e.message || "Publication impossible."); }
+    await loadReseau().catch(() => {});
+  }
 });
 
 /* ============================================================
