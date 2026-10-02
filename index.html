@@ -1007,7 +1007,7 @@ document.addEventListener("click", ev => {
    RÉSEAU — un post LinkedIn par jour
    ============================================================ */
 const RZ_DAYS = [[1,"Lundi"],[2,"Mardi"],[3,"Mercredi"],[4,"Jeudi"],[5,"Vendredi"],[6,"Samedi"],[7,"Dimanche"]];
-const RZ_IMG = n => "https://piloz.fr/assets/images/reseau/v3/fond-" + (n || 1) + ".png";
+const RZ_IMG = n => "https://piloz.fr/assets/images/reseau/v4/fond-" + (n || 1) + ".png";
 let RZ = null, rzEditId = null, rzConnectPoll = null;
 
 async function loadReseau(){
@@ -1119,9 +1119,9 @@ function rzOpenEditor(post){
   rzEditId = post ? post.id : null;
   $("rzEdTheme").value = post ? post.theme || "" : "";
   $("rzEdText").value = post ? post.texte : "";
-  const sel = post ? post.visuel : 1 + Math.floor(Math.random() * 8);
+  const sel = post ? post.visuel : 1 + Math.floor(Math.random() * 9);
   let thumbs = "";
-  for (let i = 1; i <= 8; i++) thumbs += '<label class="rz-th"><input type="radio" name="rzVis" value="' + i + '"' + (i === sel ? " checked" : "") + '><img src="' + RZ_IMG(i) + '" alt="Visuel ' + i + '" loading="lazy"></label>';
+  for (let i = 1; i <= 9; i++) thumbs += '<label class="rz-th"><input type="radio" name="rzVis" value="' + i + '"' + (i === sel ? " checked" : "") + '><img src="' + RZ_IMG(i) + '" alt="Visuel ' + i + '" loading="lazy"></label>';
   $("rzThumbs").innerHTML = thumbs;
   $("rzEditor").hidden = false;
   $("rzEdText").focus();
