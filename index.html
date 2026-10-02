@@ -1752,21 +1752,19 @@ function trackBadges(m){
   if (m.site_clicked_at) b.push('<span class="badge clic" title="Lien cliqué le ' + esc(dateTimeFr(m.site_clicked_at)) + '">Clic</span>');
   return b.length ? " " + b.join(" ") : "";
 }
-// État de suivi explicite d'un message envoyé : ouvert ou pas, cliqué ou pas.
+// État de suivi explicite d'un message envoyé : ouvert ou pas, puis vidéo et
+// clic site affichés séparément (mêmes badges que l'accueil), ou « Pas cliqué ».
 function trackState(m){
-  const clicked = m.video_clicked_at || m.site_clicked_at;
-  const clickTitle = [
-    m.video_clicked_at ? "vidéo le " + dateTimeFr(m.video_clicked_at) : "",
-    m.site_clicked_at ? "site le " + dateTimeFr(m.site_clicked_at) : "",
-  ].filter(Boolean).join(" · ");
   const SUPPRESSED = { desinscription: "Désinscrit", rebond: "Rebond", manuel: "Exclu", deja_contacte: "Exclu" };
-  return " " + (m.opened_at
-      ? '<span class="badge open" title="Ouvert le ' + esc(dateTimeFr(m.opened_at)) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") + '">Ouvert</span>'
-      : '<span class="badge off">Pas ouvert</span>') +
-    " " + (clicked
-      ? '<span class="badge clic" title="' + esc(clickTitle) + '">' + (m.video_clicked_at ? "▶ " : "") + "Cliqué</span>"
-      : '<span class="badge off">Pas cliqué</span>') +
-    (m.suppressed ? ' <span class="badge unsub" title="Cette adresse ne sera plus jamais contactée">' + esc(SUPPRESSED[m.suppressed] || "Exclu") + "</span>" : "");
+  const parts = [];
+  parts.push(m.opened_at
+    ? '<span class="badge open" title="Ouvert le ' + esc(dateTimeFr(m.opened_at)) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") + '">Ouvert</span>'
+    : '<span class="badge off">Pas ouvert</span>');
+  if (m.video_clicked_at) parts.push('<span class="badge video" title="Vidéo ouverte le ' + esc(dateTimeFr(m.video_clicked_at)) + '">▶ Vidéo</span>');
+  if (m.site_clicked_at) parts.push('<span class="badge clic" title="Site ouvert le ' + esc(dateTimeFr(m.site_clicked_at)) + '">Clic site</span>');
+  if (!m.video_clicked_at && !m.site_clicked_at) parts.push('<span class="badge off">Pas cliqué</span>');
+  if (m.suppressed) parts.push('<span class="badge unsub" title="Cette adresse ne sera plus jamais contactée">' + esc(SUPPRESSED[m.suppressed] || "Exclu") + "</span>");
+  return " " + parts.join(" ");
 }
 let logT = null;
 async function loadLog(){
