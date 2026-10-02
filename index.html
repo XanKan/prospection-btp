@@ -501,7 +501,7 @@
                 <button type="button" class="b b-out" id="bRzRefresh">Actualiser</button>
                 <button type="button" class="b b-out" id="bRzDisconnect" hidden>Déconnecter</button>
               </div>
-              <p class="note" style="margin-top:12px">LinkedIn limite chaque connexion à environ 60 jours : quand elle expire, un clic sur « Connecter LinkedIn » la renouvelle. Le jeton reste côté serveur, jamais dans ce navigateur.</p>
+              <p class="note" style="margin-top:12px">Les posts partent <b>uniquement sur la page entreprise Piloz</b>, jamais sur le profil personnel. LinkedIn limite chaque connexion à environ 60 jours : quand elle expire, un clic sur « Reconnecter LinkedIn » la renouvelle. Le jeton reste côté serveur, jamais dans ce navigateur.</p>
             </div>
           </div>
           <form class="card" id="rzForm">
@@ -974,7 +974,7 @@ async function api(action, payload){
    ============================================================ */
 const VIEWS = {
   auto:     { t:"Automate",   s:"Recherche d'entreprises et envoi des e-mails de prospection, en continu et sans intervention." },
-  reseau:   { t:"Réseau",     s:"Un post LinkedIn publié automatiquement chaque jour : file de brouillons préparée avec Claude, visuels Piloz." },
+  reseau:   { t:"Réseau",     s:"Un post par jour sur la page LinkedIn de Piloz : file de brouillons préparée avec Claude, visuels de marque." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
   log:      { t:"Envois",     s:"File d'attente et historique de tout ce que l'automate a envoyé." },
@@ -1019,10 +1019,15 @@ function renderReseau(){
   if (!RZ) return;
   const s = RZ.settings, li = RZ.linkedin;
   const st = $("rzLiSt");
-  if (li.connected){
+  if (li.connected && li.org_id){
     const days = Math.max(0, Math.round((new Date(li.expires_at) - Date.now()) / 864e5));
-    st.className = "st st-ok"; st.lastElementChild.textContent = "Connecté";
-    $("rzLiInfo").innerHTML = "Connecté en tant que <b>" + esc(li.member_name || "profil LinkedIn") + "</b> — connexion valable encore <b>" + days + " jour(s)</b>.";
+    st.className = "st st-ok"; st.lastElementChild.textContent = "Page reliée";
+    $("rzLiInfo").innerHTML = "Les posts partiront sur la page <b>" + esc(li.org_name || "entreprise") + "</b> (connecté via " + esc(li.member_name || "votre profil") + ", valable encore <b>" + days + " jour(s)</b>). Jamais sur le profil personnel.";
+    $("bRzConnect").textContent = "Reconnecter LinkedIn";
+    $("bRzDisconnect").hidden = false;
+  } else if (li.connected){
+    st.className = "st st-warn"; st.lastElementChild.textContent = "Page manquante";
+    $("rzLiInfo").innerHTML = "Profil <b>" + esc(li.member_name || "") + "</b> connecté, mais <b>aucune page entreprise reliée : rien ne sera publié</b> (le profil personnel est exclu).<br>1. Vérifiez que la page LinkedIn de Piloz existe et que vous en êtes administrateur.<br>2. Dans l'application LinkedIn → onglet <b>Products</b> → demandez « <b>Community Management API</b> ».<br>3. Une fois l'accès approuvé par LinkedIn, cliquez « Reconnecter LinkedIn » ci-dessous.";
     $("bRzConnect").textContent = "Reconnecter LinkedIn";
     $("bRzDisconnect").hidden = false;
   } else {
@@ -1050,6 +1055,7 @@ function renderReseau(){
     if (days <= 7) banners.push('<div class="banner warn"><div class="grow"><b>La connexion LinkedIn expire dans ' + Math.max(0, days) + ' jour(s).</b> Cliquez sur « Reconnecter LinkedIn » pour repartir sur 60 jours.</div></div>');
   }
   if (s.enabled && !li.connected) banners.push('<div class="banner err"><div class="grow"><b>Publication activée mais LinkedIn non connecté :</b> rien ne partira tant que le compte n\'est pas relié.</div></div>');
+  else if (s.enabled && !li.org_id) banners.push('<div class="banner err"><div class="grow"><b>Publication activée mais aucune page entreprise reliée :</b> rien ne partira. Le profil personnel est exclu — demandez l\'accès « Community Management API » dans l\'application LinkedIn puis reconnectez.</div></div>');
   if (s.enabled && drafts.length === 0) banners.push('<div class="banner err"><div class="grow"><b>File vide :</b> plus rien à publier. Demandez à Claude Code « recharge les posts LinkedIn », ou écrivez un post ci-dessous.</div></div>');
   else if (s.enabled && drafts.length < 5) banners.push('<div class="banner warn"><div class="grow"><b>Plus que ' + drafts.length + ' brouillon(s) en réserve</b> — pensez à demander à Claude Code « recharge les posts LinkedIn ».</div></div>');
   $("rzBanners").innerHTML = banners.join("");
