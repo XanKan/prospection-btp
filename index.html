@@ -1800,6 +1800,13 @@ function trackBadges(m){
 }
 // État de suivi explicite d'un message envoyé : ouvert ou pas, puis vidéo et
 // clic site affichés séparément (mêmes badges que l'accueil), ou « Pas cliqué ».
+// Signal d'intention porté par le prospect : marché public de travaux gagné ou offre d'emploi en cours.
+function signalBadge(m){
+  const d = m.data || {};
+  if (d.marche) return ' <span class="badge clic" title="Marché public remporté : ' + esc(d.marche) + '">Marché public</span>';
+  if (d.offre) return ' <span class="badge clic" title="Offre d\'emploi en cours : ' + esc(d.offre) + '">Recrute</span>';
+  return "";
+}
 function trackState(m){
   const SUPPRESSED = { desinscription: "Désinscrit", rebond: "Rebond", manuel: "Exclu", deja_contacte: "Exclu" };
   const parts = [];
@@ -1840,7 +1847,7 @@ function renderLog(){
     '<td><input type="checkbox" class="cbx" data-lsel="' + esc(m.id) + '"' + (LOG.sel.has(m.id) ? " checked" : "") + (m.status === "sent" || m.status === "sending" ? " disabled" : "") + "></td>" +
     "<td><b>" + esc(niceCompany(m.company) || "—") + '</b><div class="meta">' + esc(m.email) + "</div></td>" +
     '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
-    '<td class="nw">' + esc(ORIGIN[m.origin] || m.origin) + "</td>" +
+    '<td class="nw">' + esc(ORIGIN[m.origin] || m.origin) + signalBadge(m) + "</td>" +
     '<td class="nw">' + esc(dateTimeFr(LOG.status === "sent" ? m.sent_at : m.created_at)) + "</td>" +
     '<td><span class="badge ' + esc(m.status) + '">' + esc(BADGE[m.status] || m.status) + "</span>" + (m.status === "sent" ? trackState(m) : "") + (m.error && m.status !== "sent" ? '<div class="meta">' + esc(m.error) + "</div>" : "") + "</td></tr>"
   ).join("") : '<tr><td colspan="6" class="empty"><b>Rien ici</b>' + esc(empty[LOG.status]) + "</td></tr>";
@@ -1887,6 +1894,9 @@ async function openMessage(id){
         "<div><dt>Métier</dt><dd>" + esc(d.metier || "—") + "</dd></div>" +
         "<div><dt>SIREN</dt><dd>" + (m.siren ? '<a href="https://annuaire-entreprises.data.gouv.fr/entreprise/' + esc(m.siren) + '" target="_blank" rel="noopener">' + esc(m.siren) + "</a>" : "—") + "</dd></div>" +
         "<div><dt>Origine</dt><dd>" + esc(ORIGIN[m.origin] || m.origin) + (m.score != null ? " · score " + m.score : "") + "</dd></div>" +
+        (d.marche ? "<div><dt>Marché public gagné</dt><dd>" + esc(d.marche) + "</dd></div>" : "") +
+        (d.offre ? "<div><dt>Offre d'emploi en cours</dt><dd>" + esc(d.offre) + "</dd></div>" : "") +
+        (d.tel ? "<div><dt>Téléphone</dt><dd>" + esc(d.tel) + "</dd></div>" : "") +
         (m.status === "sent" ? "<div><dt>Suivi</dt><dd>" + ([
           m.opened_at ? "ouvert le " + dateTimeFr(m.opened_at) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") : "",
           m.video_clicked_at ? "vidéo ouverte le " + dateTimeFr(m.video_clicked_at) : "",
