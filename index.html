@@ -674,6 +674,7 @@
       <section class="view" id="v-log">
         <div class="card">
           <div class="tabs" id="logTabs">
+            <button type="button" class="tab" data-st="all">Tous<span class="pill num" id="tcAll">0</span></button>
             <button type="button" class="tab on" data-st="queued">En file<span class="pill num" id="tcQueued">0</span></button>
             <button type="button" class="tab" data-st="sent">Envoyés<span class="pill num" id="tcSent">0</span></button>
             <button type="button" class="tab" data-st="followups">Relances<span class="pill num" id="tcFollow">0</span></button>
@@ -1392,6 +1393,7 @@ function renderState(){
   $("kSupp").textContent = fmt(c.suppressions);
   $("kFail").textContent = fmt(c.failed);
   $("tcQueued").textContent = fmt(c.queued); $("tcSent").textContent = fmt(c.sent); $("tcFollow").textContent = fmt((state.followups || {}).sent || 0);
+  $("tcAll").textContent = fmt((c.queued || 0) + (c.sent || 0) + (c.failed || 0) + (c.skipped || 0));
   $("tcFailed").textContent = fmt(c.failed); $("tcSkipped").textContent = fmt(c.skipped);
 
   // Tout l'historique, jour par jour (heure de Paris), du premier envoi à aujourd'hui.
@@ -1850,21 +1852,20 @@ async function loadLog(){
 }
 function renderLog(){
   document.querySelectorAll("#logTabs .tab").forEach(t => t.classList.toggle("on", t.dataset.st === LOG.status));
-  $("lDateH").textContent = LOG.status === "sent" ? "Envoyé le" : LOG.status === "followups" ? "Relance envoyée le" : "Ajouté le";
+  $("lDateH").textContent = LOG.status === "sent" ? "Envoyé le" : LOG.status === "followups" ? "Relance envoyée le" : LOG.status === "all" ? "Envoyé / ajouté le" : "Ajouté le";
   $("lTrack").hidden = LOG.status !== "sent";
   $("lSignal").hidden = LOG.status === "followups";
   $("lStage").hidden = LOG.status !== "followups";
   $("bLogRetry").hidden = LOG.status !== "failed";
-  $("bLogRemove").hidden = LOG.status === "sent";
+  $("bLogRemove").hidden = LOG.status === "sent" || LOG.status === "all" || LOG.status === "followups";
   $("bLogRemove").textContent = LOG.status === "queued" ? "Retirer de la file" : "Supprimer";
   const pages = Math.max(1, Math.ceil(LOG.total / 50));
   $("lPage").textContent = "Page " + LOG.page + " / " + pages + " · " + fmt(LOG.total) + " ligne(s)";
   $("lPrev").disabled = LOG.page <= 1; $("lNext").disabled = LOG.page >= pages;
   $("lCount").textContent = "";
-  const empty = { queued: "La file est vide. Envoyez des prospects depuis l'écran Résultats ou activez le pilote automatique.", sent: "Aucun message envoyé pour l'instant.", failed: "Aucun échec.", skipped: "Aucun message ignoré.", followups: "Aucune relance envoyée pour l'instant. Les relances se règlent dans Réglages." };
+  const empty = { all: "Aucun message pour l'instant.", queued: "La file est vide. Envoyez des prospects depuis l'écran Résultats ou activez le pilote automatique.", sent: "Aucun message envoyé pour l'instant.", failed: "Aucun échec.", skipped: "Aucun message ignoré.", followups: "Aucune relance envoyée pour l'instant. Les relances se règlent dans Réglages." };
   if (LOG.status === "followups"){
-    $("lBody").innerHTML = LOG.items.length ? LOG.items.map(f => { const m = f.message || {}; return
-      '<tr class="click" data-msg="' + esc(m.id || "") + '">' +
+    $("lBody").innerHTML = LOG.items.length ? LOG.items.map(f => { const m = f.message || {}; return '<tr class="click" data-msg="' + esc(m.id || "") + '">' +
       '<td><input type="checkbox" class="cbx" disabled></td>' +
       "<td><b>" + esc(niceCompany(m.company) || "—") + '</b><div class="meta">' + esc(m.email || "") + "</div></td>" +
       '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
@@ -1881,7 +1882,7 @@ function renderLog(){
     "<td><b>" + esc(niceCompany(m.company) || "—") + '</b><div class="meta">' + esc(m.email) + "</div></td>" +
     '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
     '<td class="nw">' + esc(ORIGIN[m.origin] || m.origin) + signalBadge(m) + "</td>" +
-    '<td class="nw">' + esc(dateTimeFr(LOG.status === "sent" ? m.sent_at : m.created_at)) + "</td>" +
+    '<td class="nw">' + esc(dateTimeFr(LOG.status === "sent" || (LOG.status === "all" && m.sent_at) ? m.sent_at : m.created_at)) + "</td>" +
     '<td><span class="badge ' + esc(m.status) + '">' + esc(BADGE[m.status] || m.status) + "</span>" + (m.status === "sent" ? trackState(m) : "") + (m.error && m.status !== "sent" ? '<div class="meta">' + esc(m.error) + "</div>" : "") + "</td></tr>"
   ).join("") : '<tr><td colspan="6" class="empty"><b>Rien ici</b>' + esc(empty[LOG.status]) + "</td></tr>";
   logSel();
