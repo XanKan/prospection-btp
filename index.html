@@ -689,6 +689,12 @@
               <option value="">Source : toutes</option>
               <option value="marche">Marché public gagné</option>
             </select>
+            <select class="inp" id="lStage" hidden style="width:auto">
+              <option value="">Relances : toutes</option>
+              <option value="1">Relance 1</option>
+              <option value="2">Relance 2</option>
+              <option value="replied">Ont répondu</option>
+            </select>
             <select class="inp" id="lTrack" hidden style="width:auto">
               <option value="">Suivi : tous</option>
               <option value="opened">Ouverts</option>
@@ -1835,7 +1841,7 @@ async function loadLog(){
   const seq = ++logSeq;
   try {
     const data = LOG.status === "followups"
-      ? await api("followups.list", { page: LOG.page, search: $("lq").value })
+      ? await api("followups.list", { page: LOG.page, search: $("lq").value, stage: $("lStage").value })
       : await api("queue.list", { status: LOG.status, page: LOG.page, search: $("lq").value, track: LOG.status === "sent" ? $("lTrack").value : "", signal: $("lSignal").value });
     if (seq !== logSeq) return;
     LOG.items = data.items; LOG.total = data.total; LOG.sel.clear();
@@ -1847,6 +1853,7 @@ function renderLog(){
   $("lDateH").textContent = LOG.status === "sent" ? "Envoyé le" : LOG.status === "followups" ? "Relance envoyée le" : "Ajouté le";
   $("lTrack").hidden = LOG.status !== "sent";
   $("lSignal").hidden = LOG.status === "followups";
+  $("lStage").hidden = LOG.status !== "followups";
   $("bLogRetry").hidden = LOG.status !== "failed";
   $("bLogRemove").hidden = LOG.status === "sent";
   $("bLogRemove").textContent = LOG.status === "queued" ? "Retirer de la file" : "Supprimer";
@@ -1889,6 +1896,7 @@ $("logTabs").addEventListener("click", ev => { const t = ev.target.closest("[dat
 $("lq").addEventListener("input", () => { clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
 $("lTrack").addEventListener("change", () => { LOG.page = 1; loadLog(); });
 $("lSignal").addEventListener("change", () => { LOG.page = 1; loadLog(); });
+$("lStage").addEventListener("change", () => { LOG.page = 1; loadLog(); });
 $("lPrev").addEventListener("click", () => { LOG.page--; loadLog(); });
 $("lNext").addEventListener("click", () => { LOG.page++; loadLog(); });
 $("lAll").addEventListener("change", ev => {
