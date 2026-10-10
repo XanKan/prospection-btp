@@ -23,7 +23,7 @@ Connexion avec le compte **super administrateur Piloz** (le même que sur admin.
 
 ## Fonctionnement de l'automate
 
-- Chaque entreprise (SIREN) et chaque adresse ne reçoivent **qu'un seul message, pour toujours**.
+- Chaque entreprise (SIREN) et chaque adresse ne reçoivent **qu'un seul premier message, pour toujours**. Si les **relances** sont activées (Réglages), jusqu'à deux relances suivent, dans le même fil (« Re : », en-tête `In-Reply-To`), après 7 puis 21 jours par défaut, aux destinataires qui n'ont pas répondu (et, au choix, qui ont ouvert). Les modèles de type « Relance 1 » et « Relance 2 » se règlent dans Messages. L'outil ne lit pas la boîte : le bouton « A répondu » d'un envoi arrête ses relances. Par défaut, seuls les messages envoyés après l'activation sont relancés.
 - Un message à la fois, espacé au hasard (20 à 45 secondes par défaut), du lundi au vendredi de 8 h 30 à 17 h 30, heure de Paris. L'automate enchaîne les envois à chaque réveil pour tenir les gros quotas.
 - Quota journalier réglable jusqu'à **3 000 messages** (le plafond de l'offre e-mail Hostinger), réglé à 1 000. La **montée en charge** progressive reste disponible dans les réglages (désactivée actuellement).
 - **Pause automatique** après 3 erreurs consécutives ou si la boîte refuse la connexion. Une adresse refusée est exclue automatiquement.

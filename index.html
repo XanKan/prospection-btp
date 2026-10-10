@@ -640,6 +640,8 @@
               <div class="card-b">
                 <div class="fields tpl-fields">
                   <div class="fld"><label for="tName">Nom interne</label><input class="inp" id="tName" maxlength="120" placeholder="ex. Premier contact — artisans"></div>
+                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option></select>
+                    <p class="help">Une relance part dans le fil du premier message, en « Re : », aux destinataires qui n'ont pas répondu. Délais et conditions dans Réglages.</p></div>
                   <div class="fld"><label for="tSubject">Objet</label><input class="inp" id="tSubject" maxlength="200"></div>
                   <div class="fld full"><label for="tBody">Message</label><textarea class="inp" id="tBody" rows="12" maxlength="8000"></textarea>
                     <div class="vars" id="varChips"></div>
@@ -683,6 +685,8 @@
               <option value="unopened">Pas ouverts</option>
               <option value="clicked">Cliqués</option>
               <option value="unclicked">Pas cliqués</option>
+              <option value="followed">Relancés</option>
+              <option value="replied">Ont répondu</option>
             </select>
             <span class="note" id="lCount"></span>
             <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
@@ -755,6 +759,22 @@
                 <div class="fld full"><label for="sFooter">Identification de l'expéditeur</label><input class="inp" id="sFooter" maxlength="300">
                   <p class="help">Affichée en bas de chaque message avec la source des données et le lien de désinscription (obligatoire en prospection B2B).</p></div>
               </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><h2>Relances</h2><span class="sub">deux messages de suite au plus, dans le même fil, puis on n'insiste plus</span></div>
+            <div class="card-b">
+              <div class="fields">
+                <div class="fld full"><label class="swi"><input type="checkbox" id="sFuEnabled"><i></i> Relancer automatiquement les destinataires qui n'ont pas répondu</label>
+                  <p class="help">La relance part en « Re : » sur l'objet du premier message, avec un modèle de type « Relance 1 » puis « Relance 2 » (écran Messages). Elle compte dans le quota du jour et passe avant les nouveaux prospects. L'outil ne lit pas la boîte : quand quelqu'un répond, cliquez « A répondu » sur sa ligne dans Envois pour arrêter ses relances.</p></div>
+                <div class="fld"><label for="sFu1">Relance 1, après</label><div class="unit"><input class="inp" type="number" id="sFu1" min="1" max="90" step="1"><span>jours</span></div></div>
+                <div class="fld"><label for="sFu2">Relance 2, après</label><div class="unit"><input class="inp" type="number" id="sFu2" min="2" max="180" step="1"><span>jours</span></div></div>
+                <div class="fld"><label class="swi"><input type="checkbox" id="sFuOpened"><i></i> Seulement si le premier message a été ouvert</label></div>
+                <div class="fld"><label for="sFuSince">Relancer les messages envoyés depuis le</label><input class="inp" type="date" id="sFuSince">
+                  <p class="help">Par défaut, la date d'activation : les messages envoyés avant ne sont pas relancés. Reculez la date pour relancer l'historique, par petites tranches.</p></div>
+              </div>
+              <p class="note" id="fuNote" style="margin-top:10px"></p>
             </div>
           </div>
 
@@ -1350,7 +1370,9 @@ function renderState(){
   $("kSent").textContent = fmt(c.sent);
   const tr = state.tracking || {};
   $("kSentF").textContent = (state.recent[0] ? "dernier " + ago(state.recent[0].sent_at) : "aucun envoi pour l'instant") +
-    (tr.opened ? " · " + fmt(tr.opened) + " ouvert(s) · " + fmt((tr.video || 0) + (tr.site || 0)) + " clic(s)" : "");
+    (tr.opened ? " · " + fmt(tr.opened) + " ouvert(s) · " + fmt((tr.video || 0) + (tr.site || 0)) + " clic(s)" : "") +
+    (state.followups && state.followups.sent ? " · " + fmt(state.followups.sent) + " relance(s)" : "") +
+    (state.followups && state.followups.due ? " · " + fmt(state.followups.due) + " à relancer" : "");
   $("kSupp").textContent = fmt(c.suppressions);
   $("kFail").textContent = fmt(c.failed);
   $("tcQueued").textContent = fmt(c.queued); $("tcSent").textContent = fmt(c.sent);
@@ -1648,7 +1670,7 @@ function renderTemplates(){
   if (tplId && !list.some(t => t.id === tplId)) tplId = null;
   if (tplId === null && list.length && !$("tName").dataset.dirty) tplId = list[0].id;
   $("tplList").innerHTML = list.map(t =>
-    '<button type="button" class="tpl-item' + (t.id === tplId ? " on" : "") + '" data-tpl="' + esc(t.id) + '"><em class="' + (t.active ? "on" : "off") + '">' + (t.active ? "Actif" : "Inactif") + "</em><b>" + esc(t.name) + "</b><span>" + esc(t.subject) + "</span></button>"
+    '<button type="button" class="tpl-item' + (t.id === tplId ? " on" : "") + '" data-tpl="' + esc(t.id) + '"><em class="' + (t.active ? "on" : "off") + '">' + (t.active ? "Actif" : "Inactif") + "</em><b>" + esc(t.name) + (KIND[t.kind] ? ' <code class="k">' + KIND[t.kind] + "</code>" : "") + "</b><span>" + esc(KIND[t.kind] ? "Re : objet du premier message" : t.subject) + "</span></button>"
   ).join("") || '<p class="note" style="margin-bottom:10px">Aucun modèle pour l\'instant.</p>';
   // Une modification en cours n'est jamais écrasée par un rafraîchissement.
   if (!$("tName").dataset.dirty) fillTemplate(list.find(x => x.id === tplId) || { name: "", subject: "", body: "", active: true });
@@ -1669,10 +1691,18 @@ async function loadSamples(){
     renderSampleOptions();
   } catch(e){}
 }
+const KIND = { relance1: "relance 1", relance2: "relance 2" };
+// Une relance part toujours en « Re : » sur l'objet du premier message : son objet propre ne sert pas.
+function syncKind(){
+  const relance = $("tKind").value !== "initial";
+  $("tSubject").disabled = relance;
+  if (relance) $("tSubject").value = "Re : (objet du premier message)";
+}
 function fillTemplate(t){
   $("tplTitle").textContent = t.id ? "Modifier le modèle" : "Nouveau modèle";
   $("tName").value = t.name || ""; $("tSubject").value = t.subject || ""; $("tBody").value = t.body || "";
   $("tActive").checked = t.active !== false;
+  $("tKind").value = t.kind || "initial"; syncKind();
   $("bTplDel").hidden = !t.id;
   $("tplMsg").textContent = "";
   delete $("tName").dataset.dirty;
@@ -1685,6 +1715,7 @@ function renderPreview(){
   $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, sampleData(), m ? m.email : "j.dupont@dupont-batiment.fr");
 }
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
+$("tKind").addEventListener("change", () => { $("tName").dataset.dirty = "1"; syncKind(); renderPreview(); });
 $("tplSample").addEventListener("change", renderPreview);
 $("tplList").addEventListener("click", ev => {
   const b = ev.target.closest("[data-tpl]");
@@ -1696,7 +1727,7 @@ $("tplList").addEventListener("click", ev => {
 $("bTplNew").addEventListener("click", () => {
   tplId = "";
   document.querySelectorAll(".tpl-item").forEach(x => x.classList.remove("on"));
-  fillTemplate({ name: "", subject: "{entreprise} : ", body: "Bonjour {prenom},\n\n\n\n{video}\n\nBien cordialement,", active: true });
+  fillTemplate({ name: "", subject: "{entreprise} : ", body: "Bonjour {prenom},\n\n\n\n{video}\n\nBien cordialement,", active: true, kind: "initial" });
   $("tName").dataset.dirty = "1";
   renderPreview();
   $("tName").focus();
@@ -1705,7 +1736,7 @@ $("bTplSave").addEventListener("click", async ev => {
   const btn = ev.currentTarget;
   busy(btn, true, "Enregistrement…");
   try {
-    const { template } = await api("templates.save", { id: tplId || undefined, name: $("tName").value, subject: $("tSubject").value, body: $("tBody").value, active: $("tActive").checked });
+    const { template } = await api("templates.save", { id: tplId || undefined, name: $("tName").value, subject: $("tSubject").value, body: $("tBody").value, active: $("tActive").checked, kind: $("tKind").value });
     tplId = template.id;
     delete $("tName").dataset.dirty;
     await loadState();
@@ -1763,6 +1794,9 @@ function trackState(m){
   if (m.video_clicked_at) parts.push('<span class="badge video" title="Vidéo ouverte le ' + esc(dateTimeFr(m.video_clicked_at)) + '">▶ Vidéo</span>');
   if (m.site_clicked_at) parts.push('<span class="badge clic" title="Site ouvert le ' + esc(dateTimeFr(m.site_clicked_at)) + '">Clic site</span>');
   if (!m.video_clicked_at && !m.site_clicked_at) parts.push('<span class="badge off">Pas cliqué</span>');
+  (m.prospection_followups || []).filter(f => f.status === "sent").sort((a, b) => a.stage - b.stage).forEach(f =>
+    parts.push('<span class="badge sent" title="Relance ' + f.stage + ' envoyée le ' + esc(dateTimeFr(f.sent_at)) + '">Relance ' + f.stage + "</span>"));
+  if (m.replied_at) parts.push('<span class="badge open" title="Marqué « a répondu » le ' + esc(dateTimeFr(m.replied_at)) + ' : plus de relance">A répondu</span>');
   if (m.suppressed) parts.push('<span class="badge unsub" title="Cette adresse ne sera plus jamais contactée">' + esc(SUPPRESSED[m.suppressed] || "Exclu") + "</span>");
   return " " + parts.join(" ");
 }
@@ -1843,10 +1877,24 @@ async function openMessage(id){
           m.video_clicked_at ? "vidéo ouverte le " + dateTimeFr(m.video_clicked_at) : "",
           m.site_clicked_at ? "lien cliqué le " + dateTimeFr(m.site_clicked_at) : "",
         ].filter(Boolean).map(esc).join(" · ") || "pas encore ouvert") + "</dd></div>" : "") +
+        (m.status === "sent" ? "<div><dt>Relances</dt><dd>" + ((m.prospection_followups || []).sort((a, b) => a.stage - b.stage).map(f =>
+          "relance " + f.stage + " : " + (f.status === "sent" ? "envoyée le " + dateTimeFr(f.sent_at) : f.status === "failed" ? "échec" : "en attente")).map(esc).join(" · ")
+          || (m.replied_at ? "arrêtées" : "aucune pour l'instant")) + (m.replied_at ? " · marqué « a répondu » le " + esc(dateTimeFr(m.replied_at)) : "") + "</dd></div>" : "") +
         (m.error ? '<div style="grid-column:1/-1"><dt>Détail</dt><dd>' + esc(m.error) + "</dd></div>" : "") +
-      "</div>" + body);
+      "</div>" + body,
+      m.status === "sent" ? '<button type="button" class="b ' + (m.replied_at ? "b-out" : "b-main") + '" data-replied="' + esc(m.id) + '" data-value="' + (m.replied_at ? "0" : "1") + '">' + (m.replied_at ? "Annuler « a répondu »" : "A répondu : arrêter les relances") + "</button>" : "");
   } catch(e){ toast(e.message, 5000); }
 }
+$("mF").addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-replied]");
+  if (!b) return;
+  busy(b, true, "…");
+  try {
+    await api("queue.replied", { id: b.getAttribute("data-replied"), replied: b.getAttribute("data-value") === "1" });
+    toast(b.getAttribute("data-value") === "1" ? "Relances arrêtées pour cette entreprise." : "Relances réactivées.");
+    closeModal(); await loadLog(); loadState().catch(() => {});
+  } catch(e){ toast(e.message, 5000); busy(b, false); }
+});
 $("bLogRemove").addEventListener("click", async ev => {
   if (!LOG.sel.size) return;
   if (!confirm((LOG.status === "queued" ? "Retirer " : "Supprimer ") + fmt(LOG.sel.size) + " message(s) ?" + (LOG.status === "queued" ? "\n\nCes entreprises pourront être recontactées plus tard." : ""))) return;
@@ -1949,6 +1997,13 @@ function fillSettings(){
   $("sWinStart").value = hm(s.window_start); $("sWinEnd").value = hm(s.window_end);
   $("sGapMin").value = s.min_gap_seconds; $("sGapMax").value = s.max_gap_seconds;
   $("sErr").value = s.max_consecutive_errors;
+  $("sFuEnabled").checked = !!s.followup_enabled; $("sFu1").value = s.followup1_days || 7; $("sFu2").value = s.followup2_days || 21;
+  $("sFuOpened").checked = s.followup_opened_only !== false;
+  $("sFuSince").value = s.followup_since ? new Date(s.followup_since).toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" }) : "";
+  const fu = state.followups || {};
+  $("fuNote").textContent = s.followup_enabled
+    ? fmt(fu.due || 0) + " relance(s) à envoyer · " + fmt(fu.sent || 0) + " envoyée(s) au total · " + fmt(fu.replied || 0) + " entreprise(s) marquée(s) « a répondu »"
+    : "Relances désactivées : chaque entreprise ne reçoit qu'un seul message.";
   document.querySelectorAll("input[name=day]").forEach(c => { c.checked = s.send_days.includes(Number(c.value)); });
   const smtp = state.smtp;
   const st = $("smtpSt");
@@ -1979,7 +2034,9 @@ $("setForm").addEventListener("submit", async ev => {
     daily_cap: $("sCap").value, warmup_enabled: $("sWarm").checked, warmup_start: $("sWarmStart").value, warmup_step: $("sWarmStep").value,
     window_start: $("sWinStart").value, window_end: $("sWinEnd").value, send_days: days,
     min_gap_seconds: Math.round(Number($("sGapMin").value)), max_gap_seconds: Math.round(Number($("sGapMax").value)),
-    max_consecutive_errors: $("sErr").value
+    max_consecutive_errors: $("sErr").value,
+    followup_enabled: $("sFuEnabled").checked, followup1_days: $("sFu1").value, followup2_days: $("sFu2").value,
+    followup_opened_only: $("sFuOpened").checked, followup_since: $("sFuSince").value
   };
   const btn = $("bSetSave");
   busy(btn, true, "Enregistrement…");
