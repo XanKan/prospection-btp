@@ -573,6 +573,11 @@
             <p class="note" style="margin-top:10px" id="srcNote"></p>
           </div>
           <div class="fset">
+            <div class="fset-h"><h3>Signal d'intention : marchés publics gagnés</h3><span class="sub">un marché de travaux notifié, c'est un chantier qui démarre dans les semaines qui viennent</span></div>
+            <label class="swi"><input type="checkbox" id="tMarches"><i></i> Chercher aussi les entreprises qui viennent de remporter un marché public de travaux (données essentielles de la commande publique, 45 derniers jours)</label>
+            <p class="note" style="margin-top:10px">Source ouverte, sans clé ni inscription : environ 1 000 entreprises par mois en France, avec leur SIRET. Chaque titulaire passe par le même entonnoir (tranche d'effectif du ciblage, adresse RGE, prénom, score), gagne 15 points et reçoit le modèle « Chantier public » grâce à la variable <code class="k">{marche}</code>.</p>
+          </div>
+          <div class="fset">
             <div class="fset-h"><h3>Signal d'intention : offres d'emploi</h3><span class="sub">une entreprise qui recrute un chef d'équipe ou un maçon a un problème de planning maintenant</span></div>
             <label class="swi"><input type="checkbox" id="tEmploi"><i></i> Chercher aussi les entreprises du bâtiment qui publient une offre d'emploi (France Travail, 7 derniers jours)</label>
             <p class="note" style="margin-top:10px" id="emploiNote">À chaque passage, le pilote automatique balaie quelques départements du ciblage, retrouve l'entreprise derrière chaque offre, puis l'enrichit comme les autres (adresse RGE, prénom, score). Ces entreprises gagnent 15 points de score et reçoivent le modèle « Vous recrutez » grâce à la variable <code class="k">{offre}</code>.</p>
@@ -1201,8 +1206,8 @@ $("v-reseau").addEventListener("click", async ev => {
 /* ============================================================
    PERSONNALISATION — miroir de supabase/functions/_shared/prospection-core.ts
    ============================================================ */
-const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "offre"];
-const VAR_HELP = { bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", offre:"intitulé de l'offre d'emploi en cours (source France Travail), vide sinon : un modèle qui l'utilise n'est envoyé qu'aux entreprises qui recrutent", video:"emplacement de la vidéo, seul sur sa ligne" };
+const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "offre", "marche"];
+const VAR_HELP = { bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", offre:"intitulé de l'offre d'emploi en cours (source France Travail), vide sinon : un modèle qui l'utilise n'est envoyé qu'aux entreprises qui recrutent", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -1417,6 +1422,7 @@ function renderState(){
   const rep = s.last_sourcing_report;
   $("apReport").innerHTML = rep
     ? "<b>Dernier passage " + esc(ago(rep.at)) + " :</b> " + fmt(rep.scanned) + " entreprises analysées, " + fmt(rep.added) + " ajoutée(s) à la file" + (rep.known ? ", " + fmt(rep.known) + " déjà connue(s)" : "") + (rep.lowScore ? ", " + fmt(rep.lowScore) + " sous le score minimum" : "") + "." + (rep.exhausted ? " <b>Toutes les entreprises du ciblage ont été parcourues</b> : élargissez-le pour continuer." : "")
+      + (rep.marches ? " <b>Marchés publics :</b> " + (rep.marches.off ? "indisponible (" + esc(rep.marches.off) + ")" : fmt(rep.marches.marches) + " marché(s) lu(s) sur " + fmt(rep.marches.total) + ", " + fmt(rep.marches.entreprises) + " entreprise(s) dans le ciblage, " + fmt(rep.marches.added) + " ajoutée(s).") : "")
       + (rep.emploi ? " <b>Offres d'emploi :</b> " + (rep.emploi.off ? "indisponible (" + esc(rep.emploi.off) + ")" : fmt(rep.emploi.offres) + " offre(s) sur " + fmt(rep.emploi.deps) + " département(s), " + fmt(rep.emploi.entreprises) + " entreprise(s) retrouvée(s), " + fmt(rep.emploi.added) + " ajoutée(s).") : "")
     : "Aucun passage pour l'instant : le premier aura lieu dès que l'automate sera démarré.";
 }
@@ -1542,7 +1548,7 @@ function readTarget(){
   const effs = [...document.querySelectorAll("input[name=eff]:checked")].flatMap(c => c.value.split(","));
   if (!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
   return {
-    target: { sect, metiers, effs, deps: parseDeps($("deps").value), tousRge: document.querySelector("input[name=src]:checked").value === "tous", emploi: $("tEmploi").checked },
+    target: { sect, metiers, effs, deps: parseDeps($("deps").value), tousRge: document.querySelector("input[name=src]:checked").value === "tous", emploi: $("tEmploi").checked, marches: $("tMarches").checked },
     minScore: Number(document.querySelector("input[name=minscore]:checked").value),
     requireFirstName: $("tReqFirst").checked
   };
@@ -1559,6 +1565,7 @@ function fillTarget(){
   $("deps").value = (t.deps || []).join(", ");
   document.querySelectorAll("input[name=src]").forEach(r => { r.checked = r.value === (t.tousRge ? "tous" : "actifs"); });
   $("tEmploi").checked = !!t.emploi;
+  $("tMarches").checked = !!t.marches;
   if (state.emploi && !state.emploi.configured) $("emploiNote").innerHTML = '<b>Source non configurée :</b> créez une application gratuite sur <a href="https://francetravail.io" target="_blank" rel="noopener">francetravail.io</a> avec l\'API « Offres d\'emploi v2 », puis enregistrez ses identifiants comme secrets Supabase <code class="k">FRANCE_TRAVAIL_CLIENT_ID</code> et <code class="k">FRANCE_TRAVAIL_CLIENT_SECRET</code>. Sans cela, la case n\'a pas d\'effet.';
   $("tReqFirst").checked = state.settings.require_first_name !== false;
   const score = Number(state.settings.autopilot_min_score || 0);
