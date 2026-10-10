@@ -30,7 +30,7 @@ Connexion avec le compte **super administrateur Piloz** (le même que sur admin.
 - **Pilote automatique** (facultatif) : quand la file passe sous deux jours d'envoi, le serveur va chercher seul de nouvelles entreprises avec le ciblage enregistré et un score minimum.
 - Messages au nom du **Service commercial Piloz** (jamais d'un nom de personne), signature graphique avec le logo, vidéo de présentation d'une minute en image cliquable (emplacement `{video}` du modèle).
 - « Bonjour Prénom » systématique : par défaut, seules les entreprises dont le prénom du dirigeant est connu sont contactées.
-- **Suivi des messages** : pixel d'ouverture et liens traqués dans la version HTML uniquement (fonction publique `prospection-track`, redirection limitée aux domaines piloz.fr, YouTube et Calendly). L'outil affiche qui a ouvert, regardé la vidéo ou cliqué un lien ; le lien de désinscription n'est jamais traqué.
+- **Suivi des messages** : pixel d'ouverture et liens traqués dans la version HTML uniquement (fonction publique `prospection-track`, redirection limitée aux domaines piloz.fr, YouTube et Calendly). L'outil affiche qui a ouvert, regardé la vidéo ou cliqué un lien ; le lien de désinscription n'est jamais traqué. Les filtres de sécurité des destinataires (Hornetsecurity, Mimecast, Proofpoint, Defender…) ouvrent le pixel et suivent tous les liens quelques secondes après réception : un événement moins de 2 minutes après le dernier envoi, un navigateur robot ou le lien piège invisible inclus dans chaque message sont comptés comme « scanner », à part des ouvertures et clics humains.
 
 ## Cadre légal (prospection B2B)
 

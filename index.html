@@ -704,6 +704,7 @@
               <option value="unclicked">Pas cliqués</option>
               <option value="followed">Relancés</option>
               <option value="replied">Ont répondu</option>
+              <option value="scanner">Scanner seulement (clics automatiques)</option>
             </select>
             <span class="note" id="lCount"></span>
             <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
@@ -1387,7 +1388,8 @@ function renderState(){
   $("kSent").textContent = fmt(c.sent);
   const tr = state.tracking || {};
   $("kSentF").textContent = (state.recent[0] ? "dernier " + ago(state.recent[0].sent_at) : "aucun envoi pour l'instant") +
-    (tr.opened ? " · " + fmt(tr.opened) + " ouvert(s) · " + fmt((tr.video || 0) + (tr.site || 0)) + " clic(s)" : "") +
+    (tr.opened ? " · " + fmt(tr.opened) + " ouvert(s) · " + fmt((tr.video || 0) + (tr.site || 0)) + " clic(s) humain(s)" : "") +
+    (tr.scanner ? " · " + fmt(tr.scanner) + " scannés" : "") +
     (state.followups && state.followups.sent ? " · " + fmt(state.followups.sent) + " relance(s)" : "") +
     (state.followups && state.followups.due ? " · " + fmt(state.followups.due) + " à relancer" : "");
   $("kSupp").textContent = fmt(c.suppressions);
@@ -1811,6 +1813,7 @@ function trackBadges(m){
   if (m.opened_at) b.push('<span class="badge open" title="Ouvert le ' + esc(dateTimeFr(m.opened_at)) + '">Ouvert</span>');
   if (m.video_clicked_at) b.push('<span class="badge video" title="Vidéo ouverte le ' + esc(dateTimeFr(m.video_clicked_at)) + '">▶ Vidéo</span>');
   if (m.site_clicked_at) b.push('<span class="badge clic" title="Lien cliqué le ' + esc(dateTimeFr(m.site_clicked_at)) + '">Clic</span>');
+  if (m.scanner_at && !m.opened_at && !m.video_clicked_at && !m.site_clicked_at) b.push('<span class="badge unsub" style="opacity:.75" title="Ouvertures et clics automatiques d\'un filtre de sécurité, ignorés">Scanner</span>');
   return b.length ? " " + b.join(" ") : "";
 }
 // État de suivi explicite d'un message envoyé : ouvert ou pas, puis vidéo et
@@ -1830,6 +1833,7 @@ function trackState(m){
   if (m.video_clicked_at) parts.push('<span class="badge video" title="Vidéo ouverte le ' + esc(dateTimeFr(m.video_clicked_at)) + '">▶ Vidéo</span>');
   if (m.site_clicked_at) parts.push('<span class="badge clic" title="Site ouvert le ' + esc(dateTimeFr(m.site_clicked_at)) + '">Clic site</span>');
   if (!m.video_clicked_at && !m.site_clicked_at) parts.push('<span class="badge off">Pas cliqué</span>');
+  if (m.scanner_at) parts.push('<span class="badge unsub" style="opacity:.75" title="Filtre de sécurité du destinataire (Hornet, Mimecast, Proofpoint, Defender…) : ' + esc(m.scanner_hits || 1) + ' ouverture(s) ou clic(s) automatiques ignorés, dernier le ' + esc(dateTimeFr(m.scanner_at)) + '">Scanner</span>');
   (m.prospection_followups || []).filter(f => f.status === "sent").sort((a, b) => a.stage - b.stage).forEach(f =>
     parts.push('<span class="badge sent" title="Relance ' + f.stage + ' envoyée le ' + esc(dateTimeFr(f.sent_at)) + '">Relance ' + f.stage + "</span>"));
   if (m.replied_at) parts.push('<span class="badge open" title="Marqué « a répondu » le ' + esc(dateTimeFr(m.replied_at)) + ' : plus de relance">A répondu</span>');
@@ -1936,7 +1940,7 @@ async function openMessage(id){
           m.opened_at ? "ouvert le " + dateTimeFr(m.opened_at) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") : "",
           m.video_clicked_at ? "vidéo ouverte le " + dateTimeFr(m.video_clicked_at) : "",
           m.site_clicked_at ? "lien cliqué le " + dateTimeFr(m.site_clicked_at) : "",
-        ].filter(Boolean).map(esc).join(" · ") || "pas encore ouvert") + "</dd></div>" : "") +
+        ].filter(Boolean).map(esc).join(" · ") || "pas encore ouvert") + (m.scanner_at ? " · filtre de sécurité : " + esc(m.scanner_hits || 1) + " clic(s) automatique(s) ignoré(s)" : "") + "</dd></div>" : "") +
         (m.status === "sent" ? "<div><dt>Relances</dt><dd>" + ((m.prospection_followups || []).sort((a, b) => a.stage - b.stage).map(f =>
           "relance " + f.stage + " : " + (f.status === "sent" ? "envoyée le " + dateTimeFr(f.sent_at) : f.status === "failed" ? "échec" : "en attente")).map(esc).join(" · ")
           || (m.replied_at ? "arrêtées" : "aucune pour l'instant")) + (m.replied_at ? " · marqué « a répondu » le " + esc(dateTimeFr(m.replied_at)) : "") + "</dd></div>" : "") +
