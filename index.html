@@ -656,7 +656,9 @@
               </div>
               <div class="run">
                 <button type="button" class="b b-main" id="bTplSave">Enregistrer</button>
-                <button type="button" class="b b-out" id="bTplTest">M'envoyer un test</button>
+                <button type="button" class="b b-out" id="bTplTest">Envoyer un test</button>
+                <input class="inp" type="email" id="tTestTo" placeholder="à moi (ou une autre adresse)" style="width:260px" title="Laissez vide pour recevoir le test sur votre adresse. Collez ici l'adresse fournie par mail-tester.com, ou un Gmail / Outlook à vous, pour un test de délivrabilité.">
+                <label class="swi" title="Sans la mention [Test] dans l'objet et avec le suivi (pixel et liens), exactement comme un vrai envoi : indispensable pour un test de délivrabilité."><input type="checkbox" id="tTestReal"><i></i> Comme un vrai envoi</label>
                 <button type="button" class="b b-danger" id="bTplDel">Supprimer</button>
                 <span class="note" id="tplMsg"></span>
               </div>
@@ -1792,7 +1794,7 @@ $("bTplTest").addEventListener("click", async ev => {
   busy(btn, true, "Envoi du test…");
   $("tplMsg").textContent = "";
   try {
-    const { to } = await api("test.send", { template: { subject: $("tSubject").value, body: $("tBody").value }, sample: sampleData() });
+    const { to } = await api("test.send", { template: { subject: $("tSubject").value, body: $("tBody").value }, sample: sampleData(), to: $("tTestTo").value.trim() || undefined, realistic: $("tTestReal").checked });
     $("tplMsg").textContent = "Test envoyé à " + to + ". Vérifiez aussi le dossier indésirables.";
   } catch(e){
     const detail = e.data && e.data.outcome === "fatal" ? " La boîte Hostinger refuse la connexion : vérifiez l'adresse d'envoi et le mot de passe enregistré côté serveur." : "";
