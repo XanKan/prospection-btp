@@ -1797,7 +1797,6 @@ function trackBadges(m){
 // État de suivi explicite d'un message envoyé : ouvert ou pas, puis vidéo et
 // clic site affichés séparément (mêmes badges que l'accueil), ou « Pas cliqué ».
 // Signal d'intention porté par le prospect : marché public de travaux gagné.
-function dateFr(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || "")); return m ? m[3] + "/" + m[2] + "/" + m[1] : String(iso || ""); }
 function signalBadge(m){
   const d = m.data || {};
   if (d.marche) return ' <span class="badge clic" title="Marché public remporté' + (d.marche_date ? ' (notifié le ' + esc(dateFr(d.marche_date)) + ')' : '') + ' : ' + esc(d.marche) + '">Marché public' + (d.marche_date ? ' · ' + esc(dateFr(d.marche_date)) : '') + '</span>';
