@@ -676,6 +676,7 @@
           <div class="tabs" id="logTabs">
             <button type="button" class="tab on" data-st="queued">En file<span class="pill num" id="tcQueued">0</span></button>
             <button type="button" class="tab" data-st="sent">Envoyés<span class="pill num" id="tcSent">0</span></button>
+            <button type="button" class="tab" data-st="followups">Relances<span class="pill num" id="tcFollow">0</span></button>
             <button type="button" class="tab" data-st="failed">Échecs<span class="pill num" id="tcFailed">0</span></button>
             <button type="button" class="tab" data-st="skipped">Ignorés<span class="pill num" id="tcSkipped">0</span></button>
           </div>
@@ -1384,22 +1385,32 @@ function renderState(){
     (state.followups && state.followups.due ? " · " + fmt(state.followups.due) + " à relancer" : "");
   $("kSupp").textContent = fmt(c.suppressions);
   $("kFail").textContent = fmt(c.failed);
-  $("tcQueued").textContent = fmt(c.queued); $("tcSent").textContent = fmt(c.sent);
+  $("tcQueued").textContent = fmt(c.queued); $("tcSent").textContent = fmt(c.sent); $("tcFollow").textContent = fmt((state.followups || {}).sent || 0);
   $("tcFailed").textContent = fmt(c.failed); $("tcSkipped").textContent = fmt(c.skipped);
 
-  // 14 jours
+  // Tout l'historique, jour par jour (heure de Paris), du premier envoi à aujourd'hui.
+  const keys = Object.keys(state.perDay || {}).sort();
+  const todayKey = new Date().toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
   const days = [];
-  for (let i = 13; i >= 0; i--){
-    const d = new Date(Date.now() - i * 864e5);
-    const key = d.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
-    days.push({ key, n: state.perDay[key] || 0, lab: d.toLocaleDateString("fr-FR", { weekday: "narrow" }) });
+  if (keys.length){
+    for (let d = new Date(keys[0] + "T12:00:00"); ; d = new Date(d.getTime() + 864e5)){
+      const key = d.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
+      const v = state.perDay[key] || { p: 0, r: 0 };
+      days.push({ key, p: v.p || 0, r: v.r || 0, n: (v.p || 0) + (v.r || 0), lab: d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }) });
+      if (key >= todayKey || days.length > 400) break;
+    }
   }
   const max = Math.max(1, ...days.map(d => d.n));
-  $("chDays").innerHTML = days.map(d => '<div title="' + esc(d.key) + " : " + d.n + ' envoi(s)"><b>' + (d.n || "") + '</b><i class="' + (d.n ? "" : "zero") + '" style="height:' + Math.max(2, Math.round(d.n / max * 86)) + 'px"></i><span>' + esc(d.lab) + "</span></div>").join("");
+  const chTotal = days.reduce((a, d) => a + d.n, 0);
+  $("chDays").style.overflowX = "auto";
+  $("chDays").innerHTML = days.map(d => '<div title="' + esc(d.key) + " : " + d.p + " premier(s) contact(s)" + (d.r ? ", " + d.r + " relance(s)" : "") + '"><b>' + (d.n || "") + '</b><i class="' + (d.n ? "" : "zero") + '" style="height:' + Math.max(2, Math.round(d.n / max * 86)) + 'px"></i><span>' + esc(d.lab) + "</span></div>").join("") ||
+    '<p class="note">Aucun envoi pour l\'instant.</p>';
+  const chTitle = $("chDays").closest(".card") && $("chDays").closest(".card").querySelector(".card-h h2");
+  if (chTitle) chTitle.textContent = "Envois par jour · " + fmt(chTotal) + " au total" + (days.length ? " depuis le " + esc(days[0].lab) : "");
 
   // Derniers envois
   $("recent").innerHTML = state.recent.length
-    ? state.recent.map(r => '<li><span class="badge sent">Envoyé</span>' + trackBadges(r) + '<div class="grow"><b>' + esc(niceCompany(r.company) || r.email) + "</b><span>" + esc(r.email) + "</span></div><span class=\"note\">" + esc(ago(r.sent_at)) + "</span></li>").join("")
+    ? state.recent.map(r => '<li>' + (r.kind === "followup" ? '<span class="badge sent">Relance ' + esc(r.stage) + '</span>' : '<span class="badge sent">Envoyé</span>') + trackBadges(r) + '<div class="grow"><b>' + esc(niceCompany(r.company) || r.email) + "</b><span>" + esc(r.email) + "</span></div><span class=\"note\">" + esc(ago(r.sent_at)) + "</span></li>").join("")
     : '<li><div class="grow"><span>Aucun message envoyé pour l\'instant.</span></div></li>';
 
   // Cadence
@@ -1817,18 +1828,25 @@ function trackState(m){
   if (m.suppressed) parts.push('<span class="badge unsub" title="Cette adresse ne sera plus jamais contactée">' + esc(SUPPRESSED[m.suppressed] || "Exclu") + "</span>");
   return " " + parts.join(" ");
 }
-let logT = null;
+let logT = null, logSeq = 0;
 async function loadLog(){
+  // Deux chargements qui se croisent (changement de filtre pendant une requête) :
+  // seule la réponse de la dernière demande est affichée.
+  const seq = ++logSeq;
   try {
-    const data = await api("queue.list", { status: LOG.status, page: LOG.page, search: $("lq").value, track: LOG.status === "sent" ? $("lTrack").value : "", signal: $("lSignal").value });
+    const data = LOG.status === "followups"
+      ? await api("followups.list", { page: LOG.page, search: $("lq").value })
+      : await api("queue.list", { status: LOG.status, page: LOG.page, search: $("lq").value, track: LOG.status === "sent" ? $("lTrack").value : "", signal: $("lSignal").value });
+    if (seq !== logSeq) return;
     LOG.items = data.items; LOG.total = data.total; LOG.sel.clear();
     renderLog();
   } catch(e){ if (e.code !== "session") toast(e.message, 5000); }
 }
 function renderLog(){
   document.querySelectorAll("#logTabs .tab").forEach(t => t.classList.toggle("on", t.dataset.st === LOG.status));
-  $("lDateH").textContent = LOG.status === "sent" ? "Envoyé le" : "Ajouté le";
+  $("lDateH").textContent = LOG.status === "sent" ? "Envoyé le" : LOG.status === "followups" ? "Relance envoyée le" : "Ajouté le";
   $("lTrack").hidden = LOG.status !== "sent";
+  $("lSignal").hidden = LOG.status === "followups";
   $("bLogRetry").hidden = LOG.status !== "failed";
   $("bLogRemove").hidden = LOG.status === "sent";
   $("bLogRemove").textContent = LOG.status === "queued" ? "Retirer de la file" : "Supprimer";
@@ -1836,7 +1854,20 @@ function renderLog(){
   $("lPage").textContent = "Page " + LOG.page + " / " + pages + " · " + fmt(LOG.total) + " ligne(s)";
   $("lPrev").disabled = LOG.page <= 1; $("lNext").disabled = LOG.page >= pages;
   $("lCount").textContent = "";
-  const empty = { queued: "La file est vide. Envoyez des prospects depuis l'écran Résultats ou activez le pilote automatique.", sent: "Aucun message envoyé pour l'instant.", failed: "Aucun échec.", skipped: "Aucun message ignoré." };
+  const empty = { queued: "La file est vide. Envoyez des prospects depuis l'écran Résultats ou activez le pilote automatique.", sent: "Aucun message envoyé pour l'instant.", failed: "Aucun échec.", skipped: "Aucun message ignoré.", followups: "Aucune relance envoyée pour l'instant. Les relances se règlent dans Réglages." };
+  if (LOG.status === "followups"){
+    $("lBody").innerHTML = LOG.items.length ? LOG.items.map(f => { const m = f.message || {}; return
+      '<tr class="click" data-msg="' + esc(m.id || "") + '">' +
+      '<td><input type="checkbox" class="cbx" disabled></td>' +
+      "<td><b>" + esc(niceCompany(m.company) || "—") + '</b><div class="meta">' + esc(m.email || "") + "</div></td>" +
+      '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
+      '<td class="nw"><span class="badge sent">Relance ' + esc(f.stage) + "</span>" + signalBadge(m) + "</td>" +
+      '<td class="nw">' + esc(dateTimeFr(f.sent_at)) + "</td>" +
+      '<td><span class="badge ' + (f.status === "sent" ? "sent" : "failed") + '">' + (f.status === "sent" ? "Envoyée" : "Échec") + "</span>" + (f.status === "sent" ? trackState(m) : "") + (f.error ? '<div class="meta">' + esc(f.error) + "</div>" : "") + "</td></tr>"; }).join("")
+      : '<tr><td colspan="6" class="empty"><b>Rien ici</b>' + esc(empty.followups) + "</td></tr>";
+    logSel();
+    return;
+  }
   $("lBody").innerHTML = LOG.items.length ? LOG.items.map(m =>
     '<tr class="click' + (LOG.sel.has(m.id) ? " sel" : "") + '" data-msg="' + esc(m.id) + '">' +
     '<td><input type="checkbox" class="cbx" data-lsel="' + esc(m.id) + '"' + (LOG.sel.has(m.id) ? " checked" : "") + (m.status === "sent" || m.status === "sending" ? " disabled" : "") + "></td>" +
