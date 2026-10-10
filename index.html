@@ -1797,9 +1797,10 @@ function trackBadges(m){
 // État de suivi explicite d'un message envoyé : ouvert ou pas, puis vidéo et
 // clic site affichés séparément (mêmes badges que l'accueil), ou « Pas cliqué ».
 // Signal d'intention porté par le prospect : marché public de travaux gagné.
+function dateFr(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || "")); return m ? m[3] + "/" + m[2] + "/" + m[1] : String(iso || ""); }
 function signalBadge(m){
   const d = m.data || {};
-  if (d.marche) return ' <span class="badge clic" title="Marché public remporté : ' + esc(d.marche) + '">Marché public</span>';
+  if (d.marche) return ' <span class="badge clic" title="Marché public remporté' + (d.marche_date ? ' (notifié le ' + esc(dateFr(d.marche_date)) + ')' : '') + ' : ' + esc(d.marche) + '">Marché public' + (d.marche_date ? ' · ' + esc(dateFr(d.marche_date)) : '') + '</span>';
   return "";
 }
 function trackState(m){
@@ -1890,7 +1891,7 @@ async function openMessage(id){
         "<div><dt>Métier</dt><dd>" + esc(d.metier || "—") + "</dd></div>" +
         "<div><dt>SIREN</dt><dd>" + (m.siren ? '<a href="https://annuaire-entreprises.data.gouv.fr/entreprise/' + esc(m.siren) + '" target="_blank" rel="noopener">' + esc(m.siren) + "</a>" : "—") + "</dd></div>" +
         "<div><dt>Origine</dt><dd>" + esc(ORIGIN[m.origin] || m.origin) + (m.score != null ? " · score " + m.score : "") + "</dd></div>" +
-        (d.marche ? "<div><dt>Marché public gagné</dt><dd>" + esc(d.marche) + "</dd></div>" : "") +
+        (d.marche ? "<div><dt>Marché public gagné" + (d.marche_date ? " (notifié le " + esc(dateFr(d.marche_date)) + ")" : "") + "</dt><dd>" + esc(d.marche) + "</dd></div>" : "") +
         (d.tel ? "<div><dt>Téléphone</dt><dd>" + esc(d.tel) + "</dd></div>" : "") +
         (m.status === "sent" ? "<div><dt>Suivi</dt><dd>" + ([
           m.opened_at ? "ouvert le " + dateTimeFr(m.opened_at) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") : "",
