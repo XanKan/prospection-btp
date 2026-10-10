@@ -707,7 +707,8 @@
               <option value="scanner">Scanner seulement (clics automatiques)</option>
             </select>
             <span class="note" id="lCount"></span>
-            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span class="pill num" id="lTotal" style="font-size:.95rem;padding:6px 12px" title="Nombre de lignes correspondant à l'onglet et aux filtres en cours">0</span>
               <button type="button" class="b b-out b-sm" id="bLogRetry" hidden disabled>Réessayer</button>
               <button type="button" class="b b-danger b-sm" id="bLogRemove" disabled>Retirer</button>
             </div>
@@ -1865,6 +1866,10 @@ function renderLog(){
   $("bLogRemove").textContent = LOG.status === "queued" ? "Retirer de la file" : "Supprimer";
   const pages = Math.max(1, Math.ceil(LOG.total / 50));
   $("lPage").textContent = "Page " + LOG.page + " / " + pages + " · " + fmt(LOG.total) + " ligne(s)";
+  const filtered = !!($("lq").value || (!$("lTrack").hidden && $("lTrack").value) || (!$("lSignal").hidden && $("lSignal").value) || (!$("lStage").hidden && $("lStage").value));
+  $("lTotal").textContent = fmt(LOG.total) + (filtered ? " filtré(s)" : "");
+  $("lTotal").style.background = filtered ? "var(--violet)" : "";
+  $("lTotal").style.color = filtered ? "#fff" : "";
   $("lPrev").disabled = LOG.page <= 1; $("lNext").disabled = LOG.page >= pages;
   $("lCount").textContent = "";
   const empty = { all: "Aucun message pour l'instant.", queued: "La file est vide. Envoyez des prospects depuis l'écran Résultats ou activez le pilote automatique.", sent: "Aucun message envoyé pour l'instant.", failed: "Aucun échec.", skipped: "Aucun message ignoré.", followups: "Aucune relance envoyée pour l'instant. Les relances se règlent dans Réglages." };
