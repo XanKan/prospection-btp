@@ -695,6 +695,7 @@
               <option value="marche">Marché public gagné</option>
               <option value="web">Adresse trouvée sur le site web (non RGE)</option>
             </select>
+            <select class="inp" id="lSender" style="width:auto"><option value="">Boîte d'envoi : toutes</option></select>
             <select class="inp" id="lStage" hidden style="width:auto">
               <option value="">Relances : toutes</option>
               <option value="1">Relance 1</option>
@@ -1337,6 +1338,7 @@ function renderState(){
   if (!state) return;
   const s = state.settings, c = state.counts, st = STATUS[state.status] || STATUS.paused;
   $("whoami").textContent = state.adminEmail || "";
+  fillSenderFilter();
   $("pillQueue").textContent = fmt(c.queued);
 
   const top = $("topStatus");
@@ -1865,7 +1867,7 @@ async function loadLog(){
   try {
     const data = LOG.status === "followups"
       ? await api("followups.list", { page: LOG.page, search: $("lq").value, stage: $("lStage").value })
-      : await api("queue.list", { status: LOG.status, page: LOG.page, search: $("lq").value, track: LOG.status === "sent" ? $("lTrack").value : "", signal: $("lSignal").value });
+      : await api("queue.list", { status: LOG.status, page: LOG.page, search: $("lq").value, track: LOG.status === "sent" ? $("lTrack").value : "", signal: $("lSignal").value, sender: $("lSender").value });
     if (seq !== logSeq) return;
     LOG.items = data.items; LOG.total = data.total; LOG.sel.clear();
     renderLog();
@@ -1876,13 +1878,14 @@ function renderLog(){
   $("lDateH").textContent = LOG.status === "sent" ? "Envoyé le" : LOG.status === "followups" ? "Relance envoyée le" : LOG.status === "all" ? "Envoyé / ajouté le" : "Ajouté le";
   $("lTrack").hidden = LOG.status !== "sent";
   $("lSignal").hidden = LOG.status === "followups";
+  $("lSender").hidden = LOG.status === "followups" || LOG.status === "queued";
   $("lStage").hidden = LOG.status !== "followups";
   $("bLogRetry").hidden = LOG.status !== "failed";
   $("bLogRemove").hidden = LOG.status === "sent" || LOG.status === "all" || LOG.status === "followups";
   $("bLogRemove").textContent = LOG.status === "queued" ? "Retirer de la file" : "Supprimer";
   const pages = Math.max(1, Math.ceil(LOG.total / 50));
   $("lPage").textContent = "Page " + LOG.page + " / " + pages + " · " + fmt(LOG.total) + " ligne(s)";
-  const filtered = !!($("lq").value || (!$("lTrack").hidden && $("lTrack").value) || (!$("lSignal").hidden && $("lSignal").value) || (!$("lStage").hidden && $("lStage").value));
+  const filtered = !!($("lq").value || (!$("lTrack").hidden && $("lTrack").value) || (!$("lSignal").hidden && $("lSignal").value) || (!$("lSender").hidden && $("lSender").value) || (!$("lStage").hidden && $("lStage").value));
   $("lTotal").textContent = fmt(LOG.total) + (filtered ? " filtré(s)" : "");
   $("lTotal").style.background = filtered ? "var(--violet)" : "";
   $("lTotal").style.color = filtered ? "#fff" : "";
@@ -1904,7 +1907,7 @@ function renderLog(){
   $("lBody").innerHTML = LOG.items.length ? LOG.items.map(m =>
     '<tr class="click' + (LOG.sel.has(m.id) ? " sel" : "") + '" data-msg="' + esc(m.id) + '">' +
     '<td><input type="checkbox" class="cbx" data-lsel="' + esc(m.id) + '"' + (LOG.sel.has(m.id) ? " checked" : "") + (m.status === "sent" || m.status === "sending" ? " disabled" : "") + "></td>" +
-    "<td><b>" + esc(niceCompany(m.company) || "—") + '</b><div class="meta">' + esc(m.email) + "</div></td>" +
+    "<td><b>" + esc(niceCompany(m.company) || "—") + '</b><div class="meta">' + esc(m.email) + (m.sender && m.status === "sent" ? ' <span title="Boîte d\'envoi">· depuis ' + esc(m.sender) + "</span>" : "") + "</div></td>" +
     '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
     '<td class="nw">' + esc(ORIGIN[m.origin] || m.origin) + signalBadge(m) + "</td>" +
     '<td class="nw">' + esc(dateTimeFr(LOG.status === "sent" || (LOG.status === "all" && m.sent_at) ? m.sent_at : m.created_at)) + "</td>" +
@@ -1922,6 +1925,15 @@ $("logTabs").addEventListener("click", ev => { const t = ev.target.closest("[dat
 $("lq").addEventListener("input", () => { clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
 $("lTrack").addEventListener("change", () => { LOG.page = 1; loadLog(); });
 $("lSignal").addEventListener("change", () => { LOG.page = 1; loadLog(); });
+$("lSender").addEventListener("change", () => { LOG.page = 1; loadLog(); });
+// Les boîtes d'envoi connues (réglages) alimentent le filtre.
+function fillSenderFilter(){
+  if (!state) return;
+  const keep = $("lSender").value;
+  const boxes = [state.settings.sender_email, state.settings.sender_email_2].filter(Boolean);
+  $("lSender").innerHTML = '<option value="">Boîte d\'envoi : toutes</option>' + boxes.map(b => '<option value="' + esc(b) + '">' + esc(b) + "</option>").join("");
+  if (boxes.includes(keep)) $("lSender").value = keep;
+}
 $("lStage").addEventListener("change", () => { LOG.page = 1; loadLog(); });
 $("lPrev").addEventListener("click", () => { LOG.page--; loadLog(); });
 $("lNext").addEventListener("click", () => { LOG.page++; loadLog(); });
@@ -1950,6 +1962,7 @@ async function openMessage(id){
     openModal(niceCompany(m.company) || m.email, (BADGE[m.status] || m.status) + (m.sent_at ? " le " + dateTimeFr(m.sent_at) : " · ajouté le " + dateTimeFr(m.created_at)),
       '<div class="dl">' +
         "<div><dt>E-mail</dt><dd>" + esc(m.email) + "</dd></div>" +
+        (m.sender ? "<div><dt>Envoyé depuis</dt><dd>" + esc(m.sender) + "</dd></div>" : "") +
         "<div><dt>Prénom / nom</dt><dd>" + esc([d.prenom, d.nom].filter(Boolean).join(" ") || "—") + "</dd></div>" +
         "<div><dt>Ville</dt><dd>" + esc([d.cp, d.ville].filter(Boolean).join(" ") || "—") + "</dd></div>" +
         "<div><dt>Métier</dt><dd>" + esc(d.metier || "—") + "</dd></div>" +
