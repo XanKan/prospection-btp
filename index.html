@@ -776,6 +776,8 @@
                 <div class="fld"><label for="sName">Nom affiché</label><input class="inp" id="sName" maxlength="80" placeholder="Service commercial Piloz"></div>
                 <div class="fld"><label for="sEmail">Adresse d'envoi (Hostinger)</label><input class="inp" type="email" id="sEmail" placeholder="ex. quentin@piloz.fr"></div>
                 <div class="fld"><label for="sReply">Adresse de réponse</label><input class="inp" type="email" id="sReply" placeholder="facultatif — par défaut l'adresse d'envoi"></div>
+                <div class="fld"><label for="sEmail2">Deuxième adresse d'envoi (rotation)</label><input class="inp" type="email" id="sEmail2" placeholder="ex. commercial@piloz.fr">
+                  <p class="help">Facultatif. Les premiers messages partent alternativement des deux boîtes, une chance sur deux ; les relances partent de la boîte du premier message. Son mot de passe est le secret <code class="k">PROSPECTION_SMTP_PASSWORD_2</code>. Le quota du jour reste global : avec deux boîtes, vous pouvez le monter.</p></div>
                 <div class="fld full"><label for="sSig">Signature</label><textarea class="inp" id="sSig" rows="4" maxlength="1000" placeholder="Service commercial Piloz&#10;Logiciel de gestion pour les entreprises du BTP&#10;https://piloz.fr"></textarea>
                   <p class="help">Affichée à côté du logo Piloz ; la première ligne est en gras. Un numéro de téléphone ou un lien ajouté ici devient cliquable.</p></div>
                 <div class="fld full"><label for="sVideo">Vidéo de présentation (lien YouTube)</label><input class="inp" id="sVideo" maxlength="300" placeholder="https://www.youtube.com/watch?v=…">
@@ -1436,7 +1438,8 @@ function renderState(){
   $("cadence").innerHTML =
     "<b>" + fmt(state.capToday) + " messages aujourd'hui</b> au maximum" + (s.warmup_enabled && state.capToday < s.daily_cap ? ", jusqu'à " + fmt(s.daily_cap) + " par jour une fois la montée en charge terminée (+" + s.warmup_step + " par jour d'envoi)" : "") + ".<br>" +
     "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris), un message toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ".<br>" +
-    "Expéditeur : <b>" + esc(s.sender_email ? (s.sender_name + " <" + s.sender_email + ">") : "à renseigner") + "</b>";
+    "Expéditeur : <b>" + esc(s.sender_email ? (s.sender_name + " <" + s.sender_email + ">") : "à renseigner") + "</b>" +
+    (state.smtp && state.smtp.second && state.smtp.second.configured ? " en rotation avec <b>" + esc(state.smtp.second.address) + "</b>" : "");
 
   // Recherche automatique
   const ap = $("apStatus");
@@ -2074,7 +2077,7 @@ $("dayChips").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(d => '<label class="chip"><i
 function fillSettings(){
   if (!state) return;
   const s = state.settings;
-  $("sName").value = s.sender_name || ""; $("sEmail").value = s.sender_email || ""; $("sReply").value = s.reply_to || "";
+  $("sName").value = s.sender_name || ""; $("sEmail").value = s.sender_email || ""; $("sReply").value = s.reply_to || ""; $("sEmail2").value = s.sender_email_2 || "";
   $("sSig").value = s.signature || ""; $("sFooter").value = s.footer_identity || ""; $("sVideo").value = s.video_url || "";
   $("sCap").value = s.daily_cap; $("sWarm").checked = !!s.warmup_enabled; $("sWarmStart").value = s.warmup_start; $("sWarmStep").value = s.warmup_step;
   $("sWinStart").value = hm(s.window_start); $("sWinEnd").value = hm(s.window_end);
@@ -2093,7 +2096,8 @@ function fillSettings(){
   st.className = "st " + (smtp.configured ? "st-ok" : "st-warn");
   st.querySelector("span").textContent = smtp.configured ? "Mot de passe enregistré" : "Mot de passe manquant";
   $("smtpInfo").innerHTML = "Serveur <b>" + esc(smtp.host) + "</b>, port <b>" + esc(smtp.port) + "</b> (SSL). Identifiant : l'adresse d'envoi ci-dessus." +
-    (smtp.configured ? " Utilisez « M'envoyer un test » dans Messages pour vérifier la connexion." : "");
+    (smtp.configured ? " Utilisez « M'envoyer un test » dans Messages pour vérifier la connexion." : "") +
+    (smtp.second && smtp.second.address ? " Deuxième boîte <b>" + esc(smtp.second.address) + "</b> : " + (smtp.second.configured ? "mot de passe enregistré, rotation active." : "mot de passe <code class=\"k\">PROSPECTION_SMTP_PASSWORD_2</code> manquant, rotation inactive.") : "");
   $("setMsg").textContent = "";
   capacityNote();
 }
@@ -2112,7 +2116,7 @@ $("setForm").addEventListener("submit", async ev => {
   ev.preventDefault();
   const days = [...document.querySelectorAll("input[name=day]:checked")].map(c => Number(c.value));
   const payload = {
-    sender_name: $("sName").value, sender_email: $("sEmail").value, reply_to: $("sReply").value,
+    sender_name: $("sName").value, sender_email: $("sEmail").value, reply_to: $("sReply").value, sender_email_2: $("sEmail2").value,
     signature: $("sSig").value, footer_identity: $("sFooter").value, video_url: $("sVideo").value.trim(),
     daily_cap: $("sCap").value, warmup_enabled: $("sWarm").checked, warmup_start: $("sWarmStart").value, warmup_step: $("sWarmStep").value,
     window_start: $("sWinStart").value, window_end: $("sWinEnd").value, send_days: days,
