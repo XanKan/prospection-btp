@@ -181,21 +181,19 @@
   .chip:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
   .chip:has(input:focus-visible){outline:2px solid var(--violet);outline-offset:2px}
   button.chip{font-family:inherit}
-  /* Rubrique Réseau (LinkedIn) */
-  .rz-thumbs{display:flex;gap:8px;flex-wrap:wrap}
-  .rz-th{cursor:pointer;position:relative}
-  .rz-th input{position:absolute;opacity:0;width:0;height:0}
-  .rz-th img{width:96px;height:50px;object-fit:cover;border-radius:8px;display:block;border:2px solid var(--line);transition:border-color .12s,transform .12s}
-  .rz-th:has(input:checked) img{border-color:var(--violet);transform:scale(1.05)}
-  .rz-th:has(input:focus-visible) img{outline:2px solid var(--violet);outline-offset:2px}
-  .rz-item{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--line-2);align-items:flex-start}
+  /* Rubrique Réseau (posts LinkedIn à copier-coller) */
+  .rz-item{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--line-2);align-items:flex-start}
   .rz-item:last-child{border-bottom:0}
-  .rz-item>img{width:88px;height:46px;object-fit:cover;border-radius:7px;flex:none;margin-top:2px;border:1px solid var(--line-2)}
-  .rz-item .txt{font-size:.86rem;white-space:pre-line;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+  .rz-prev{width:180px;height:180px;border-radius:10px;flex:none;border:1px solid var(--line-2);cursor:pointer;background:var(--paper)}
+  .rz-item .txt{font-size:.86rem;white-space:pre-line;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+  .rz-item.open .txt{display:block;-webkit-line-clamp:unset}
   .rz-item .meta{display:flex;gap:9px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
   .rz-item .meta .th{font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--violet)}
-  .rz-acts{display:flex;gap:6px;flex:none;flex-direction:column;align-items:stretch}
-  @media (max-width:760px){ .rz-item{flex-wrap:wrap} .rz-acts{flex-direction:row;width:100%} }
+  .rz-acts{display:flex;gap:6px;flex:none;flex-direction:column;align-items:stretch;min-width:170px}
+  .rz-ed{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .rz-edprev{width:100%;max-width:300px;height:auto;border-radius:10px;border:1px solid var(--line-2);margin-top:12px;display:block}
+  @media (max-width:860px){ .rz-ed{grid-template-columns:1fr} }
+  @media (max-width:760px){ .rz-item{flex-wrap:wrap} .rz-prev{width:120px;height:120px} .rz-acts{flex-direction:row;flex-wrap:wrap;width:100%;min-width:0} }
   .seg{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px;gap:3px;flex-wrap:wrap}
   .seg label{cursor:pointer;padding:6px 13px;border-radius:6px;font-size:.85rem;font-weight:700;color:var(--muted);transition:background .12s,color .12s;position:relative}
   .seg input{position:absolute;opacity:0;width:0;height:0}
@@ -488,68 +486,64 @@
         </div>
       </section>
 
-      <!-- ==================== RÉSEAU (LinkedIn) ==================== -->
+      <!-- ==================== RÉSEAU (posts LinkedIn à copier-coller) ==================== -->
       <section class="view" id="v-reseau">
-        <div id="rzBanners"></div>
-        <div class="grid2">
-          <div class="card">
-            <div class="card-h"><h2>Compte LinkedIn</h2><span class="st" id="rzLiSt"><i></i><span>—</span></span></div>
-            <div class="card-b">
-              <p class="note" id="rzLiInfo">Chargement…</p>
-              <div class="run" style="margin-top:14px">
-                <button type="button" class="b b-main" id="bRzConnect">Connecter LinkedIn</button>
-                <button type="button" class="b b-out" id="bRzRefresh">Actualiser</button>
-                <button type="button" class="b b-out" id="bRzDisconnect" hidden>Déconnecter</button>
-              </div>
-              <p class="note" style="margin-top:12px">Les posts partent <b>uniquement sur la page entreprise Piloz</b>, jamais sur le profil personnel. LinkedIn limite chaque connexion à environ 60 jours : quand elle expire, un clic sur « Reconnecter LinkedIn » la renouvelle. Le jeton reste côté serveur, jamais dans ce navigateur.</p>
-            </div>
+        <div class="card">
+          <div class="card-h"><h2>Générer des posts</h2>
+            <div class="right"><button type="button" class="b b-out b-sm" id="bRzRefresh">Actualiser</button></div>
           </div>
-          <form class="card" id="rzForm">
-            <div class="card-h"><h2>Publication automatique</h2>
-              <div class="right"><label class="swi"><input type="checkbox" id="rzEnabled"><i></i> Activée</label></div>
+          <div class="card-b">
+            <p class="note" style="margin-bottom:14px">Rien n'est connecté à LinkedIn : chaque post est généré ici avec son visuel. Vous <b>copiez le texte</b>, <b>téléchargez l'image</b>, puis vous publiez vous-même sur la page Piloz. Un clic sur « Publié ✓ » le range dans l'historique.</p>
+            <div class="fields">
+              <div class="fld" style="max-width:320px"><label for="rzGenTheme">Sujet</label><select class="inp" id="rzGenTheme"></select></div>
+              <div class="fld" style="max-width:150px"><label for="rzGenCount">Combien</label><select class="inp" id="rzGenCount"><option value="1">1 post</option><option value="3">3 posts</option><option value="5" selected>5 posts (une semaine)</option><option value="10">10 posts</option></select></div>
+              <div class="fld" style="justify-content:flex-end"><label>&nbsp;</label><button type="button" class="b b-main" id="bRzGen">Générer</button></div>
             </div>
-            <div class="card-b">
-              <div class="fields">
-                <div class="fld" style="max-width:170px"><label for="rzTime">Heure de publication</label><input class="inp" type="time" id="rzTime" value="09:00"></div>
-              </div>
-              <div class="fset" style="margin-top:14px">
-                <div class="fset-h"><h3>Jours de publication</h3></div>
-                <div class="chips" id="rzDays"></div>
-              </div>
-              <div class="fld" style="margin-top:14px"><label for="rzNote">Consignes permanentes de rédaction — Claude les lit à chaque rechargement de la file</label>
-                <textarea class="inp" id="rzNote" rows="3" maxlength="2000" placeholder="ex. parler souvent du pointage, cibler les couvreurs, éviter l'humour…"></textarea></div>
-              <div class="run" style="margin-top:14px">
-                <button type="submit" class="b b-main" id="bRzSave">Enregistrer</button>
-                <span class="note">Chaque jour choisi, le premier brouillon de la file est publié à l'heure indiquée (au plus tard dans les 3 heures qui suivent).</span>
-              </div>
-            </div>
-          </form>
+            <p class="note" style="margin-top:10px">Les sujets déjà utilisés passent en dernier ; l'accroche, l'appel final et les couleurs du visuel changent à chaque génération. Vous pouvez tout modifier avant de copier.</p>
+          </div>
         </div>
 
         <div class="card">
-          <div class="card-h"><h2>File de posts à publier</h2>
+          <div class="card-h"><h2>Posts prêts à copier</h2>
             <div class="right">
-              <button type="button" class="b b-out b-sm" id="bRzGen" hidden>Générer un post</button>
+              <span class="st st-blue" id="rzCount" style="padding:3px 10px;font-size:.74rem">0</span>
               <button type="button" class="b b-main b-sm" id="bRzNew">+ Écrire un post</button>
             </div>
           </div>
           <div class="card-b">
             <div id="rzEditor" hidden style="border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px">
-              <div class="fld"><label for="rzEdTheme">Thème (deux ou trois mots, pour varier les sujets)</label><input class="inp" id="rzEdTheme" maxlength="80" placeholder="ex. pointage papier" style="max-width:340px"></div>
-              <div class="fld" style="margin-top:12px"><label for="rzEdText">Texte du post</label><textarea class="inp" id="rzEdText" rows="9" maxlength="2900" placeholder="Accroche en première ligne…"></textarea></div>
-              <div class="fld" style="margin-top:12px"><label>Visuel joint</label><div class="rz-thumbs" id="rzThumbs"></div></div>
+              <div class="rz-ed">
+                <div>
+                  <div class="fld"><label for="rzEdTheme">Sujet (deux ou trois mots)</label><input class="inp" id="rzEdTheme" maxlength="80" placeholder="ex. pointage papier" style="max-width:340px"></div>
+                  <div class="fld" style="margin-top:12px"><label for="rzEdText">Texte du post (accroche en première ligne)</label><textarea class="inp" id="rzEdText" rows="12" maxlength="2900" placeholder="Accroche en première ligne…"></textarea></div>
+                </div>
+                <div>
+                  <div class="fset"><div class="fset-h"><h3>Visuel</h3></div>
+                    <div class="fields">
+                      <div class="fld"><label for="rzEdLayout">Mise en page</label><select class="inp" id="rzEdLayout"></select></div>
+                      <div class="fld"><label for="rzEdVariant">Couleurs</label><select class="inp" id="rzEdVariant"></select></div>
+                      <div class="fld"><label for="rzEdFond">Visuel de marque tout fait</label><select class="inp" id="rzEdFond"></select></div>
+                    </div>
+                    <div class="fld" style="margin-top:10px"><label for="rzEdTitre">Titre du visuel <button type="button" class="b b-out b-xs" id="bRzEdHook" style="margin-left:8px">Reprendre l'accroche</button></label><input class="inp" id="rzEdTitre" maxlength="160"></div>
+                    <div class="fld" id="rzEdChiffreW" style="margin-top:10px" hidden><label for="rzEdChiffre">Chiffre mis en avant</label><input class="inp" id="rzEdChiffre" maxlength="16" placeholder="ex. 35 h" style="max-width:160px"></div>
+                    <div class="fld" id="rzEdLignesW" style="margin-top:10px" hidden><label for="rzEdLignes">Lignes de la liste (une par ligne ; « - » pour barrée, « + » pour cochée)</label><textarea class="inp" id="rzEdLignes" rows="4"></textarea></div>
+                    <div class="fld" style="margin-top:10px"><label for="rzEdSous">Sous-titre / badge</label><input class="inp" id="rzEdSous" maxlength="160"></div>
+                  </div>
+                  <canvas id="rzEdCanvas" width="540" height="540" class="rz-edprev"></canvas>
+                </div>
+              </div>
               <div class="run" style="margin-top:14px">
-                <button type="button" class="b b-main" id="bRzEdSave">Enregistrer le brouillon</button>
+                <button type="button" class="b b-main" id="bRzEdSave">Enregistrer</button>
                 <button type="button" class="b b-out" id="bRzEdCancel">Annuler</button>
               </div>
             </div>
             <ul id="rzDrafts" style="list-style:none;margin:0;padding:0"></ul>
-            <p class="note" id="rzEmpty" hidden>Aucun brouillon en attente. Demandez à Claude Code : « recharge les posts LinkedIn » — ou écrivez le vôtre.</p>
+            <p class="note" id="rzEmpty" hidden>Aucun post en attente : générez-en ci-dessus, ou écrivez le vôtre.</p>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-h"><h2>Historique</h2></div>
+          <div class="card-h"><h2>Historique des posts publiés</h2></div>
           <div class="card-b" style="padding-top:6px;padding-bottom:6px">
             <ul class="list" id="rzHistory"></ul>
             <p class="note" id="rzHistEmpty" hidden style="padding:10px 0">Rien de publié pour le moment.</p>
@@ -1021,7 +1015,7 @@ async function api(action, payload){
    ============================================================ */
 const VIEWS = {
   auto:     { t:"Automate",   s:"Recherche d'entreprises et envoi des e-mails de prospection, en continu et sans intervention." },
-  reseau:   { t:"Réseau",     s:"Un post par jour sur la page LinkedIn de Piloz : file de brouillons préparée avec Claude, visuels de marque." },
+  reseau:   { t:"Réseau",     s:"Posts LinkedIn prêts à copier-coller, avec leur visuel. Rien n'est connecté : vous publiez vous-même." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
   log:      { t:"Envois",     s:"File d'attente et historique de tout ce que l'automate a envoyé." },
@@ -1051,173 +1045,427 @@ document.addEventListener("click", ev => {
 });
 
 /* ============================================================
-   RÉSEAU — un post LinkedIn par jour
+   RÉSEAU — posts LinkedIn prêts à copier-coller (sans connexion)
+   Le texte vient d'une banque de posts écrits pour Piloz, varié à
+   chaque génération ; le visuel est dessiné ici, dans le navigateur.
    ============================================================ */
-const RZ_DAYS = [[1,"Lundi"],[2,"Mardi"],[3,"Mercredi"],[4,"Jeudi"],[5,"Vendredi"],[6,"Samedi"],[7,"Dimanche"]];
-const RZ_IMG = n => "https://piloz.fr/assets/images/reseau/v4/fond-" + (n || 1) + ".png";
-let RZ = null, rzEditId = null, rzConnectPoll = null;
+const RZ_BRAND = {
+  nom: "PILOZ", url: "piloz.fr", ligne: "Logiciel BTP · planning · pointage",
+  fonds: n => "https://piloz.fr/assets/images/reseau/v4/fond-" + n + ".png",
+  palettes: {
+    encre:  { bg:"#15161f", fg:"#fffdf7", accent:"#6d5ef8", muted:"#9c9db3", soft:"#2a2c3f" },
+    papier: { bg:"#fffdf7", fg:"#15161f", accent:"#6d5ef8", muted:"#5b5d72", soft:"#e9e9f1" },
+    violet: { bg:"#6d5ef8", fg:"#fffdf7", accent:"#15161f", muted:"#e4e0ff", soft:"#5a4bd6" }
+  }
+};
+const RZ_LAYOUTS = { accroche:"Accroche", chiffre:"Chiffre", question:"Question", liste:"Liste", offre:"Offre" };
+const RZ_VARIANTS = { encre:"Encre (sombre)", papier:"Papier (clair)", violet:"Violet" };
+const RZ_FONDS = { 1:"Le BTP, piloté (produit)", 2:"Planning sombre", 3:"Question du jour", 4:"Grues de nuit", 5:"Relance de devis", 6:"Heures et paie", 7:"Fiche chantier", 8:"Pointage mobile", 9:"Zéro euro" };
+const RZ_TAGS = "#BTP #artisans #chantier #planning #pointage";
+
+/* Banque : hooks (accroches) et ctas tirés au sort à chaque génération. */
+const RZ_BANK = [
+  { id:"pointage-papier", theme:"pointage papier",
+    hooks:["35 heures par mois à recopier des feuilles d'heures.","La feuille d'heures papier coûte plus cher qu'un salarié."],
+    corps:"Faites le calcul avec nous.\n\n10 compagnons. 10 minutes chaque soir pour remplir, puis quelqu'un au bureau pour relire, recopier, vérifier. 21 jours travaillés.\n\nÇa fait 35 heures par mois. Presque une semaine de travail, passée à déplacer des chiffres d'un papier vers un tableur.\n\nAvec un pointage depuis le téléphone, chacun badge son arrivée et son départ sur le chantier. Le bureau voit les heures le soir même, par chantier et par personne. Plus rien à recopier.",
+    ctas:["Combien d'heures votre entreprise passe-t-elle sur les feuilles d'heures ?","Si vous voulez voir comment ça marche chez nous : piloz.fr"],
+    vis:{ layout:"chiffre", chiffre:"35 h", titre:"par mois à recopier des feuilles d'heures", sous:"10 compagnons × 10 min × 21 jours", fonds:[6,8] } },
+  { id:"tableau-blanc", theme:"planning",
+    hooks:["Le planning est sur le tableau blanc. Et le tableau blanc est au bureau.","Un planning que personne ne voit n'est pas un planning."],
+    corps:"Lundi 7 h. Le chef d'équipe est sur le chantier, le planning est au bureau, et le téléphone sonne : « Je vais où ce matin ? »\n\nOn a vu ce tableau blanc dans beaucoup d'entreprises. Il marche très bien, tant qu'on est devant.\n\nChez Piloz, le planning des équipes par chantier se lit sur le téléphone de chacun. Un déplacement au bureau, et tout le monde a la nouvelle version. Sans appel, sans photo du tableau envoyée dans un groupe.",
+    ctas:["Et chez vous, le planning vit où ?","Le planning est inclus dans l'essai gratuit : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Le planning est au bureau. Vos équipes sont sur le chantier.", sous:"Le planning dans la poche de chacun", fonds:[2] } },
+  { id:"appel-7h", theme:"appels du matin",
+    hooks:["Qui est où ce matin ?","Combien d'appels avant 8 h pour savoir qui est sur quel chantier ?"],
+    corps:"Six appels, trois messages vocaux, une photo floue du planning.\n\nC'est le début de journée de beaucoup de conducteurs de travaux. Pas parce que les équipes sont désorganisées, mais parce que l'information est dans une seule tête.\n\nQuand chacun voit son chantier du jour sur son téléphone, les appels du matin disparaissent. Il reste ceux qui comptent : le client, le fournisseur, l'imprévu.",
+    ctas:["Combien d'appels ce matin, avant 8 h ?","On a construit Piloz pour ça. Essai gratuit sur piloz.fr"],
+    vis:{ layout:"question", titre:"Qui est où ce matin ?", sous:"Le chantier du jour, sur le téléphone de chacun", fonds:[3] } },
+  { id:"fin-de-mois", theme:"paie",
+    hooks:["Le 28 du mois, tout le monde cherche les heures.","La fin de mois ne devrait pas être une enquête."],
+    corps:"Une feuille oubliée dans la camionnette. Des heures contestées par un compagnon. Un chantier dont personne ne sait combien de temps il a vraiment pris.\n\nLa paie se prépare avec ce qu'on a. Et souvent, on n'a pas tout.\n\nAvec un pointage fait chaque jour sur le chantier, les heures existent déjà le 28 : par personne, par chantier, avec les heures supplémentaires visibles. L'export part au comptable en deux clics.",
+    ctas:["Votre fin de mois ressemble à quoi ?","Pointage inclus dès l'offre Essentiel : piloz.fr"],
+    vis:{ layout:"liste", titre:"La fin de mois, avant / après", lignes:["- Feuilles d'heures perdues","- Heures contestées","- Trois soirs de ressaisie","+ Export paie en deux clics"], fonds:[6] } },
+  { id:"crm-gratuit", theme:"CRM gratuit",
+    hooks:["Un CRM chantier gratuit. Pas un essai : gratuit.","0 € pour tenir vos clients et vos chantiers."],
+    corps:"On nous demande souvent où est le piège.\n\nIl n'y en a pas. Le CRM Piloz, c'est vos clients, vos chantiers et vos devis au même endroit, à 0 €, sans limite de durée.\n\nPourquoi ? Parce qu'une entreprise qui tient bien ses clients finit par avoir besoin de planning et de pointage. Ce jour-là, on est déjà là, et l'offre Essentiel est à 49 € par mois.\n\nEn attendant, le CRM reste gratuit.",
+    ctas:["Vos clients sont aujourd'hui dans quel outil ?","Le CRM gratuit se crée en deux minutes sur piloz.fr"],
+    vis:{ layout:"offre", sous:"CRM clients et chantiers", titre:"0 €, sans limite de durée", fonds:[9] } },
+  { id:"devis-relance", theme:"relance de devis",
+    hooks:["Un devis sans relance est un devis perdu.","Vous avez envoyé le devis. Et ensuite ?"],
+    corps:"Le devis est parti un mardi. Le client a dit « je regarde ». Deux semaines plus tard, un concurrent a signé.\n\nCe n'est pas une question de prix. C'est une question de relance : personne n'avait noté de rappeler.\n\nDans Piloz, chaque devis a un statut et une date de relance. Le matin, la liste des clients à rappeler est prête. Pas besoin de mémoire, ni de post-it.",
+    ctas:["Combien de devis « en attente » dorment chez vous en ce moment ?","Essayez le suivi des devis gratuitement : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Un devis sans relance est un devis perdu.", sous:"La liste des clients à rappeler, chaque matin", fonds:[5] } },
+  { id:"photo-chantier", theme:"photos de chantier",
+    hooks:["La photo qui vous évite un litige coûte 3 secondes.","Avant / après : la preuve tient dans le téléphone."],
+    corps:"Le client dit que le mur était abîmé avant. Vous savez que non. Qui a la preuve ?\n\nLa photo prise à l'arrivée sur le chantier, datée et rangée dans le bon dossier, règle la discussion en dix secondes.\n\nLe problème n'est pas de prendre la photo. C'est de la retrouver six mois plus tard, dans 4 000 images du téléphone d'un compagnon.\n\nDans Piloz, la photo est prise depuis la fiche chantier. Elle y reste.",
+    ctas:["Vos photos de chantier sont rangées où ?","Fiche chantier avec photos, dès l'essai gratuit : piloz.fr"],
+    vis:{ layout:"liste", titre:"Une photo de chantier utile, c'est :", lignes:["+ Prise à l'arrivée","+ Datée automatiquement","+ Rangée dans le chantier","- Perdue dans le téléphone"], fonds:[7] } },
+  { id:"intemperies", theme:"intempéries",
+    hooks:["Il pleut. Qui prévient les équipes ?","Alerte orange à 6 h. Le planning change à 6 h 05 ?"],
+    corps:"La météo décide, pas vous. Mais la façon dont l'information circule, ça, c'est vous.\n\nSans outil : une chaîne d'appels, des compagnons déjà sur la route, une équipe qui attend devant un chantier fermé.\n\nAvec un planning partagé : le chantier du jour est déplacé, chacun voit le nouveau sur son téléphone, et l'équipe part sur le chantier couvert.\n\nCinq minutes au lieu d'une heure de téléphone.",
+    ctas:["Comment vous faites, les matins de pluie ?","Planning partagé, essai gratuit : piloz.fr"],
+    vis:{ layout:"question", titre:"Il pleut. Qui prévient les équipes ?", sous:"Un planning qui change en 5 minutes", fonds:[4] } },
+  { id:"prix-49", theme:"prix",
+    hooks:["49 € par mois. Moins qu'une heure de bureau.","On a mis un prix simple parce que le BTP n'a pas le temps des devis logiciels."],
+    corps:"Pas de « contactez-nous pour un tarif ». Pas de licence par utilisateur qui double la facture quand on embauche.\n\nPiloz Essentiel : 49 € par mois, planning et pointage compris. Premium : 69 € par mois. Le CRM seul reste gratuit.\n\nOn a choisi ces prix pour une raison : une entreprise de 5 à 30 personnes doit pouvoir décider en une réunion, pas en un trimestre.",
+    ctas:["Qu'est-ce qu'un logiciel devrait coûter pour une entreprise de votre taille ?","Les tarifs sont publics, sans surprise : piloz.fr"],
+    vis:{ layout:"offre", sous:"Planning + pointage + CRM", titre:"49 € par mois, tout compris", fonds:[1] } },
+  { id:"telephone-poche", theme:"mobile",
+    hooks:["Vos compagnons ont déjà l'outil dans la poche.","Pas de tablette à acheter. Le téléphone suffit."],
+    corps:"On nous demande parfois s'il faut équiper les équipes.\n\nNon. Le pointage, le planning et les photos se font depuis le téléphone que chacun a déjà. Android ou iPhone, récent ou pas.\n\nL'écran est fait pour des mains qui travaillent : deux gros boutons, arrivée et départ, lisibles au soleil et avec des gants.\n\nSi un outil demande une formation d'une journée pour pointer, ce n'est pas un outil de chantier.",
+    ctas:["Vos équipes utiliseraient un pointage sur leur téléphone ?","Testez avec une équipe cette semaine : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Vos compagnons ont déjà l'outil dans la poche.", sous:"Pointage et planning sur le téléphone de chacun", fonds:[8] } },
+  { id:"chantier-rentable", theme:"rentabilité",
+    hooks:["Ce chantier, vous l'avez gagné ou perdu ?","Le devis disait 120 heures. Le chantier en a pris combien ?"],
+    corps:"La plupart des entreprises le savent à la fin de l'année, en lisant le bilan. Trop tard pour corriger.\n\nQuand les heures sont pointées par chantier, la réponse est là chaque semaine : heures prévues, heures réelles, écart.\n\nUn chantier qui dérape se voit au jour 5, pas au jour 40. Et le prochain devis du même type se chiffre avec de vrais chiffres.",
+    ctas:["Vous connaissez la rentabilité de votre dernier chantier ?","Heures par chantier, en temps réel : piloz.fr"],
+    vis:{ layout:"question", titre:"Ce chantier, vous l'avez gagné ou perdu ?", sous:"Heures prévues / heures réelles, chaque semaine", fonds:[7] } },
+  { id:"excel", theme:"Excel",
+    hooks:["Excel n'a jamais été un logiciel de chantier.","Le fichier « planning_v12_final_ok.xlsx » a une histoire à raconter."],
+    corps:"On adore Excel. Vraiment. Mais le planning de six équipes dans un tableur, partagé par mail, modifié par trois personnes, ça finit toujours pareil : deux versions, une erreur, un chantier sans équipe.\n\nUn logiciel de chantier fait trois choses qu'un tableur ne fera jamais : une seule version, visible par tous, depuis un téléphone.\n\nLe reste, Excel le fait très bien.",
+    ctas:["Quel est le fichier Excel dont vous ne pouvez plus vous passer ?","Pour le planning, essayez autre chose : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Excel n'a jamais été un logiciel de chantier.", sous:"Une seule version, visible par tous", fonds:[2] } },
+  { id:"jeunes", theme:"recrutement",
+    hooks:["Un compagnon de 22 ans ne remplira pas une feuille d'heures papier.","Les jeunes ne fuient pas le bâtiment. Ils fuient la paperasse."],
+    corps:"On entend beaucoup que les jeunes ne veulent plus travailler dans le BTP.\n\nCe qu'on observe est différent : ils veulent un métier, et des outils de leur époque. Un planning par SMS, des heures sur papier et des photos envoyées dans un groupe privé, ça ne donne pas envie de rester.\n\nUn pointage sur téléphone, un planning clair, un chantier documenté : ce n'est pas du confort. C'est ce qui fait qu'un bon compagnon reste.",
+    ctas:["Qu'est-ce qui fait rester vos meilleurs compagnons ?","Des outils simples pour les équipes : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Les jeunes ne fuient pas le bâtiment. Ils fuient la paperasse.", sous:"Des outils de leur époque", fonds:[8] } },
+  { id:"heures-sup", theme:"heures supplémentaires",
+    hooks:["Les heures sup existent. La question est de savoir lesquelles.","« J'ai fait plus d'heures » : qui a raison ?"],
+    corps:"Le compagnon est sûr d'avoir fait 42 heures. Le bureau en compte 39. Personne ne ment : chacun a une mémoire différente de la semaine.\n\nUn pointage fait chaque jour, à l'heure réelle, règle la question avant qu'elle ne se pose. Les heures supplémentaires sont visibles, par semaine et par personne, pour le salarié comme pour l'entreprise.\n\nMoins de discussions à la paie. Plus de confiance.",
+    ctas:["Les heures supplémentaires, c'est un sujet de tension chez vous ?","Pointage transparent, des deux côtés : piloz.fr"],
+    vis:{ layout:"liste", titre:"Heures supplémentaires, sans discussion", lignes:["+ Pointées le jour même","+ Visibles par le salarié","+ Récapitulées par semaine","- Reconstituées de mémoire"], fonds:[6] } },
+  { id:"conducteur", theme:"conducteur de travaux",
+    hooks:["Combien de chantiers par conducteur de travaux ?","Un conducteur de travaux passe sa journée à chercher l'information."],
+    corps:"Huit chantiers, trois équipes, un téléphone qui sonne toutes les dix minutes.\n\nLe conducteur de travaux ne manque pas de compétence. Il manque de visibilité : qui est où, où en est quel chantier, quelles heures ont été faites.\n\nQuand tout ça est dans un seul outil, lisible depuis la voiture, il peut faire ce pour quoi il est payé : anticiper, au lieu de courir après.",
+    ctas:["Vos conducteurs de travaux ont combien de chantiers en même temps ?","Une vue par chantier, depuis le téléphone : piloz.fr"],
+    vis:{ layout:"question", titre:"Combien de chantiers par conducteur de travaux ?", sous:"Qui est où, où en est quoi, en un écran", fonds:[4] } },
+  { id:"trois-salaries", theme:"petite entreprise",
+    hooks:["3 salariés, c'est déjà une entreprise à organiser.","On n'attend pas d'être 20 pour avoir besoin d'un planning."],
+    corps:"« On est trop petits pour un logiciel. »\n\nOn l'entend souvent. Puis le dirigeant décrit sa semaine : les devis le soir, les heures le week-end, le planning dans la tête.\n\nUne entreprise de 3 personnes a les mêmes besoins qu'une de 30 : savoir qui fait quoi, combien de temps ça a pris, et ce qu'il reste à facturer. Elle a juste moins de temps pour s'en occuper.\n\nC'est pour ça que le CRM Piloz est gratuit, et le reste à 49 € par mois.",
+    ctas:["À partir de combien de salariés un logiciel devient utile, selon vous ?","Commencez gratuitement : piloz.fr"],
+    vis:{ layout:"accroche", titre:"3 salariés, c'est déjà une entreprise à organiser.", sous:"CRM gratuit, planning et pointage à 49 €/mois", fonds:[1] } },
+  { id:"simple", theme:"simplicité",
+    hooks:["Un logiciel que l'on n'ouvre pas ne sert à rien.","Deux boutons. Arrivée, départ. C'est tout."],
+    corps:"On a vu des entreprises payer un logiciel complet pendant deux ans sans que les équipes ne l'utilisent.\n\nPas par mauvaise volonté : parce qu'il fallait six écrans pour pointer une journée.\n\nChez Piloz, l'écran du compagnon tient en deux boutons. Le bureau a plus d'options, mais le terrain n'en a pas besoin. Un outil de chantier se juge au nombre de clics par jour, pas au nombre de fonctions.",
+    ctas:["Combien de clics pour pointer une journée dans votre outil actuel ?","Testez l'écran compagnon : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Deux boutons. Arrivée, départ. C'est tout.", sous:"L'écran compagnon tient en deux gestes", fonds:[8] } },
+  { id:"francais", theme:"équipe française",
+    hooks:["Un logiciel français, une équipe qui répond.","Quand ça bloque sur le chantier, vous appelez qui ?"],
+    corps:"Un outil de chantier tombe en panne au pire moment : à 7 h, un lundi, avec huit compagnons qui attendent.\n\nCe jour-là, la question n'est pas le nombre de fonctions. C'est : est-ce que quelqu'un répond ?\n\nPiloz est développé en France par une équipe qui connaît ses clients par leur nom. Quand vous écrivez, c'est nous qui lisons. Et qui corrigeons.",
+    ctas:["Votre dernier appel au support d'un logiciel, ça s'est passé comment ?","Une équipe joignable : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Un logiciel français, une équipe qui répond.", sous:"Quand vous écrivez, c'est nous qui lisons", fonds:[1] } },
+  { id:"reunion-lundi", theme:"réunion du lundi",
+    hooks:["Votre réunion du lundi dure combien de temps ?","Une heure de réunion pour redire ce qu'un écran montre."],
+    corps:"Lundi, 7 h 30. Toute l'équipe au dépôt pour entendre qui va où cette semaine. Une heure. Dix personnes. Dix heures payées à écouter un planning.\n\nQuand le planning est sur le téléphone de chacun dès le vendredi, la réunion du lundi change de nature : on parle des problèmes, pas de la logistique.\n\nOu elle n'a plus lieu du tout, et les équipes partent directement sur le chantier.",
+    ctas:["Votre réunion du lundi sert à quoi, exactement ?","Le planning de la semaine, le vendredi soir : piloz.fr"],
+    vis:{ layout:"chiffre", chiffre:"10 h", titre:"payées chaque lundi matin à écouter le planning", sous:"10 personnes × 1 heure de réunion", fonds:[2] } },
+  { id:"client-rappelle", theme:"historique client",
+    hooks:["Le client rappelle deux ans après. Vous retrouvez quoi ?","« Vous étiez venus pour la toiture, vous vous souvenez ? »"],
+    corps:"Non, vous ne vous souvenez pas. Et c'est normal : 200 chantiers sont passés depuis.\n\nMais l'entreprise, elle, devrait se souvenir. Quel devis, quels travaux, quelles photos, qui était sur place, combien d'heures.\n\nQuand tout ça est dans la fiche client, la réponse prend trente secondes, et le client a l'impression d'être connu. C'est souvent comme ça qu'on signe le deuxième chantier.",
+    ctas:["Combien de temps pour retrouver un chantier d'il y a deux ans ?","Fiche client avec tout l'historique, gratuite : piloz.fr"],
+    vis:{ layout:"question", titre:"Le client rappelle deux ans après. Vous retrouvez quoi ?", sous:"Devis, photos, heures : dans la fiche client", fonds:[7] } },
+  { id:"essai-vrai-chantier", theme:"essai",
+    hooks:["Testez Piloz avec un vrai chantier, pas une démo.","Une démo ne dit rien. Un chantier, si."],
+    corps:"On ne fait pas de présentation d'une heure avec des données fictives.\n\nOn préfère ceci : vous créez votre compte, vous entrez un chantier réel, une équipe réelle, et vous pointez une semaine.\n\nAu bout de cinq jours, vous savez. Soit les compagnons ont pointé sans qu'on le leur rappelle, et c'est gagné. Soit non, et vous n'avez rien perdu.",
+    ctas:["Quel chantier vous testeriez en premier ?","Le compte se crée en deux minutes : piloz.fr"],
+    vis:{ layout:"offre", sous:"Essai gratuit", titre:"Une semaine, un vrai chantier, une vraie équipe", fonds:[3] } },
+  { id:"sous-traitants", theme:"sous-traitance",
+    hooks:["Le sous-traitant dit 60 heures. Votre chantier en a vu 45.","Sous-traitance : la confiance, c'est bien. Les heures, c'est mieux."],
+    corps:"Avec les sous-traitants, le désaccord arrive toujours à la facture. Le nombre de jours, les heures, les reprises.\n\nQuand le planning du chantier montre qui était prévu quel jour, et que les présences sont pointées, la discussion est courte. Chacun regarde le même écran.\n\nCe n'est pas de la méfiance. C'est une base commune.",
+    ctas:["Comment vous suivez les heures de vos sous-traitants ?","Planning et présences par chantier : piloz.fr"],
+    vis:{ layout:"liste", titre:"Sous-traitants, une base commune", lignes:["+ Jours prévus au planning","+ Présences pointées","+ Un seul écran pour deux","- Une facture à discuter"], fonds:[5] } },
+  { id:"changer-outil", theme:"changement d'outil",
+    hooks:["On ne change pas d'outil en pleine saison. Vraiment ?","Le bon moment pour changer d'outil n'existe pas."],
+    corps:"« On verra cet hiver. » Puis l'hiver, c'est les devis de printemps. Puis le printemps, c'est la saison.\n\nLe secret des entreprises qui ont changé : elles n'ont pas tout changé. Une équipe, un chantier, le pointage seulement. Deux semaines. Puis une deuxième équipe.\n\nPas de migration, pas de formation collective. Juste un début.",
+    ctas:["Qu'est-ce qui vous retient de changer d'outil ?","Commencez par une équipe : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Le bon moment pour changer d'outil n'existe pas.", sous:"Une équipe, un chantier, deux semaines", fonds:[4] } },
+  { id:"pourquoi-piloz", theme:"pourquoi Piloz",
+    hooks:["On a construit Piloz pour les équipes de 3 à 30 personnes.","Les gros logiciels sont faits pour les gros. Et les autres ?"],
+    corps:"Les grands logiciels du bâtiment sont pensés pour les majors : des services entiers pour les paramétrer.\n\nUne entreprise de 12 personnes n'a pas de service informatique. Elle a un dirigeant qui fait les devis le soir.\n\nPiloz est né de ça : un CRM, un planning, un pointage, qui s'installent en une après-midi et que les compagnons utilisent dès le lendemain. Rien de plus, rien de moins.",
+    ctas:["Qu'est-ce qui manque le plus aux outils que vous avez testés ?","Fait pour les 3 à 30 : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Fait pour les entreprises de 3 à 30 personnes.", sous:"CRM, planning, pointage. Rien de plus.", fonds:[1] } },
+  { id:"pire-outil", theme:"question communauté",
+    hooks:["Quel est le pire outil de votre entreprise ?","Le papier, le tableur ou le groupe WhatsApp : lequel vous fait perdre le plus de temps ?"],
+    corps:"On pose la question sérieusement, parce qu'on construit Piloz avec les réponses.\n\nChez les entreprises qu'on rencontre, trois candidats reviennent : la feuille d'heures papier, le planning Excel envoyé par mail, et le groupe WhatsApp où tout se perd.\n\nChacun a son défenseur. Chacun a son lundi matin raté.",
+    ctas:["Dites-nous le vôtre en commentaire, on lit tout.","Et si vous voulez remplacer les trois : piloz.fr"],
+    vis:{ layout:"question", titre:"Quel est le pire outil de votre entreprise ?", sous:"Papier, tableur ou WhatsApp ?", fonds:[3] } },
+  { id:"dimanche-soir", theme:"charge du dirigeant",
+    hooks:["Le dimanche soir n'est pas un jour de bureau.","Combien de dimanches passés à faire le planning de la semaine ?"],
+    corps:"Beaucoup de dirigeants du bâtiment ont le même rituel : le dimanche soir, à la table de la cuisine, le planning de la semaine.\n\nCe temps-là ne se facture pas et ne se voit pas. Il s'additionne.\n\nAvec un planning qui se construit au fil de la semaine, depuis le téléphone, en déplaçant une équipe d'un chantier à l'autre, le dimanche soir redevient un dimanche soir.",
+    ctas:["Votre planning, vous le faites quand ?","Un planning qui se fait en semaine : piloz.fr"],
+    vis:{ layout:"accroche", titre:"Le dimanche soir n'est pas un jour de bureau.", sous:"Le planning se construit au fil de la semaine", fonds:[2] } }
+];
+
+let RZ = null, rzEditId = null, rzImgCache = {}, rzFontsReady = null;
+const rzPick = arr => arr[Math.floor(Math.random() * arr.length)];
 
 async function loadReseau(){
   RZ = await api("reseau.state");
   renderReseau();
 }
 
+/* ---------- Moteur de visuels (canvas 1080 × 1080) ---------- */
+function rzFonts(){
+  if (!rzFontsReady) rzFontsReady = (document.fonts && document.fonts.load ? Promise.all(["900 100px Archivo", "700 60px Archivo", "500 40px Archivo"].map(f => document.fonts.load(f))) : Promise.resolve()).catch(() => {});
+  return rzFontsReady;
+}
+function rzImage(n){
+  if (!n) return Promise.resolve(null);
+  if (!rzImgCache[n]) rzImgCache[n] = new Promise(res => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => res(null); im.src = RZ_BRAND.fonds(n); });
+  return rzImgCache[n];
+}
+function rzWrap(ctx, text, maxW){
+  const out = [];
+  for (const para of String(text || "").split("\n")){
+    let line = "";
+    for (const w of para.split(/\s+/).filter(Boolean)){
+      const t = line ? line + " " + w : w;
+      if (ctx.measureText(t).width > maxW && line){ out.push(line); line = w; } else line = t;
+    }
+    out.push(line);
+  }
+  return out;
+}
+function rzFit(ctx, text, maxW, maxH, max, min, weight){
+  for (let size = max; size >= min; size -= 4){
+    ctx.font = weight + " " + size + "px Archivo, sans-serif";
+    const lines = rzWrap(ctx, text, maxW);
+    if (lines.length * size * 1.12 <= maxH) return { size, lines };
+  }
+  ctx.font = weight + " " + min + "px Archivo, sans-serif";
+  return { size: min, lines: rzWrap(ctx, text, maxW) };
+}
+function rzBlock(ctx, text, x, y, maxW, maxH, max, min, weight, color){
+  if (!text) return y;
+  const { size, lines } = rzFit(ctx, text, maxW, maxH, max, min, weight);
+  ctx.fillStyle = color; ctx.textBaseline = "top";
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i * size * 1.12));
+  return y + lines.length * size * 1.12;
+}
+async function rzDraw(canvas, spec, size){
+  await rzFonts();
+  const S = 1080, scale = (size || S) / S;
+  canvas.width = size || S; canvas.height = size || S;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  const fond = Number(spec.fond) || 0;
+  const pal = RZ_BRAND.palettes[spec.variant] || RZ_BRAND.palettes.encre;
+  if (fond){
+    // Visuel de marque tout fait (1200 × 627) : rendu tel quel, sans texte par-dessus.
+    const im = await rzImage(fond);
+    if (im){
+      if (size){ ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, S, S); const r = Math.min(S / im.width, S / im.height), w = im.width * r, h = im.height * r; ctx.drawImage(im, (S - w) / 2, (S - h) / 2, w, h); }
+      else { canvas.width = im.width; canvas.height = im.height; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(im, 0, 0); }
+      return canvas;
+    }
+  }
+  ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, S, S);
+  const P = 88, W = S - 2 * P;
+  // En-tête : marque
+  ctx.fillStyle = pal.accent; ctx.fillRect(P, P, 22, 22);
+  ctx.font = "900 34px Archivo, sans-serif"; ctx.fillStyle = pal.fg; ctx.textBaseline = "top"; ctx.letterSpacing = "6px";
+  ctx.fillText(RZ_BRAND.nom, P + 38, P - 4);
+  ctx.letterSpacing = "0px";
+  // Pied : url + ligne
+  ctx.font = "700 30px Archivo, sans-serif"; ctx.fillStyle = pal.fg; ctx.fillText(RZ_BRAND.url, P, S - P - 30);
+  ctx.font = "500 24px Archivo, sans-serif"; ctx.fillStyle = pal.muted; ctx.textAlign = "right"; ctx.fillText(RZ_BRAND.ligne, S - P, S - P - 26); ctx.textAlign = "left";
+  const top = P + 110, bottom = S - P - 90;
+  const layout = spec.layout || "accroche";
+  if (layout === "chiffre"){
+    ctx.font = "900 250px Archivo, sans-serif"; let fs = 250;
+    while (ctx.measureText(spec.chiffre || "0").width > W && fs > 90){ fs -= 10; ctx.font = "900 " + fs + "px Archivo, sans-serif"; }
+    ctx.fillStyle = spec.variant === "violet" ? pal.fg : pal.accent; ctx.textBaseline = "top";
+    ctx.fillText(spec.chiffre || "", P - 8, top + 20);
+    let y = top + 40 + fs * 1.0;
+    y = rzBlock(ctx, spec.titre, P, y, W, bottom - y - 70, 66, 40, "900", pal.fg) + 22;
+    rzBlock(ctx, spec.sous, P, y, W, bottom - y, 34, 26, "500", pal.muted);
+  } else if (layout === "question"){
+    ctx.font = "900 520px Archivo, sans-serif"; ctx.globalAlpha = .22; ctx.fillStyle = spec.variant === "violet" ? pal.fg : pal.accent; ctx.textAlign = "right"; ctx.fillText("?", S - P + 40, top - 70); ctx.textAlign = "left"; ctx.globalAlpha = 1;
+    let y = rzBlock(ctx, spec.titre, P, top + 120, W - 40, bottom - top - 220, 92, 50, "900", pal.fg) + 28;
+    rzBlock(ctx, spec.sous, P, y, W, bottom - y, 36, 26, "500", pal.muted);
+  } else if (layout === "liste"){
+    let y = rzBlock(ctx, spec.titre, P, top, W, 230, 68, 40, "900", pal.fg) + 40;
+    const lignes = (spec.lignes || []).slice(0, 5);
+    const lh = Math.min(104, Math.floor((bottom - y) / Math.max(1, lignes.length)));
+    for (const raw of lignes){
+      const neg = /^\s*-/.test(raw), txt = raw.replace(/^\s*[-+]\s*/, "");
+      ctx.beginPath(); ctx.arc(P + 26, y + 26, 26, 0, Math.PI * 2); ctx.fillStyle = neg ? pal.soft : (spec.variant === "violet" ? pal.fg : pal.accent); ctx.fill();
+      ctx.strokeStyle = neg ? pal.muted : (spec.variant === "violet" ? pal.accent : pal.bg); ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.beginPath();
+      if (neg){ ctx.moveTo(P + 15, y + 15); ctx.lineTo(P + 37, y + 37); ctx.moveTo(P + 37, y + 15); ctx.lineTo(P + 15, y + 37); }
+      else { ctx.moveTo(P + 13, y + 27); ctx.lineTo(P + 23, y + 37); ctx.lineTo(P + 40, y + 16); }
+      ctx.stroke();
+      ctx.font = "700 " + Math.min(44, lh - 40) + "px Archivo, sans-serif"; ctx.fillStyle = neg ? pal.muted : pal.fg; ctx.textBaseline = "top";
+      let t = txt; while (ctx.measureText(t).width > W - 90 && t.length > 4) t = t.slice(0, -2).trim() + "…";
+      ctx.fillText(t, P + 76, y + 6);
+      if (neg){ const w = ctx.measureText(t).width; ctx.strokeStyle = pal.muted; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(P + 76, y + 30); ctx.lineTo(P + 76 + w, y + 30); ctx.stroke(); }
+      y += lh;
+    }
+  } else if (layout === "offre"){
+    const badge = (spec.sous || "").toUpperCase();
+    let bs = 30, bw = 0;
+    ctx.letterSpacing = "2px";
+    do { ctx.font = "800 " + bs + "px Archivo, sans-serif"; bw = ctx.measureText(badge).width + 56; if (bw <= W) break; bs -= 2; } while (bs > 18);
+    let label = badge; while (bw > W && label.length > 6){ label = label.slice(0, -2).trim() + "…"; bw = ctx.measureText(label).width + 56; }
+    ctx.letterSpacing = "0px";
+    const fit = rzFit(ctx, spec.titre, W, bottom - top - 220, 108, 56, "900");
+    const total = (badge ? 120 : 0) + fit.lines.length * fit.size * 1.12 + 60;
+    let y = Math.max(top, Math.round((top + bottom - total) / 2));
+    if (badge){
+      ctx.font = "800 " + bs + "px Archivo, sans-serif"; ctx.letterSpacing = "2px";
+      ctx.fillStyle = spec.variant === "violet" ? pal.fg : pal.accent; ctx.beginPath(); ctx.roundRect(P, y, bw, 64, 32); ctx.fill();
+      ctx.fillStyle = spec.variant === "violet" ? pal.accent : "#fffdf7"; ctx.textBaseline = "top"; ctx.fillText(label, P + 28, y + 32 - bs / 2);
+      ctx.letterSpacing = "0px";
+      y += 120;
+    }
+    y = rzBlock(ctx, spec.titre, P, y, W, bottom - y - 60, 108, 56, "900", pal.fg) + 50;
+    ctx.fillStyle = spec.variant === "violet" ? pal.fg : pal.accent; ctx.fillRect(P, y, 140, 10);
+  } else {
+    let y = rzBlock(ctx, spec.titre, P, top + 40, W, bottom - top - 160, 100, 52, "900", pal.fg) + 36;
+    ctx.fillStyle = spec.variant === "violet" ? pal.fg : pal.accent; ctx.fillRect(P, y, 110, 10); y += 42;
+    rzBlock(ctx, spec.sous, P, y, W, bottom - y, 36, 26, "500", pal.muted);
+  }
+  return canvas;
+}
+function rzSpecOf(p){
+  const s = (p && p.visuel_spec && typeof p.visuel_spec === "object") ? p.visuel_spec : {};
+  const first = p && p.texte ? p.texte.split("\n")[0] : "";
+  return { layout: s.layout || "accroche", variant: s.variant || "encre", titre: s.titre || first.slice(0, 140), sous: s.sous || "", chiffre: s.chiffre || "", lignes: s.lignes || [], fond: Number(s.fond) || (p && p.visuel ? p.visuel : 0), bank: s.bank || "" };
+}
+async function rzDownload(p){
+  const c = document.createElement("canvas");
+  await rzDraw(c, rzSpecOf(p), 1080);
+  const name = "post-piloz-" + (p.theme || "linkedin").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".png";
+  await new Promise(res => c.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); res(); }, "image/png"));
+}
+async function rzCopy(text){
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch(e){ const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand("copy"); } catch(_){} ta.remove(); return ok; }
+}
+
+/* ---------- Génération locale ---------- */
+function rzGenerate(n, themeFilter){
+  const used = {};
+  for (const p of (RZ && RZ.posts || [])){ const b = rzSpecOf(p).bank; if (b) used[b] = Math.max(used[b] || 0, new Date(p.created_at).getTime()); }
+  let pool = RZ_BANK.filter(e => !themeFilter || e.id === themeFilter);
+  pool = pool.sort((a, b) => (used[a.id] || 0) - (used[b.id] || 0) || Math.random() - .5);
+  const out = [];
+  for (let i = 0; i < n; i++){
+    const e = pool[i % pool.length]; if (!e) break;
+    const hook = rzPick(e.hooks), cta = rzPick(e.ctas);
+    const variant = rzPick(["encre", "encre", "papier", "violet"]);
+    const fond = Math.random() < .2 && e.vis.fonds && e.vis.fonds.length ? rzPick(e.vis.fonds) : 0;
+    const spec = { layout: e.vis.layout, variant, titre: e.vis.titre, sous: e.vis.sous || "", chiffre: e.vis.chiffre || "", lignes: e.vis.lignes || [], fond, bank: e.id };
+    if (spec.layout === "accroche" && Math.random() < .5) spec.titre = hook;
+    out.push({ texte: hook + "\n\n" + e.corps + "\n\n" + cta + "\n\n" + RZ_TAGS, theme: e.theme, visuel: fond, visuel_spec: spec });
+  }
+  return out;
+}
+
+/* ---------- Rendu ---------- */
 function renderReseau(){
   if (!RZ) return;
-  const s = RZ.settings, li = RZ.linkedin;
-  const st = $("rzLiSt");
-  if (li.connected && li.org_id){
-    const days = Math.max(0, Math.round((new Date(li.expires_at) - Date.now()) / 864e5));
-    st.className = "st st-ok"; st.lastElementChild.textContent = "Page reliée";
-    $("rzLiInfo").innerHTML = "Les posts partiront sur la page <b>" + esc(li.org_name || "entreprise") + "</b> (connecté via " + esc(li.member_name || "votre profil") + ", valable encore <b>" + days + " jour(s)</b>). Jamais sur le profil personnel.";
-    $("bRzConnect").textContent = "Reconnecter LinkedIn";
-    $("bRzDisconnect").hidden = false;
-  } else if (li.connected){
-    st.className = "st st-warn"; st.lastElementChild.textContent = "Page manquante";
-    $("rzLiInfo").innerHTML = "Connexion enregistrée" + (li.member_name ? " (" + esc(li.member_name) + ")" : "") + ", mais <b>aucune page entreprise reliée : rien ne sera publié</b> (le profil personnel est exclu).<br>1. Vérifiez que la page LinkedIn de Piloz existe et que vous en êtes administrateur.<br>2. Dans l'application LinkedIn → onglet <b>Products</b> → demandez « <b>Community Management API</b> ».<br>3. Une fois l'accès approuvé par LinkedIn, cliquez « Reconnecter LinkedIn » ci-dessous.";
-    $("bRzConnect").textContent = "Reconnecter LinkedIn";
-    $("bRzDisconnect").hidden = false;
-  } else {
-    st.className = "st st-warn"; st.lastElementChild.textContent = "Non connecté";
-    $("rzLiInfo").innerHTML = RZ.oauthReady
-      ? "Aucun compte connecté. Cliquez sur « Connecter LinkedIn », validez dans l'onglet qui s'ouvre, puis revenez ici."
-      : "L'application LinkedIn n'est pas encore configurée côté serveur : transmettez à Claude Code le <b>Client ID</b> et le <b>Client Secret</b> de votre application LinkedIn pour terminer l'installation.";
-    $("bRzConnect").textContent = "Connecter LinkedIn";
-    $("bRzDisconnect").hidden = true;
-  }
-
-  $("rzEnabled").checked = !!s.enabled;
-  $("rzTime").value = String(s.post_time || "09:00").slice(0, 5);
-  $("rzDays").innerHTML = RZ_DAYS.map(([v, l]) => '<label class="chip"><input type="checkbox" name="rzday" value="' + v + '"' + ((s.post_days || []).includes(v) ? " checked" : "") + "> " + l + "</label>").join("");
-  if (document.activeElement !== $("rzNote")) $("rzNote").value = s.topics_note || "";
-  $("bRzGen").hidden = !RZ.canGenerate;
-
   const posts = RZ.posts || [];
   const drafts = posts.filter(p => p.status === "brouillon").sort((a, b) => (a.position - b.position) || String(a.created_at).localeCompare(String(b.created_at)));
-  const history = posts.filter(p => p.status !== "brouillon").sort((a, b) => String(b.published_at || b.created_at).localeCompare(String(a.published_at || a.created_at)));
-
-  const banners = [];
-  if (li.connected){
-    const days = Math.round((new Date(li.expires_at) - Date.now()) / 864e5);
-    if (days <= 7) banners.push('<div class="banner warn"><div class="grow"><b>La connexion LinkedIn expire dans ' + Math.max(0, days) + ' jour(s).</b> Cliquez sur « Reconnecter LinkedIn » pour repartir sur 60 jours.</div></div>');
-  }
-  if (s.enabled && !li.connected) banners.push('<div class="banner err"><div class="grow"><b>Publication activée mais LinkedIn non connecté :</b> rien ne partira tant que le compte n\'est pas relié.</div></div>');
-  else if (s.enabled && !li.org_id) banners.push('<div class="banner err"><div class="grow"><b>Publication activée mais aucune page entreprise reliée :</b> rien ne partira. Le profil personnel est exclu — demandez l\'accès « Community Management API » dans l\'application LinkedIn puis reconnectez.</div></div>');
-  if (s.enabled && drafts.length === 0) banners.push('<div class="banner err"><div class="grow"><b>File vide :</b> plus rien à publier. Demandez à Claude Code « recharge les posts LinkedIn », ou écrivez un post ci-dessous.</div></div>');
-  else if (s.enabled && drafts.length < 5) banners.push('<div class="banner warn"><div class="grow"><b>Plus que ' + drafts.length + ' brouillon(s) en réserve</b> — pensez à demander à Claude Code « recharge les posts LinkedIn ».</div></div>');
-  $("rzBanners").innerHTML = banners.join("");
-
+  const history = posts.filter(p => p.status === "publie").sort((a, b) => String(b.published_at || b.created_at).localeCompare(String(a.published_at || a.created_at)));
+  $("rzCount").textContent = drafts.length + " prêt(s)";
   $("rzEmpty").hidden = drafts.length > 0;
-  $("rzDrafts").innerHTML = drafts.map((p, i) => '<li class="rz-item">' +
-    '<img src="' + RZ_IMG(p.visuel) + '" alt="Visuel ' + p.visuel + '" loading="lazy">' +
+  $("rzDrafts").innerHTML = drafts.map((p, i) => '<li class="rz-item" data-id="' + p.id + '">' +
+    '<canvas class="rz-prev" width="360" height="360" data-rz-canvas="' + p.id + '" title="Cliquer pour télécharger le visuel"></canvas>' +
     '<div class="grow" style="flex:1;min-width:0"><div class="meta">' +
-      '<span class="st st-blue" style="padding:2px 9px;font-size:.72rem">' + (i === 0 ? "prochain publié" : "n° " + (i + 1)) + "</span>" +
+      '<span class="st st-blue" style="padding:2px 9px;font-size:.72rem">n° ' + (i + 1) + "</span>" +
       (p.theme ? '<span class="th">' + esc(p.theme) + "</span>" : "") +
-      '<span class="note" style="margin:0">' + dateFr(p.created_at) + "</span></div>" +
-    '<div class="txt">' + esc(p.texte) + "</div></div>" +
+      '<span class="note" style="margin:0">' + dateFr(p.created_at) + " · " + p.texte.length + " car.</span></div>" +
+    '<div class="txt">' + esc(p.texte) + "</div>" +
+    '<button type="button" class="b b-out b-xs" data-rz-more="' + p.id + '" style="margin-top:6px">Voir le texte entier</button></div>' +
     '<div class="rz-acts">' +
-      '<button type="button" class="b b-main b-xs" data-rz-pub="' + p.id + '">Publier maintenant</button>' +
+      '<button type="button" class="b b-main b-xs" data-rz-copy="' + p.id + '">Copier le texte</button>' +
+      '<button type="button" class="b b-main b-xs" data-rz-dl="' + p.id + '">Télécharger le visuel</button>' +
+      '<button type="button" class="b b-out b-xs" data-rz-done="' + p.id + '">Publié ✓</button>' +
       '<button type="button" class="b b-out b-xs" data-rz-edit="' + p.id + '">Modifier</button>' +
       '<button type="button" class="b b-out b-xs" data-rz-del="' + p.id + '">Supprimer</button>' +
     "</div></li>").join("");
+  drafts.forEach(p => { const c = document.querySelector('[data-rz-canvas="' + p.id + '"]'); if (c) rzDraw(c, rzSpecOf(p), 360).catch(() => {}); });
 
   $("rzHistEmpty").hidden = history.length > 0;
-  $("rzHistory").innerHTML = history.slice(0, 40).map(p => {
-    const ok = p.status === "publie";
-    return '<li><span class="st ' + (ok ? "st-ok" : "st-danger") + '" style="padding:3px 10px;font-size:.72rem">' + (ok ? "Publié" : "Échec") + "</span>" +
-      '<div class="grow"><b>' + esc(p.theme || p.texte.split("\n")[0].slice(0, 70)) + "</b><span>" +
-      (ok ? "le " + dateFr(p.published_at) + " à " + timeFr(p.published_at) : esc(p.error || "Erreur inconnue")) + "</span></div>" +
-      (ok && p.linkedin_post_id
-        ? '<a class="b b-out b-xs" href="https://www.linkedin.com/feed/update/' + encodeURIComponent(p.linkedin_post_id) + '" target="_blank" rel="noopener">Voir ↗</a>'
-        : (!ok && p.texte !== "(aucun post publié)" ? '<button type="button" class="b b-out b-xs" data-rz-pub="' + p.id + '">Réessayer</button>' : "")) +
-      "</li>";
-  }).join("");
+  $("rzHistory").innerHTML = history.slice(0, 40).map(p => '<li><span class="st st-ok" style="padding:3px 10px;font-size:.72rem">Publié</span>' +
+      '<div class="grow"><b>' + esc(p.theme || p.texte.split("\n")[0].slice(0, 70)) + "</b><span>le " + dateFr(p.published_at) + " à " + timeFr(p.published_at) + "</span></div>" +
+      '<button type="button" class="b b-out b-xs" data-rz-copy="' + p.id + '">Copier</button>' +
+      '<button type="button" class="b b-out b-xs" data-rz-dl="' + p.id + '">Visuel</button></li>').join("");
 }
 
 $("bRzRefresh").addEventListener("click", () => loadReseau().then(() => toast("Actualisé.")).catch(e => toast(e.message || "Actualisation impossible.")));
-
-$("bRzConnect").addEventListener("click", async () => {
-  busy($("bRzConnect"), true);
+$("rzGenTheme").innerHTML = '<option value="">Tous les sujets (variés)</option>' + RZ_BANK.map(e => '<option value="' + e.id + '">' + esc(e.theme) + "</option>").join("");
+$("bRzGen").addEventListener("click", async () => {
+  const n = Number($("rzGenCount").value) || 1, theme = $("rzGenTheme").value;
+  busy($("bRzGen"), true);
   try {
-    const { url } = await api("reseau.connect.start");
-    window.open(url, "_blank", "noopener");
-    toast("Validez la connexion dans l'onglet LinkedIn qui vient de s'ouvrir.");
-    clearInterval(rzConnectPoll);
-    let tries = 0;
-    rzConnectPoll = setInterval(async () => {
-      if (++tries > 45 || current !== "reseau"){ clearInterval(rzConnectPoll); return; }
-      try { await loadReseau(); if (RZ.linkedin.connected){ clearInterval(rzConnectPoll); toast("LinkedIn connecté ✓"); } } catch(e){}
-    }, 4000);
-  } catch(e){ toast(e.message || "Impossible de démarrer la connexion LinkedIn."); }
-  busy($("bRzConnect"), false);
+    const posts = rzGenerate(n, theme);
+    if (!posts.length) throw new Error("Rien à générer.");
+    await api("reseau.draft.bulk", { posts, source: "banque" });
+    toast(posts.length + " post(s) prêt(s) à copier.");
+    await loadReseau();
+  } catch(e){ toast(e.message || "Génération impossible."); }
+  busy($("bRzGen"), false);
 });
 
-$("bRzDisconnect").addEventListener("click", async () => {
-  if (!confirm("Déconnecter LinkedIn ? La publication automatique s'arrêtera jusqu'à la prochaine connexion.")) return;
-  try { await api("reseau.disconnect"); toast("LinkedIn déconnecté."); await loadReseau(); } catch(e){ toast(e.message || "Déconnexion impossible."); }
-});
-
-$("rzForm").addEventListener("submit", async ev => {
-  ev.preventDefault();
-  const days = [...document.querySelectorAll('input[name="rzday"]:checked')].map(i => Number(i.value));
-  busy($("bRzSave"), true);
-  try {
-    const { settings } = await api("reseau.settings.save", { enabled: $("rzEnabled").checked, post_time: $("rzTime").value, post_days: days, topics_note: $("rzNote").value });
-    RZ.settings = settings; renderReseau(); toast("Réglages enregistrés.");
-  } catch(e){ toast(e.message || "Enregistrement impossible."); }
-  busy($("bRzSave"), false);
-});
-
+/* ---------- Éditeur ---------- */
+function rzEdSpec(){
+  return { layout: $("rzEdLayout").value, variant: $("rzEdVariant").value, titre: $("rzEdTitre").value, sous: $("rzEdSous").value, chiffre: $("rzEdChiffre").value,
+    lignes: $("rzEdLignes").value.split("\n").map(s => s.trim()).filter(Boolean).slice(0, 5), fond: Number($("rzEdFond").value) || 0, bank: $("rzEditor").dataset.bank || "" };
+}
+let rzPrevTimer = null;
+function rzPreview(){
+  clearTimeout(rzPrevTimer);
+  rzPrevTimer = setTimeout(() => {
+    const s = rzEdSpec();
+    $("rzEdChiffreW").hidden = s.layout !== "chiffre";
+    $("rzEdLignesW").hidden = s.layout !== "liste";
+    rzDraw($("rzEdCanvas"), s, 540).catch(() => {});
+  }, 120);
+}
 function rzOpenEditor(post){
   rzEditId = post ? post.id : null;
+  const s = post ? rzSpecOf(post) : { layout:"accroche", variant:"encre", titre:"", sous:"", chiffre:"", lignes:[], fond:0, bank:"" };
+  $("rzEditor").dataset.bank = s.bank || "";
   $("rzEdTheme").value = post ? post.theme || "" : "";
   $("rzEdText").value = post ? post.texte : "";
-  const sel = post ? post.visuel : 1 + Math.floor(Math.random() * 9);
-  let thumbs = "";
-  for (let i = 1; i <= 9; i++) thumbs += '<label class="rz-th"><input type="radio" name="rzVis" value="' + i + '"' + (i === sel ? " checked" : "") + '><img src="' + RZ_IMG(i) + '" alt="Visuel ' + i + '" loading="lazy"></label>';
-  $("rzThumbs").innerHTML = thumbs;
+  $("rzEdLayout").value = s.layout; $("rzEdVariant").value = s.variant; $("rzEdFond").value = String(s.fond || 0);
+  $("rzEdTitre").value = s.titre; $("rzEdSous").value = s.sous; $("rzEdChiffre").value = s.chiffre; $("rzEdLignes").value = (s.lignes || []).join("\n");
   $("rzEditor").hidden = false;
+  rzPreview();
   $("rzEdText").focus();
   $("rzEditor").scrollIntoView({ behavior: "smooth", block: "center" });
 }
+$("rzEdLayout").innerHTML = Object.entries(RZ_LAYOUTS).map(([k, v]) => '<option value="' + k + '">' + v + "</option>").join("");
+$("rzEdVariant").innerHTML = Object.entries(RZ_VARIANTS).map(([k, v]) => '<option value="' + k + '">' + v + "</option>").join("");
+$("rzEdFond").innerHTML = '<option value="0">Non : mise en page ci-dessus</option>' + Object.entries(RZ_FONDS).map(([k, v]) => '<option value="' + k + '">' + k + " · " + v + "</option>").join("");
+["rzEdLayout", "rzEdVariant", "rzEdFond", "rzEdTitre", "rzEdSous", "rzEdChiffre", "rzEdLignes"].forEach(id => { $(id).addEventListener("input", rzPreview); $(id).addEventListener("change", rzPreview); });
+$("bRzEdHook").addEventListener("click", () => { $("rzEdTitre").value = $("rzEdText").value.split("\n")[0].slice(0, 140); rzPreview(); });
 $("bRzNew").addEventListener("click", () => rzOpenEditor(null));
 $("bRzEdCancel").addEventListener("click", () => { $("rzEditor").hidden = true; rzEditId = null; });
 $("bRzEdSave").addEventListener("click", async () => {
-  const visuel = Number((document.querySelector('input[name="rzVis"]:checked') || {}).value || 1);
+  const spec = rzEdSpec();
   busy($("bRzEdSave"), true);
   try {
-    await api("reseau.draft.save", { id: rzEditId || undefined, texte: $("rzEdText").value, theme: $("rzEdTheme").value, visuel });
+    await api("reseau.draft.save", { id: rzEditId || undefined, texte: $("rzEdText").value, theme: $("rzEdTheme").value, visuel: spec.fond, visuel_spec: spec });
     $("rzEditor").hidden = true; rzEditId = null;
-    toast("Brouillon enregistré.");
+    toast("Post enregistré.");
     await loadReseau();
   } catch(e){ toast(e.message || "Enregistrement impossible."); }
   busy($("bRzEdSave"), false);
 });
 
-$("bRzGen").addEventListener("click", async () => {
-  const instruction = prompt("Consigne pour ce post (facultatif) :", "");
-  if (instruction === null) return;
-  busy($("bRzGen"), true);
-  try { await api("reseau.generate", { instruction }); toast("Post généré et ajouté à la file."); await loadReseau(); }
-  catch(e){ toast(e.message || "Génération impossible."); }
-  busy($("bRzGen"), false);
-});
-
 $("v-reseau").addEventListener("click", async ev => {
-  const pub = ev.target.closest("[data-rz-pub]"), edit = ev.target.closest("[data-rz-edit]"), del = ev.target.closest("[data-rz-del]");
-  if (edit){ const p = (RZ && RZ.posts || []).find(x => x.id === edit.dataset.rzEdit); if (p) rzOpenEditor(p); return; }
-  if (del){
-    if (!confirm("Supprimer ce brouillon ?")) return;
-    try { await api("reseau.draft.delete", { id: del.dataset.rzDel }); toast("Brouillon supprimé."); await loadReseau(); } catch(e){ toast(e.message || "Suppression impossible."); }
-    return;
-  }
-  if (pub){
-    if (!confirm("Publier ce post maintenant sur votre profil LinkedIn ?")) return;
-    busy(pub, true);
-    try { await api("reseau.publish", { id: pub.dataset.rzPub }); toast("Publié sur LinkedIn ✓"); }
-    catch(e){ toast(e.message || "Publication impossible."); }
-    await loadReseau().catch(() => {});
-  }
+  const t = ev.target, find = a => t.closest("[data-rz-" + a + "]");
+  const copy = find("copy"), dl = find("dl") || t.closest("[data-rz-canvas]"), done = find("done"), edit = find("edit"), del = find("del"), more = find("more");
+  const byId = id => (RZ && RZ.posts || []).find(x => x.id === id);
+  if (more){ const li = more.closest(".rz-item"); li.classList.toggle("open"); more.textContent = li.classList.contains("open") ? "Replier" : "Voir le texte entier"; return; }
+  if (copy){ const p = byId(copy.dataset.rzCopy); if (!p) return; toast((await rzCopy(p.texte)) ? "Texte copié : collez-le dans LinkedIn." : "Copie impossible : sélectionnez le texte à la main."); return; }
+  if (dl){ const p = byId(dl.dataset.rzDl || dl.dataset.rzCanvas); if (!p) return; busy(dl.tagName === "BUTTON" ? dl : $("bRzNew"), true); try { await rzDownload(p); toast("Visuel téléchargé."); } catch(e){ toast("Téléchargement impossible."); } busy(dl.tagName === "BUTTON" ? dl : $("bRzNew"), false); return; }
+  if (edit){ const p = byId(edit.dataset.rzEdit); if (p) rzOpenEditor(p); return; }
+  if (del){ if (!confirm("Supprimer ce post ?")) return; try { await api("reseau.draft.delete", { id: del.dataset.rzDel }); toast("Post supprimé."); await loadReseau(); } catch(e){ toast(e.message || "Suppression impossible."); } return; }
+  if (done){ try { await api("reseau.draft.done", { id: done.dataset.rzDone }); toast("Passé dans l'historique."); await loadReseau(); } catch(e){ toast(e.message || "Impossible."); } }
 });
 
 /* ============================================================
