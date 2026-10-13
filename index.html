@@ -571,6 +571,8 @@
               <label><input type="radio" name="src" value="tous" checked> + anciens RGE — trois fois plus d'entreprises</label>
             </div>
             <p class="note" style="margin-top:10px" id="srcNote"></p>
+            <label class="swi" style="margin-top:14px"><input type="checkbox" id="tWeb" checked><i></i> Chercher aussi les entreprises <b>non RGE</b> sur leur site internet : domaine deviné depuis le nom, site vérifié par le SIREN ou le nom et la ville, adresse lue sur le site</label>
+            <p class="note" style="margin-top:8px" id="webNote">Pour chaque entreprise du ciblage sans adresse RGE, l'automate essaie dupont-batiment.fr, dupontbatiment.com… et ne retient un site que s'il porte le SIREN (mentions légales) ou le nom avec la ville. Comptez environ une adresse pour quatre à six entreprises de plus de 10 salariés. Les entreprises examinées sont mémorisées 180 jours. La recherche tourne en tâche dédiée toutes les deux minutes quand la réserve baisse.</p>
           </div>
           <div class="fset">
             <div class="fset-h"><h3>Signal d'intention : marchés publics gagnés</h3><span class="sub">un marché de travaux notifié, c'est un chantier qui démarre dans les semaines qui viennent</span></div>
@@ -691,6 +693,7 @@
             <select class="inp" id="lSignal" style="width:auto">
               <option value="">Source : toutes</option>
               <option value="marche">Marché public gagné</option>
+              <option value="web">Adresse trouvée sur le site web (non RGE)</option>
             </select>
             <select class="inp" id="lStage" hidden style="width:auto">
               <option value="">Relances : toutes</option>
@@ -1271,7 +1274,9 @@ function buildEmail(tpl, s, data){
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
   const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
     '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">Vous recevez ce message car ' + hesc(company) +
-    " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE). " +
+    ((data || {}).source === "web"
+      ? " figure dans le répertoire public des entreprises (base SIRENE de l'INSEE) et publie ses coordonnées professionnelles sur son site internet. "
+      : " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE). ") +
     '<a href="https://piloz.fr/desinscription.html" style="color:#8a8ca0">Ne plus recevoir de message</a>.' + (identity ? "<br>" + hesc(identity) : "") + "</p></div>";
   return { subject: clean(renderTpl(tpl.subject, v), 200), html };
 }
@@ -1446,6 +1451,8 @@ function renderState(){
   $("apReport").innerHTML = rep
     ? "<b>Dernier passage " + esc(ago(rep.at)) + " :</b> " + fmt(rep.scanned) + " entreprises analysées, " + fmt(rep.added) + " ajoutée(s) à la file" + (rep.known ? ", " + fmt(rep.known) + " déjà connue(s)" : "") + (rep.lowScore ? ", " + fmt(rep.lowScore) + " sous le score minimum" : "") + "." + (rep.exhausted ? " <b>Toutes les entreprises du ciblage ont été parcourues</b> : élargissez-le pour continuer." : "")
       + (rep.marches ? " <b>Marchés publics :</b> " + (rep.marches.off ? "indisponible (" + esc(rep.marches.off) + ")" : fmt(rep.marches.marches) + " marché(s) lu(s) sur " + fmt(rep.marches.total) + ", " + fmt(rep.marches.entreprises) + " entreprise(s) dans le ciblage, " + fmt(rep.marches.added) + " ajoutée(s).") : "")
+      + (rep.web ? " <b>Sites web (non RGE) :</b> " + fmt(rep.web.examined) + " entreprise(s) examinée(s), " + fmt(rep.web.sites) + " site(s) vérifié(s), " + fmt(rep.web.emails) + " adresse(s) trouvée(s)" + (rep.web.searchBlocked ? ", moteur de recherche au quota" : "") + "." : "")
+      + (state.scanned && state.scanned.total ? " <b>Depuis le début :</b> " + fmt(state.scanned.total) + " entreprises non RGE examinées, " + fmt(state.scanned.emails) + " adresses trouvées (" + Math.round(state.scanned.emails / state.scanned.total * 100) + " %)." : "")
     : "Aucun passage pour l'instant : le premier aura lieu dès que l'automate sera démarré.";
 }
 
@@ -1536,7 +1543,7 @@ function targetSummary(t){
   const effs = (t.effs && t.effs.length ? t.effs : DEFAULT_EFFS).map(e => EFF[e]).filter(Boolean);
   const effTxt = effs.length ? "effectif " + effs[0].split(" à ")[0] + " à " + (effs[effs.length - 1].split(" à ")[1] || effs[effs.length - 1]) + " salariés" : "tous effectifs";
   const zone = t.deps && t.deps.length ? "départements " + t.deps.join(", ") : "toute la France";
-  return what + " · " + effTxt + " · " + zone + " · " + (t.tousRge ? "RGE actuels et anciens" : "RGE actuels");
+  return what + " · " + effTxt + " · " + zone + " · " + (t.tousRge ? "RGE actuels et anciens" : "RGE actuels") + (t.web !== false ? " + sites web des non RGE" : "");
 }
 function parseDeps(text){
   const list = String(text || "").toUpperCase().split(/[\s,;]+/).map(d => d.trim()).filter(Boolean).map(d => /^\d$/.test(d) ? "0" + d : d);
@@ -1570,7 +1577,7 @@ function readTarget(){
   const effs = [...document.querySelectorAll("input[name=eff]:checked")].flatMap(c => c.value.split(","));
   if (!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
   return {
-    target: { sect, metiers, effs, deps: parseDeps($("deps").value), tousRge: document.querySelector("input[name=src]:checked").value === "tous", marches: $("tMarches").checked },
+    target: { sect, metiers, effs, deps: parseDeps($("deps").value), tousRge: document.querySelector("input[name=src]:checked").value === "tous", marches: $("tMarches").checked, web: $("tWeb").checked },
     minScore: Number(document.querySelector("input[name=minscore]:checked").value),
     requireFirstName: $("tReqFirst").checked
   };
@@ -1587,6 +1594,8 @@ function fillTarget(){
   $("deps").value = (t.deps || []).join(", ");
   document.querySelectorAll("input[name=src]").forEach(r => { r.checked = r.value === (t.tousRge !== false ? "tous" : "actifs"); });
   $("tMarches").checked = t.marches !== false;
+  $("tWeb").checked = t.web !== false;
+  if (state.search) $("webNote").innerHTML = ($("webNote").textContent.split(" La recherche tourne")[0]) + (state.search.configured ? " Moteur de recherche configuré côté serveur : il est interrogé quand aucun domaine deviné ne convient." : " Sans clé de moteur de recherche côté serveur (secret PROSPECTION_SEARCH_API_KEY, Brave Search), seuls les domaines devinés sont essayés.") + " La recherche tourne en tâche dédiée toutes les deux minutes quand la réserve baisse.";
   $("tReqFirst").checked = state.settings.require_first_name !== false;
   const score = Number(state.settings.autopilot_min_score || 0);
   const scoreValue = score >= 65 ? "65" : score >= 40 ? "40" : "0";
@@ -1635,7 +1644,7 @@ async function estimate(){
   if (failed && !total){ $("targetEstimate").textContent = ""; return; }
   const perDay = state ? Math.max(1, state.settings.daily_cap) : 200;
   $("targetEstimate").innerHTML = t.tousRge
-    ? (capped ? "Au moins " : "≈ ") + "<b>" + fmt(total) + "</b> entreprises du BTP correspondent ; seules celles passées par la qualification RGE (≈ 173 000 en France, actuelles et anciennes) ont une adresse e-mail publiée."
+    ? (capped ? "Au moins " : "≈ ") + "<b>" + fmt(total) + "</b> entreprises du BTP correspondent ; celles passées par la qualification RGE (≈ 173 000 en France, actuelles et anciennes) ont une adresse publiée" + (t.web ? ", les autres sont cherchées sur leur site internet (environ une adresse sur cinq)." : ".")
     : (capped ? "Au moins " : "≈ ") + "<b>" + fmt(total) + "</b> entreprises correspondent, soit environ " + fmt(Math.ceil(total / perDay)) + " jours d'envoi au quota maximum.";
 }
 $("bTargetMax").addEventListener("click", () => {
@@ -1644,9 +1653,10 @@ $("bTargetMax").addEventListener("click", () => {
   document.querySelectorAll("input[name=eff]").forEach(c => { c.checked = true; });
   document.querySelectorAll("input[name=src]").forEach(r => { r.checked = r.value === "tous"; });
   document.querySelectorAll("input[name=minscore]").forEach(r => { r.checked = r.value === "0"; });
+  $("tWeb").checked = true;
   $("deps").value = "";
   targetChanged();
-  toast("Volume maximum : tout le BTP, toutes tailles, RGE actuels et anciens. Pensez à enregistrer.", 5000);
+  toast("Volume maximum : tout le BTP, toutes tailles, RGE actuels et anciens, sites web des non RGE. Pensez à enregistrer.", 5000);
 });
 $("targetForm").addEventListener("input", targetChanged);
 $("targetForm").addEventListener("change", targetChanged);
@@ -1825,6 +1835,7 @@ function trackBadges(m){
 function signalBadge(m){
   const d = m.data || {};
   if (d.marche) return ' <span class="badge clic" title="Marché public remporté' + (d.marche_date ? ' (notifié le ' + esc(dateFr(d.marche_date)) + ')' : '') + ' : ' + esc(d.marche) + '">Marché public' + (d.marche_date ? ' · ' + esc(dateFr(d.marche_date)) : '') + '</span>';
+  if (d.source === "web") return ' <span class="badge open" title="Entreprise non RGE : adresse lue sur ' + esc(String(d.site || "").replace(/^https?:\/\//, "")) + (d.how ? " (" + (/siren/.test(d.how) ? "SIREN vérifié" : "nom et ville vérifiés") + ")" : "") + '">Site web</span>';
   return "";
 }
 function trackState(m){
@@ -1943,6 +1954,7 @@ async function openMessage(id){
         "<div><dt>Origine</dt><dd>" + esc(ORIGIN[m.origin] || m.origin) + (m.score != null ? " · score " + m.score : "") + "</dd></div>" +
         (d.marche ? "<div><dt>Marché public gagné" + (d.marche_date ? " (notifié le " + esc(dateFr(d.marche_date)) + ")" : "") + "</dt><dd>" + esc(d.marche) + "</dd></div>" : "") +
         (d.tel ? "<div><dt>Téléphone</dt><dd>" + esc(d.tel) + "</dd></div>" : "") +
+        (d.site ? "<div><dt>Site internet</dt><dd>" + '<a href="' + esc(/^https?:/.test(d.site) ? d.site : "https://" + d.site) + '" target="_blank" rel="noopener">' + esc(String(d.site).replace(/^https?:\/\//, "")) + "</a>" + (d.source === "web" ? ' <span class="muted">(adresse lue sur le site' + (d.how ? ", " + (/siren/.test(d.how) ? "SIREN vérifié" : "nom et ville vérifiés") : "") + ")</span>" : "") + "</dd></div>" : "") +
         (m.status === "sent" ? "<div><dt>Suivi</dt><dd>" + ([
           m.opened_at ? "ouvert le " + dateTimeFr(m.opened_at) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") : "",
           m.video_clicked_at ? "vidéo ouverte le " + dateTimeFr(m.video_clicked_at) : "",
@@ -2143,7 +2155,7 @@ function openHelp(topic){
     '<p class="note">Les messages partent de votre vrai domaine. Pour que Gmail et Outlook continuent de les accepter, l\'automate monte progressivement en volume, espace les messages au hasard et ne travaille qu\'aux heures de bureau. En cas d\'incident passager ou de quota Hostinger atteint, il patiente puis reprend seul ; il ne <b>se met en pause</b> que si la boîte refuse les envois, et vous prévient alors par e-mail.</p>' +
     '<p class="note">Aucun pixel de suivi ni lien traqué : les messages ressemblent à un e-mail écrit à la main, ce qui aide à les faire arriver en boîte de réception.</p>' +
     '<p class="sect-t" style="margin-top:20px">Les données</p>' +
-    '<p class="note"><b>API Recherche d\'entreprises</b> (SIRENE, RNE) pour les entreprises, leurs dirigeants et leur taille ; <b>ADEME RGE</b> (Licence Ouverte) pour les e-mails, publiés par les entreprises qualifiées RGE. Le score Piloz classe des profils à partir de signaux publics ; il ne mesure pas une intention d\'achat.</p>' +
+    '<p class="note"><b>API Recherche d\'entreprises</b> (SIRENE, RNE) pour les entreprises, leurs dirigeants et leur taille ; <b>ADEME RGE</b> (Licence Ouverte) pour les e-mails publiés par les entreprises qualifiées RGE ; <b>le site internet de l\'entreprise</b> pour les autres : domaine deviné depuis le nom, site vérifié par le SIREN (mentions légales) ou le nom et la ville, adresse lue sur la page d\'accueil, la page contact ou les mentions légales. La mention d\'origine des données en bas de chaque message s\'adapte à la source. Le score Piloz classe des profils à partir de signaux publics ; il ne mesure pas une intention d\'achat.</p>' +
     '<p class="sect-t" style="margin-top:20px">Cadre légal (prospection B2B)</p>' +
     '<p class="note">En France, un e-mail de prospection vers une adresse professionnelle est autorisé sans consentement préalable s\'il concerne l\'activité de la personne. En contrepartie, chaque message doit identifier l\'expéditeur, indiquer l\'origine des données et proposer une <b>désinscription simple</b>. L\'automate ajoute tout cela automatiquement, gère la désinscription en un clic (lien et en-tête reconnu par Gmail/Outlook) et n\'écrit plus jamais à une adresse désinscrite.</p>' +
     '<p class="note">Si quelqu\'un vous répond « stop », ajoutez son adresse dans <b>Exclusions</b>.</p>');
