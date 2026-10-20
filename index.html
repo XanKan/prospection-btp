@@ -1339,7 +1339,10 @@ function fillTarget(){
   document.querySelectorAll("input[name=src]").forEach(r => { r.checked = r.value === (t.tousRge !== false ? "tous" : "actifs"); });
   $("tMarches").checked = t.marches !== false;
   $("tWeb").checked = t.web !== false;
-  if (state.search) $("webNote").innerHTML = ($("webNote").textContent.split(" La recherche tourne")[0]) + (state.search.configured ? " Moteur de recherche configuré côté serveur : il est interrogé quand aucun domaine deviné ne convient." : " Sans clé de moteur de recherche côté serveur (secret PROSPECTION_SEARCH_API_KEY, Brave Search), seuls les domaines devinés sont essayés.") + " La recherche tourne en tâche dédiée toutes les deux minutes quand la réserve baisse.";
+  // Texte d'origine gardé à part : la mention du moteur de recherche est ajoutée une seule fois.
+  const webNote = $("webNote");
+  if (!webNote.dataset.base) webNote.dataset.base = webNote.textContent.trim();
+  if (state.search) webNote.textContent = webNote.dataset.base + (state.search.configured ? " Moteur de recherche configuré côté serveur : il est interrogé quand aucun domaine deviné ne convient." : " Sans clé de moteur de recherche côté serveur (secret PROSPECTION_SEARCH_API_KEY, Brave Search), seuls les domaines devinés sont essayés.") + " La recherche tourne en tâche dédiée toutes les deux minutes quand la réserve baisse.";
   $("tReqFirst").checked = state.settings.require_first_name !== false;
   const score = Number(state.settings.autopilot_min_score || 0);
   const scoreValue = score >= 65 ? "65" : score >= 40 ? "40" : "0";
