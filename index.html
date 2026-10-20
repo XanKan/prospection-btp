@@ -736,6 +736,7 @@
             <div class="card-b">
               <div class="fields">
                 <div class="fld"><label for="sCap">Quota maximum par jour</label><input class="inp" type="number" id="sCap" min="1" max="3000">
+                  <p class="note" id="rampNote" hidden style="margin:6px 0 4px"></p>
                   <p class="help" id="sCapHelp">Hostinger accepte jusqu'à 3 000 e-mails par jour. Plafond une fois la montée en charge terminée.</p></div>
                 <div class="fld" id="sWarmFld"><label>Montée en charge</label>
                   <label class="swi" style="margin:4px 0 10px"><input type="checkbox" id="sWarm"><i></i> Augmenter le quota progressivement</label>
@@ -1127,7 +1128,8 @@ function renderState(){
   $("kToday").innerHTML = fmt(state.sentToday) + " <small>/ " + fmt(state.capToday) + "</small>";
   $("kTodayBar").style.width = Math.min(100, state.capToday ? Math.round(state.sentToday / state.capToday * 100) : 0) + "%";
   const boites = (state.smtp && state.smtp.boites) || [];
-  $("kTodayF").textContent = boites.length && state.capToday < s.daily_cap ? "montée progressive : " + fmt(state.capToday) + " aujourd'hui, jusqu'à " + fmt(s.daily_cap) + " par jour"
+  const next = boites.length ? rampPlan(s, boites.length)[0] : null;
+  $("kTodayF").textContent = boites.length && state.capToday < s.daily_cap ? "montée progressive" + (next ? " · " + next.label + " : " + fmt(next.cap) : "") + ", jusqu'à " + fmt(s.daily_cap) + " par jour"
     : s.warmup_enabled && state.capToday < s.daily_cap ? "montée en charge : quota en hausse chaque jour d'envoi" : "quota du jour";
   $("kQueue").textContent = fmt(c.queued);
   const perDayCap = Math.max(1, state.capToday || s.daily_cap);
@@ -1824,6 +1826,29 @@ $("sBody").addEventListener("click", async ev => {
    RÉGLAGES
    ============================================================ */
 $("dayChips").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(d => '<label class="chip"><input type="checkbox" name="day" value="' + d + '"> ' + DAY_NAMES[d].charAt(0).toUpperCase() + DAY_NAMES[d].slice(1) + "</label>").join("");
+// Montée progressive des boîtes dédiées : quota d'un jour donné (même règle que
+// prospection_daily_cap côté base), et prochains jours d'envoi.
+function boxCapOn(s, n, day){
+  if (!s.boites_debut || !n) return 0;
+  const days = Math.round((new Date(day + "T12:00:00") - new Date(s.boites_debut + "T12:00:00")) / 864e5);
+  if (days < 0) return 0;
+  return Math.min(s.daily_cap, n * Math.min(s.boite_max || 40, (s.boite_palier || 10) * (Math.floor(days / 7) + 1)));
+}
+function rampPlan(s, n){
+  const parisDay = d => new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris" }).format(d);
+  const isoDow = day => ((new Date(day + "T12:00:00").getDay() + 6) % 7) + 1;
+  const label = day => new Date(day + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  const plan = [];
+  let last = -1;
+  for (let i = 1; i <= 60 && plan.length < 5; i++){
+    const day = parisDay(new Date(Date.now() + i * 864e5));
+    if (!s.send_days.includes(isoDow(day))) continue;
+    const cap = boxCapOn(s, n, day);
+    if (cap !== last){ plan.push({ day, label: label(day), cap }); last = cap; }
+    if (cap >= s.daily_cap) break;
+  }
+  return plan;
+}
 function fillSettings(){
   if (!state) return;
   const s = state.settings;
@@ -1851,7 +1876,10 @@ function fillSettings(){
   $("sCapHelp").textContent = dedicated
     ? "Plafond une fois la montée progressive terminée. Chaque boîte envoie " + (s.boite_palier || 10) + " messages par jour la première semaine, puis " + (s.boite_palier || 10) + " de plus chaque semaine, jusqu'à " + (s.boite_max || 40) + " par boîte."
     : "Hostinger accepte jusqu'à 3 000 e-mails par jour. Plafond une fois la montée en charge terminée.";
+  $("rampNote").hidden = !dedicated;
   if (dedicated){
+    const plan = rampPlan(s, boites.length);
+    $("rampNote").innerHTML = "Aujourd'hui : <b>" + fmt(state.capToday) + " messages</b>." + (plan.length ? "<br>" + plan.map((p, i) => (i ? "À partir du " : "Prochain jour d'envoi, ") + esc(p.label) + " : <b>" + fmt(p.cap) + " messages</b> (" + fmt(Math.round(p.cap / boites.length)) + " par boîte)").join("<br>") : "");
     const ok = boites.every(b => b.password);
     $("boxesNote").innerHTML = "Les messages partent de <b>" + boites.length + " boîtes dédiées à la prospection</b>, la moins utilisée du jour d'abord : " +
       boites.map(b => "<b>" + esc(b.address) + "</b>" + (b.password ? "" : " (mot de passe manquant)") + (b.token ? "" : " (réponses non lues)")).join(", ") +
