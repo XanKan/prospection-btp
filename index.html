@@ -735,6 +735,8 @@
                 <div class="fld"><label for="sFu1">Relance 1, après</label><div class="unit"><input class="inp" type="number" id="sFu1" min="1" max="90" step="1"><span>jours</span></div></div>
                 <div class="fld"><label for="sFu2">Relance 2, après</label><div class="unit"><input class="inp" type="number" id="sFu2" min="2" max="180" step="1"><span>jours</span></div></div>
                 <div class="fld"><label class="swi"><input type="checkbox" id="sFuOpened"><i></i> Seulement si le premier message a été ouvert</label></div>
+                <div class="fld" id="sFuOldFld"><label for="sFuOld">Relances depuis piloz.fr, par jour</label><input class="inp" type="number" id="sFuOld" min="0" max="500" step="1">
+                  <p class="help">Anciens prospects contactés depuis contact@ ou commercial@piloz.fr : relancés depuis la même boîte, dans le fil du premier message, en plus du quota des nouvelles boîtes. 0 pour arrêter.</p></div>
                 <div class="fld"><label for="sFuSince">Relancer les messages envoyés depuis le</label><input class="inp" type="date" id="sFuSince">
                   <p class="help">Par défaut, la date d'activation : les messages envoyés avant ne sont pas relancés. Reculez la date pour relancer l'historique, par petites tranches.</p></div>
               </div>
@@ -1203,11 +1205,15 @@ function renderState(){
   $("heroAct").innerHTML = act.join("");
 
   // Indicateurs
-  $("kToday").innerHTML = fmt(state.sentToday) + " <small>/ " + fmt(state.capToday) + "</small>";
-  $("kTodayBar").style.width = Math.min(100, state.capToday ? Math.round(state.sentToday / state.capToday * 100) : 0) + "%";
+  // Deux quotas avec les boîtes dédiées : nouvelles boîtes (montée progressive) et relances piloz.fr.
   const boites = (state.smtp && state.smtp.boites) || [];
+  const qn = boites.length && state.quotas ? state.quotas.nouvelles : null, qp = boites.length && state.quotas ? state.quotas.piloz : null;
+  const sentShown = qn ? qn.envoyes : state.sentToday, capShown = qn ? qn.plafond : state.capToday;
+  $("kToday").innerHTML = fmt(sentShown) + " <small>/ " + fmt(capShown) + "</small>";
+  $("kTodayBar").style.width = Math.min(100, capShown ? Math.round(sentShown / capShown * 100) : 0) + "%";
   const next = boites.length ? rampPlan(s, boites.length)[0] : null;
-  $("kTodayF").textContent = boites.length && state.capToday < s.daily_cap ? "montée progressive" + (next ? " · " + next.label + " : " + fmt(next.cap) : "") + ", jusqu'à " + fmt(s.daily_cap) + " par jour"
+  $("kTodayF").textContent = qp ? "nouvelles boîtes" + (next && capShown < s.daily_cap ? " (" + next.label + " : " + fmt(next.cap) + ")" : "") + " · relances piloz.fr : " + fmt(qp.envoyes) + " / " + fmt(qp.plafond)
+    : boites.length && state.capToday < s.daily_cap ? "montée progressive" + (next ? " · " + next.label + " : " + fmt(next.cap) : "") + ", jusqu'à " + fmt(s.daily_cap) + " par jour"
     : s.warmup_enabled && state.capToday < s.daily_cap ? "montée en charge : quota en hausse chaque jour d'envoi" : "quota du jour";
   $("kQueue").textContent = fmt(c.queued);
   const perDayCap = Math.max(1, state.capToday || s.daily_cap);
@@ -1254,6 +1260,7 @@ function renderState(){
   const days2 = s.send_days.map(d => DAY_NAMES[d]).join(", ");
   $("cadence").innerHTML =
     "<b>" + fmt(state.capToday) + " messages aujourd'hui</b> au maximum" + (boites.length && state.capToday < s.daily_cap ? ", jusqu'à " + fmt(s.daily_cap) + " par jour une fois la montée progressive des boîtes terminée (+" + (s.boite_palier || 10) + " par boîte chaque semaine)" : s.warmup_enabled && state.capToday < s.daily_cap ? ", jusqu'à " + fmt(s.daily_cap) + " par jour une fois la montée en charge terminée (+" + s.warmup_step + " par jour d'envoi)" : "") + ".<br>" +
+    (qp ? "Relances des anciens prospects depuis piloz.fr (ceux qui ont ouvert ou cliqué), dans le fil de leur premier message : <b>" + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + " aujourd'hui</b>, en plus, " + fmt(qp.dues) + " en attente.<br>" : "") +
     "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris), un message toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ".<br>" +
     (boites.length
       ? "Expéditeur : <b>" + esc(s.sender_name || "Piloz") + "</b>, depuis " + boites.map(b => "<b>" + esc(b.address) + "</b>").join(", ")
@@ -1946,6 +1953,8 @@ function fillSettings(){
   $("sFuEnabled").checked = !!s.followup_enabled; $("sFu1").value = s.followup1_days || 7; $("sFu2").value = s.followup2_days || 21;
   $("sFuOpened").checked = s.followup_opened_only !== false;
   $("sFuSince").value = s.followup_since ? new Date(s.followup_since).toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" }) : "";
+  $("sFuOld").value = s.relances_piloz_max ?? 30;
+  $("sFuOldFld").hidden = !((state.smtp && state.smtp.boites) || []).length;
   const fu = state.followups || {};
   $("fuNote").textContent = s.followup_enabled
     ? fmt(fu.due || 0) + " relance(s) à envoyer · " + fmt(fu.sent || 0) + " envoyée(s) au total · " + fmt(fu.replied || 0) + " entreprise(s) marquée(s) « a répondu »"
@@ -1964,7 +1973,8 @@ function fillSettings(){
   $("rampNote").hidden = !dedicated;
   if (dedicated){
     const plan = rampPlan(s, boites.length);
-    $("rampNote").innerHTML = "Aujourd'hui : <b>" + fmt(state.capToday) + " messages</b>." + (plan.length ? "<br>" + plan.map((p, i) => (i ? "À partir du " : "Prochain jour d'envoi, ") + esc(p.label) + " : <b>" + fmt(p.cap) + " messages</b> (" + fmt(Math.round(p.cap / boites.length)) + " par boîte)").join("<br>") : "");
+    const qp2 = state.quotas && state.quotas.piloz;
+    $("rampNote").innerHTML = "Aujourd'hui : <b>" + fmt(state.capToday) + " messages</b> depuis les nouvelles boîtes" + (qp2 ? ", plus <b>" + fmt(qp2.plafond) + " relances</b> depuis piloz.fr" : "") + "." + (plan.length ? "<br>" + plan.map((p, i) => (i ? "À partir du " : "Prochain jour d'envoi, ") + esc(p.label) + " : <b>" + fmt(p.cap) + " messages</b> (" + fmt(Math.round(p.cap / boites.length)) + " par boîte)").join("<br>") : "");
     const ok = boites.every(b => b.password);
     $("boxesNote").innerHTML = "Les messages partent de <b>" + boites.length + " boîtes dédiées à la prospection</b>, la moins utilisée du jour d'abord : " +
       boites.map(b => "<b>" + esc(b.address) + "</b>" + (b.password ? "" : " (mot de passe manquant)") + (b.token ? "" : " (réponses non lues)")).join(", ") +
@@ -2007,7 +2017,7 @@ $("setForm").addEventListener("submit", async ev => {
     min_gap_seconds: Math.round(Number($("sGapMin").value)), max_gap_seconds: Math.round(Number($("sGapMax").value)),
     max_consecutive_errors: $("sErr").value,
     followup_enabled: $("sFuEnabled").checked, followup1_days: $("sFu1").value, followup2_days: $("sFu2").value,
-    followup_opened_only: $("sFuOpened").checked, followup_since: $("sFuSince").value
+    followup_opened_only: $("sFuOpened").checked, followup_since: $("sFuSince").value, relances_piloz_max: $("sFuOld").value
   };
   const btn = $("bSetSave");
   busy(btn, true, "Enregistrement…");
