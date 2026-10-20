@@ -8,14 +8,14 @@
 <link rel="icon" type="image/png" href="https://piloz.fr/assets/icons/favicon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
     --ink:#15161f; --ink-2:#1e2030; --ink-3:#2a2c3f;
-    --paper:#f6f6fb; --panel:#fff;
+    --paper:#f7f6fe; --panel:#fff;
     --violet:#6d5ef8; --violet-2:#8b7cfb; --violet-soft:#efecff; --violet-dark:#4a3fd0;
-    --muted:#5b5d72; --line:#e8e8f2; --line-2:#f1f1f7;
+    --muted:#5b5d72; --line:#ebe9f7; --line-2:#f3f2fb;
     --ok:#17a06a; --ok-soft:#e4f5ee;
     --warn:#e08a2c; --warn-soft:#fdf1e0;
     --danger:#e0473f; --danger-soft:#fdeceb;
@@ -25,7 +25,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{min-height:100%}
-  body{font-family:"Archivo",system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  body{font-family:"DM Sans",system-ui,-apple-system,sans-serif;background:#fff;color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:var(--violet)}
   button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
   input,select,textarea{font:inherit;color:inherit}
@@ -48,34 +48,35 @@
   #loginErr{color:var(--danger);font-size:.87rem;font-weight:600;margin-top:12px;min-height:1.2em}
   #login .hint{font-size:.8rem;color:var(--muted);margin-top:14px}
 
-  /* ================= SHELL ================= */
-  #app{min-height:100vh;display:grid;grid-template-columns:236px 1fr}
+  /* ================= SHELL : barre de menus en haut ================= */
+  #app{min-height:100vh;display:block}
   #app>*{min-width:0}
-  .side{background:var(--ink);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-  .side-top{padding:20px 18px 16px}
+  .side{background:#fff;color:var(--ink);display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:40;border-bottom:1px solid var(--line);padding:0 22px;flex-wrap:nowrap}
+  .side-top{padding:12px 0}
   .mark{display:flex;align-items:center;gap:10px}
-  .mark img{width:30px;height:30px;border-radius:8px;flex:none}
-  .mark-name{font-variation-settings:"wdth" 108;font-weight:850;font-size:1.02rem;letter-spacing:-.02em;line-height:1.1}
-  .mark-sub{font-size:.7rem;color:#8e90a8;letter-spacing:.05em;text-transform:uppercase;font-weight:700;margin-top:1px}
-  nav.side-nav{padding:6px 12px;display:flex;flex-direction:column;gap:2px}
-  .nav-sep{font-size:.68rem;color:#6f7190;text-transform:uppercase;letter-spacing:.07em;font-weight:800;padding:14px 11px 5px}
-  .nav-b{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border-radius:var(--r-sm);color:#b9bacd;font-size:.9rem;font-weight:600;text-align:left;transition:background .13s,color .13s}
-  .nav-b:hover{background:var(--ink-2);color:#fff}
-  .nav-b.on{background:var(--violet);color:#fff}
-  .nav-b svg{flex:none;opacity:.9}
-  .nav-b .pill{margin-left:auto;background:rgba(255,255,255,.13);border-radius:99px;padding:1px 7px;font-size:.72rem;font-weight:700}
-  .nav-b.on .pill{background:rgba(255,255,255,.24)}
-  .side-foot{margin-top:auto;padding:14px 18px 18px;border-top:1px solid var(--ink-3);font-size:.76rem;color:#8e90a8;line-height:1.45}
-  .side-foot b{display:block;color:#d6d7e6;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .side-foot button{margin-top:8px;color:#b9bacd;font-weight:700;font-size:.78rem;text-decoration:underline}
-  .side-foot button:hover{color:#fff}
-
+  .mark img{width:32px;height:32px;border-radius:9px;flex:none}
+  .mark-name{font-family:Manrope,sans-serif;font-weight:800;font-size:1rem;letter-spacing:-.01em;line-height:1.1;color:var(--ink)}
+  .mark-sub{font-size:.7rem;color:var(--violet);letter-spacing:.08em;text-transform:uppercase;font-weight:800;margin-top:1px}
+  nav.side-nav{display:flex;flex-wrap:nowrap;gap:0;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+  nav.side-nav::-webkit-scrollbar{display:none}
+  .nav-sep{display:none}
+  .nav-b{display:inline-flex;align-items:center;gap:7px;padding:19px 10px 16px;border-bottom:3px solid transparent;color:#3a3b4d;font-size:.88rem;font-weight:600;text-align:left;transition:color .13s,border-color .13s;white-space:nowrap}
+  .nav-b:hover{color:var(--ink)}
+  .nav-b.on{color:var(--violet-dark);border-bottom-color:var(--violet);font-weight:800}
+  .nav-b svg{display:none}
+  .nav-b .pill{background:var(--violet-soft);color:var(--violet-dark);border-radius:99px;padding:1px 7px;font-size:.72rem;font-weight:800}
+  .nav-b .pill.hot{background:var(--violet);color:#fff}
+  .side-foot{display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--muted);padding:8px 0;flex:none}
+  @media(max-width:1560px){.side-foot .lbl{display:none}}
+  @media(max-width:1320px){.side-foot b{display:none}.nav-b{padding-left:8px;padding-right:8px}}
+  .side-foot b{color:var(--ink);font-weight:700;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .side-foot button{color:var(--violet-dark);font-weight:700;font-size:.78rem;text-decoration:underline}
   main{min-width:0;display:flex;flex-direction:column}
-  .top{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
-  .top h1{font-size:1.12rem;font-variation-settings:"wdth" 105;font-weight:800;letter-spacing:-.01em}
+  .top{background:transparent;padding:26px 28px 4px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;max-width:1360px;margin:0 auto;width:100%}
+  .top h1{font-family:Manrope,sans-serif;font-size:1.75rem;font-weight:800;letter-spacing:-.02em;line-height:1.15}
   .top p{font-size:.84rem;color:var(--muted)}
   .top-act{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .content{padding:24px 28px 60px;flex:1}
+  .content{padding:18px 28px 60px;flex:1;max-width:1360px;margin:0 auto;width:100%}
   .view{display:none}
   .view.on{display:block}
 
@@ -338,15 +339,58 @@
   @keyframes sp{to{transform:rotate(360deg)}}
 
   @media(max-width:860px){
-    #app{grid-template-columns:1fr}
-    .side{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto}
-    .side-top{padding:10px 14px} .side-foot,.nav-sep{display:none}
-    .mark-name,.mark-sub{display:none}
-    nav.side-nav{flex-direction:row;padding:8px 10px}
-    .nav-b span.t{display:none} .nav-b{padding:9px}
+    .side{padding:0 14px;gap:8px;flex-wrap:wrap}
+    nav.side-nav{flex-wrap:nowrap;overflow-x:auto;order:3;width:100%}
+    .side-foot{margin-left:auto}
+    .mark-sub{display:none}
     .top,.content{padding-left:16px;padding-right:16px}
     .hero{padding:18px 16px}
   }
+  /* ================= REFONTE : filtres, boîtes, réponses, parcours ================= */
+  #dashExtra{margin-bottom:18px}
+  .log-wrap{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+  .filt{padding:16px 16px 18px;display:flex;flex-direction:column;gap:12px}
+  .filt h3{font-family:Manrope,sans-serif;font-size:1rem;font-weight:800}
+  .filt .fg{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line-2)}
+  .filt .fl{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .filt .cb{display:flex;align-items:center;gap:9px;font-size:.88rem;min-height:30px;cursor:pointer}
+  .filt .cb input{width:17px;height:17px;accent-color:var(--violet);flex:none}
+  .filt .cb small{margin-left:auto;color:var(--muted);font-size:.75rem}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+  .row2>*{min-width:0}
+  .filt label.note{display:flex;flex-direction:column;gap:4px}
+  .filt select.inp,.filt input.inp{width:100%;min-width:0}
+  @media(max-width:980px){.log-wrap{grid-template-columns:1fr}}
+  .funnel{display:flex;flex-direction:column;gap:9px}
+  .fr{display:grid;grid-template-columns:150px minmax(0,1fr) 130px;gap:12px;align-items:center;font-size:.9rem}
+  .fr .bar{height:22px;background:var(--paper);border-radius:7px;overflow:hidden}
+  .fr .bar i{display:block;height:100%;border-radius:7px;min-width:3px}
+  @media(max-width:700px){.fr{grid-template-columns:110px minmax(0,1fr) 90px}}
+  .bx-domains{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:16px}
+  .bx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;margin-bottom:16px}
+  .bx-domains>.card,.bx-grid>.card{margin-top:0}
+  .bx{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+  .bx h3{font-family:Manrope,sans-serif;font-size:1rem;font-weight:800;overflow-wrap:anywhere}
+  .bx dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .bx dt{font-size:.74rem;color:var(--muted)} .bx dd{font-family:Manrope,sans-serif;font-weight:800;font-size:1.05rem}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap}
+  .chip.v{background:var(--violet-soft);color:var(--violet-dark)} .chip.g{background:#f1f5f9;color:#334155} .chip.ok{background:var(--ok-soft);color:var(--ok)}
+  .chip.bad{background:var(--danger-soft);color:var(--danger)} .chip.on{background:var(--violet);color:#fff} .chip.dim{background:var(--line-2);color:var(--muted)}
+  .spark{display:flex;align-items:flex-end;gap:3px;height:30px} .spark i{width:8px;border-radius:2px;background:var(--violet);display:block}
+  .bars{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:8px;align-items:end;height:210px}
+  .bars .c{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;height:100%;font-size:.72rem;color:var(--muted)}
+  .bars .b1{width:100%;max-width:40px;background:#d7d3fd;border-radius:6px 6px 0 0;display:flex;align-items:flex-end;overflow:hidden} .bars .b2{width:100%;background:var(--violet-dark);display:block}
+  .rep-wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);min-height:420px}
+  .rep-list{border-right:1px solid var(--line-2)}
+  .rep-it{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;padding:13px 18px;border-bottom:1px solid var(--line-2)}
+  .rep-it:hover{background:var(--paper)} .rep-it.on{background:#f3f1ff}
+  .rep-it .pv{display:block;font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rep-d{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+  .rep-d .msg{white-space:pre-line;background:var(--paper);border-radius:10px;padding:14px;font-size:.9rem;max-height:340px;overflow:auto}
+  @media(max-width:980px){.rep-wrap{grid-template-columns:1fr}.rep-list{border-right:0}}
+  .k-a_lire,.k-question{background:var(--violet-soft);color:var(--violet-dark)} .k-interesse{background:var(--ok-soft);color:var(--ok)}
+  .k-desinscription{background:var(--danger-soft);color:var(--danger)} .k-absence,.k-autre{background:var(--line-2);color:var(--muted)}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -389,19 +433,18 @@
       </div>
     </div>
     <nav class="side-nav">
-      <button class="nav-b on" data-view="auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg><span class="t">Automate</span></button>
-      <div class="nav-sep">Paramètres</div>
-      <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
-      <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
-      <button class="nav-b" data-view="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span class="t">Réglages</span></button>
-      <div class="nav-sep">Clients</div>
-      <button class="nav-b" data-view="clients"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span class="t">Nouveaux clients</span><span class="pill num" id="pillClients" hidden>0</span></button>
-      <div class="nav-sep">Historique</div>
+      <button class="nav-b on" data-view="auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg><span class="t">Tableau de bord</span></button>
+      <button class="nav-b" data-view="boites"><span class="t">Boîtes d'envoi</span><span class="pill num" id="pillBoites" hidden>0</span></button>
       <button class="nav-b" data-view="log"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg><span class="t">Envois</span><span class="pill num" id="pillQueue">0</span></button>
+      <button class="nav-b" data-view="rep"><span class="t">Réponses</span><span class="pill num hot" id="pillRep" hidden>0</span></button>
+      <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
+      <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
+      <button class="nav-b" data-view="clients"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span class="t">Clients</span><span class="pill num" id="pillClients" hidden>0</span></button>
       <button class="nav-b" data-view="supp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span class="t">Exclusions</span></button>
+      <button class="nav-b" data-view="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span class="t">Réglages</span></button>
     </nav>
     <div class="side-foot">
-      Connecté en tant que<b id="whoami">—</b>
+      <span class="lbl">Connecté en tant que</span><b id="whoami">—</b>
       <button type="button" id="bLogout">Se déconnecter</button>
     </div>
   </aside>
@@ -409,7 +452,7 @@
   <main>
     <div class="top">
       <div>
-        <h1 id="topT">Automate</h1>
+        <h1 id="topT">Tableau de bord</h1>
         <p id="topS"></p>
       </div>
       <div class="top-act">
@@ -424,6 +467,17 @@
       <!-- ==================== AUTOMATE ==================== -->
       <section class="view on" id="v-auto">
         <div id="autoBanners"></div>
+        <div class="grid2" id="dashExtra" hidden>
+          <div class="card">
+            <div class="card-h"><h2>Du premier mail au client</h2><span class="sub">depuis le début, toutes boîtes</span></div>
+            <div class="card-b"><div class="funnel" id="dashFunnel"></div><p class="note" id="dashComptes" style="margin-top:12px"></p></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2>Boîtes d'envoi</h2><span class="sub">aujourd'hui · 14 derniers jours</span><div class="right"><button type="button" class="b b-out b-xs" data-go="boites">Tout le détail</button></div></div>
+            <div class="tscroll"><table><thead><tr><th>Boîte</th><th style="width:92px">Aujourd'hui</th><th style="width:128px">14 jours</th><th style="width:70px">Ouv.</th><th style="width:52px">Rép.</th></tr></thead><tbody id="dashBoxes"></tbody></table></div>
+            <div class="card-b" style="padding-top:10px"><p class="note" id="dashReplies"></p></div>
+          </div>
+        </div>
         <div class="card">
           <div class="hero">
             <div class="hero-dot" id="heroDot"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></div>
@@ -488,7 +542,7 @@
               <label><input type="radio" name="src" value="tous" checked> + anciens RGE — trois fois plus d'entreprises</label>
             </div>
             <p class="note" style="margin-top:10px" id="srcNote"></p>
-            <label class="swi" style="margin-top:14px"><input type="checkbox" id="tWeb" checked><i></i> Chercher aussi les entreprises <b>non RGE</b> sur leur site internet : domaine deviné depuis le nom, site vérifié par le SIREN ou le nom et la ville, adresse lue sur le site</label>
+            <label class="swi" style="margin-top:14px"><input type="checkbox" id="tWeb" checked><i></i><span>Chercher aussi les entreprises <b>non RGE</b> sur leur site internet : domaine deviné depuis le nom, site vérifié par le SIREN ou le nom et la ville, adresse lue sur le site</span></label>
             <p class="note" style="margin-top:8px" id="webNote">Pour chaque entreprise du ciblage sans adresse RGE, l'automate essaie dupont-batiment.fr, dupontbatiment.com… et ne retient un site que s'il porte le SIREN (mentions légales) ou le nom avec la ville. Comptez environ une adresse pour quatre à six entreprises de plus de 10 salariés. Les entreprises examinées sont mémorisées 180 jours. La recherche tourne en tâche dédiée toutes les deux minutes quand la réserve baisse.</p>
           </div>
           <div class="fset">
@@ -594,63 +648,139 @@
 
       <!-- ==================== ENVOIS ==================== -->
       <section class="view" id="v-log">
+        <div class="log-wrap">
+          <aside class="card filt" aria-label="Filtres des envois">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><h3>Filtres</h3><button type="button" class="b b-out b-xs" id="bLogReset">Tout effacer</button></div>
+            <div class="fg">
+              <span class="fl">Mes vues</span>
+              <select class="inp" id="lViews"><option value="">Choisir une vue enregistrée…</option></select>
+              <div class="row2"><button type="button" class="b b-out b-xs" id="bViewSave">Enregistrer la vue</button><button type="button" class="b b-out b-xs" id="bViewDel">Supprimer la vue</button></div>
+            </div>
+            <div class="fg">
+              <span class="fl">Période</span>
+              <select class="inp" id="lPeriod"><option value="">Tout l'historique</option><option value="today">Aujourd'hui</option><option value="yday">Hier</option><option value="7">7 derniers jours</option><option value="30">30 derniers jours</option><option value="custom">Dates précises</option></select>
+              <div class="row2" id="lDates" hidden><label class="note">Du<input class="inp" type="date" id="lFrom"></label><label class="note">Au<input class="inp" type="date" id="lTo"></label></div>
+            </div>
+            <div class="fg"><span class="fl">Boîte d'envoi</span><div id="lBoxes"></div></div>
+            <div class="fg">
+              <span class="fl">Source</span>
+              <select class="inp" id="lSignal">
+                <option value="">Toutes les sources</option>
+                <option value="rge">Annuaire RGE</option>
+                <option value="web">Adresse trouvée sur le site web (non RGE)</option>
+                <option value="marche">Marché public gagné</option>
+                <option value="demo">Visiteur de la démo</option>
+                <option value="manuel">Ajout manuel</option>
+              </select>
+            </div>
+            <div class="fg" id="lTrackFg">
+              <span class="fl">Suivi</span>
+              <select class="inp" id="lTrack">
+                <option value="">Tous</option>
+                <option value="opened">Ouverts</option>
+                <option value="unopened">Pas ouverts</option>
+                <option value="clicked">Cliqués</option>
+                <option value="unclicked">Pas cliqués</option>
+                <option value="followed">Relancés</option>
+                <option value="replied">Ont répondu</option>
+                <option value="scanner">Robots seulement (clics automatiques)</option>
+              </select>
+            </div>
+            <div class="fg" id="lStageFg" hidden>
+              <span class="fl">Relances</span>
+              <select class="inp" id="lStage">
+                <option value="">Toutes</option>
+                <option value="1">Relance 1</option>
+                <option value="2">Relance 2</option>
+                <option value="replied">Ont répondu</option>
+              </select>
+            </div>
+            <div class="fg">
+              <span class="fl">Entreprise</span>
+              <label class="note">Modèle de mail<select class="inp" id="lTpl"><option value="">Tous les modèles</option></select></label>
+              <label class="note">Métier<select class="inp" id="lMetier"><option value="">Tous les métiers</option></select></label>
+              <div class="row2">
+                <label class="note">Départements<input class="inp" id="lDeps" placeholder="ex. 85, 44"></label>
+                <label class="note">Effectif<select class="inp" id="lEff"><option value="">Tous</option></select></label>
+              </div>
+              <label class="note">Score minimum : <b id="lScoreV">0</b><input type="range" id="lScore" min="0" max="100" step="5" value="0" style="width:100%;accent-color:var(--violet)"></label>
+            </div>
+            <div class="fg">
+              <span class="fl">Tri</span>
+              <select class="inp" id="lSort"><option value="">Plus récents</option><option value="score">Score</option><option value="company">Entreprise (A → Z)</option><option value="engaged">Plus engagés (clics, ouvertures)</option></select>
+            </div>
+          </aside>
+          <div class="card" style="min-width:0">
+            <div class="tabs" id="logTabs">
+              <button type="button" class="tab" data-st="all">Tous<span class="pill num" id="tcAll">0</span></button>
+              <button type="button" class="tab on" data-st="queued">En file<span class="pill num" id="tcQueued">0</span></button>
+              <button type="button" class="tab" data-st="sent">Envoyés<span class="pill num" id="tcSent">0</span></button>
+              <button type="button" class="tab" data-st="followups">Relances<span class="pill num" id="tcFollow">0</span></button>
+              <button type="button" class="tab" data-st="failed">Échecs<span class="pill num" id="tcFailed">0</span></button>
+              <button type="button" class="tab" data-st="skipped">Ignorés<span class="pill num" id="tcSkipped">0</span></button>
+            </div>
+            <div class="tbar">
+              <div class="search-in">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input type="search" id="lq" placeholder="Entreprise, e-mail, ville ou SIREN…">
+              </div>
+              <span class="note" id="lCount"></span>
+              <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <span class="pill num" id="lTotal" style="font-size:.95rem;padding:6px 12px" title="Nombre de lignes correspondant à l'onglet et aux filtres en cours">0</span>
+                <button type="button" class="b b-out b-sm" id="bLogExport">Exporter en CSV</button>
+                <button type="button" class="b b-out b-sm" id="bLogRetry" hidden disabled>Réessayer</button>
+                <button type="button" class="b b-danger b-sm" id="bLogRemove" disabled>Retirer</button>
+              </div>
+            </div>
+            <div class="tscroll">
+              <table>
+                <thead><tr>
+                  <th style="width:34px"><input type="checkbox" class="cbx" id="lAll"></th>
+                  <th>Entreprise</th>
+                  <th style="width:70px">Score</th>
+                  <th style="width:110px">Origine</th>
+                  <th style="width:150px" id="lDateH">Ajouté le</th>
+                  <th>Statut</th>
+                </tr></thead>
+                <tbody id="lBody"></tbody>
+              </table>
+            </div>
+            <div class="pager"><span id="lPage"></span><button type="button" class="b b-out b-xs" id="lPrev">Précédent</button><button type="button" class="b b-out b-xs" id="lNext">Suivant</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== BOÎTES D'ENVOI ==================== -->
+      <section class="view" id="v-boites">
+        <div class="bx-domains" id="bxDomains"></div>
+        <div class="bx-grid" id="bxGrid"></div>
+        <div class="card" id="bxDetail" hidden style="margin-bottom:16px">
+          <div class="card-h"><h2 id="bxDetailT">Fiche</h2><span class="sub" id="bxDetailS"></span><div class="right"><button type="button" class="b b-out b-sm" id="bxDetailClose">Fermer la fiche</button></div></div>
+          <div class="card-b">
+            <div class="note" style="display:flex;gap:16px;margin-bottom:10px"><span><span class="dot" style="background:#d7d3fd"></span> Envoyés</span><span><span class="dot" style="background:var(--violet-dark)"></span> Ouverts</span></div>
+            <div class="bars" id="bxBars"></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h"><h2>Tests de placement</h2><span class="sub">MailReach : boîte de réception ou spam, chez Gmail et Outlook</span></div>
+            <div class="card-b" id="bxTests"></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2>Modèles de mail</h2><span class="sub">toutes boîtes, depuis le début</span></div>
+            <div class="tscroll"><table><thead><tr><th>Modèle</th><th style="width:90px">Envoyés</th><th style="width:90px">Ouverture</th><th style="width:70px">Clics</th><th style="width:90px">Réponses</th></tr></thead><tbody id="bxTpls"></tbody></table></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== RÉPONSES ==================== -->
+      <section class="view" id="v-rep">
         <div class="card">
-          <div class="tabs" id="logTabs">
-            <button type="button" class="tab" data-st="all">Tous<span class="pill num" id="tcAll">0</span></button>
-            <button type="button" class="tab on" data-st="queued">En file<span class="pill num" id="tcQueued">0</span></button>
-            <button type="button" class="tab" data-st="sent">Envoyés<span class="pill num" id="tcSent">0</span></button>
-            <button type="button" class="tab" data-st="followups">Relances<span class="pill num" id="tcFollow">0</span></button>
-            <button type="button" class="tab" data-st="failed">Échecs<span class="pill num" id="tcFailed">0</span></button>
-            <button type="button" class="tab" data-st="skipped">Ignorés<span class="pill num" id="tcSkipped">0</span></button>
+          <div class="tabs" id="repTabs"></div>
+          <div class="rep-wrap">
+            <div class="rep-list" id="repList"></div>
+            <div class="rep-d" id="repDetail"><p class="note">Choisissez une réponse.</p></div>
           </div>
-          <div class="tbar">
-            <div class="search-in">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-              <input type="search" id="lq" placeholder="Entreprise ou e-mail…">
-            </div>
-            <select class="inp" id="lSignal" style="width:auto">
-              <option value="">Source : toutes</option>
-              <option value="marche">Marché public gagné</option>
-              <option value="web">Adresse trouvée sur le site web (non RGE)</option>
-            </select>
-            <select class="inp" id="lSender" style="width:auto"><option value="">Boîte d'envoi : toutes</option></select>
-            <select class="inp" id="lStage" hidden style="width:auto">
-              <option value="">Relances : toutes</option>
-              <option value="1">Relance 1</option>
-              <option value="2">Relance 2</option>
-              <option value="replied">Ont répondu</option>
-            </select>
-            <select class="inp" id="lTrack" hidden style="width:auto">
-              <option value="">Suivi : tous</option>
-              <option value="opened">Ouverts</option>
-              <option value="unopened">Pas ouverts</option>
-              <option value="clicked">Cliqués</option>
-              <option value="unclicked">Pas cliqués</option>
-              <option value="followed">Relancés</option>
-              <option value="replied">Ont répondu</option>
-              <option value="scanner">Scanner seulement (clics automatiques)</option>
-            </select>
-            <span class="note" id="lCount"></span>
-            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <span class="pill num" id="lTotal" style="font-size:.95rem;padding:6px 12px" title="Nombre de lignes correspondant à l'onglet et aux filtres en cours">0</span>
-              <button type="button" class="b b-out b-sm" id="bLogRetry" hidden disabled>Réessayer</button>
-              <button type="button" class="b b-danger b-sm" id="bLogRemove" disabled>Retirer</button>
-            </div>
-          </div>
-          <div class="tscroll">
-            <table>
-              <thead><tr>
-                <th style="width:34px"><input type="checkbox" class="cbx" id="lAll"></th>
-                <th>Entreprise</th>
-                <th style="width:70px">Score</th>
-                <th style="width:110px">Origine</th>
-                <th style="width:150px" id="lDateH">Ajouté le</th>
-                <th>Statut</th>
-              </tr></thead>
-              <tbody id="lBody"></tbody>
-            </table>
-          </div>
-          <div class="pager"><span id="lPage"></span><button type="button" class="b b-out b-xs" id="lPrev">Précédent</button><button type="button" class="b b-out b-xs" id="lNext">Suivant</button></div>
         </div>
       </section>
 
@@ -871,6 +1001,7 @@ async function needsMfa(){
 async function enter(){
   try {
     await loadState();
+    if (current === "auto") loadDashExtra(true);
   } catch(e){
     if (e.code === "mfa_required") return showLogin("Activez d'abord la double authentification sur admin.piloz.fr, puis reconnectez-vous.");
     if (e.code === "forbidden"){ await sb.auth.signOut(); return showLogin(e.message); }
@@ -946,7 +1077,9 @@ async function api(action, payload){
    NAVIGATION
    ============================================================ */
 const VIEWS = {
-  auto:     { t:"Automate",   s:"Recherche d'entreprises et envoi des e-mails de prospection, en continu et sans intervention." },
+  auto:     { t:"Tableau de bord", s:"Recherche d'entreprises et envoi des e-mails de prospection, en continu et sans intervention." },
+  boites:   { t:"Boîtes d'envoi", s:"Chaque boîte et chaque domaine : quotas, montée progressive, résultats et santé." },
+  rep:      { t:"Réponses", s:"Les réponses des boîtes d'envoi, réunies et classées automatiquement." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
   log:      { t:"Envois",     s:"File d'attente et historique de tout ce que l'automate a envoyé." },
@@ -966,9 +1099,12 @@ function showView(v){
   if (v === "log") loadLog();
   if (v === "supp") loadSupp();
   if (v === "clients") loadClients();
+  if (v === "boites") loadBoxes();
+  if (v === "rep") loadReplies();
+  if (v === "log"){ fillLogFacets(); fillViews(); }
   if (v === "tpl"){ renderTemplates(); loadSamples(); }
   if (v === "settings") fillSettings();
-  if (v === "auto") loadState().catch(() => {});
+  if (v === "auto"){ loadState().catch(() => {}); loadDashExtra(true); }
 }
 document.querySelectorAll(".nav-b").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
 document.addEventListener("click", ev => {
@@ -1026,6 +1162,214 @@ $("cliBody").addEventListener("click", ev => {
   if (!c || !confirm((c.mails ? "Renvoyer" : "Envoyer") + " le mail de prise en main à " + c.entreprise + " (" + c.email + ") ?")) return;
   sendClients([c.company_id], !!c.mails, b);
 });
+
+/* ============================================================
+   BOÎTES D'ENVOI — domaines, boîtes, fiche, tests de placement, modèles
+   ============================================================ */
+let BX = null;
+const pct = (a, b) => b ? (Math.round(a / b * 1000) / 10).toString().replace(".", ",") + " %" : "—";
+// Vérification DNS en direct (Google DNS) : SPF, DKIM, DMARC, MX.
+const dnsCache = {};
+async function dnsTxt(name, type){
+  const key = name + "/" + (type || "TXT");
+  if (dnsCache[key]) return dnsCache[key];
+  try {
+    const r = await fetch("https://dns.google/resolve?name=" + encodeURIComponent(name) + "&type=" + (type || "TXT"));
+    const d = await r.json();
+    dnsCache[key] = (d.Answer || []).map(a => String(a.data || "").replace(/"\s*"/g, "").replace(/^"|"$/g, ""));
+  } catch(e){ dnsCache[key] = null; }
+  return dnsCache[key];
+}
+async function domainChecks(domain){
+  const [txt, dmarc, mx, dk1, dka] = await Promise.all([dnsTxt(domain), dnsTxt("_dmarc." + domain), dnsTxt(domain, "MX"), dnsTxt("hostingermail1._domainkey." + domain), dnsTxt("hostingermail-a._domainkey." + domain)]);
+  const spf = (txt || []).some(t => /v=spf1/i.test(t));
+  const dm = (dmarc || []).find(t => /v=DMARC1/i.test(t)) || "";
+  const dkim = [...(dk1 || []), ...(dka || [])].some(t => /p=[A-Za-z0-9+/]{20,}/.test(t));
+  return [
+    { k: "SPF", ok: spf }, { k: "DKIM", ok: dkim }, { k: "DMARC" + (dm ? " " + ((dm.match(/p=(\w+)/) || [])[1] || "") : ""), ok: !!dm }, { k: "MX", ok: (mx || []).length > 0 }
+  ];
+}
+function boxRole(b){ return b.kind === "dediee" ? "Premiers mails" : "Relances seulement"; }
+async function loadBoxes(){
+  try {
+    const [st, pl] = await Promise.all([api("boxes.stats"), api("placement.list")]);
+    BX = { ...st, tests: pl.tests || [] };
+    renderBoxes();
+  } catch(e){ if (e.code !== "session") toast(e.message, 5000); }
+}
+function renderBoxes(){
+  if (!BX || !state) return;
+  const s = state.settings, boites = (state.smtp && state.smtp.boites) || [];
+  const qn = state.quotas && state.quotas.nouvelles, qp = state.quotas && state.quotas.piloz;
+  const nDed = BX.boxes.filter(b => b.kind === "dediee").length || 1;
+  const week = s.boites_debut ? Math.floor((new Date(parisDay(0) + "T12:00:00") - new Date(s.boites_debut + "T12:00:00")) / (7 * 864e5)) + 1 : 0;
+  const steps = Math.max(1, Math.round((s.boite_max || 40) / (s.boite_palier || 10)));
+  const lastTest = box => BX.tests.find(t => t.box === box);
+  const testLine = t => !t ? "Aucun test de placement pour l'instant." : !t.result ? "Test du " + dateTimeFr(t.created_at) + " : résultat en cours…"
+    : "Test du " + dateTimeFr(t.created_at) + " : <b>" + t.result.inbox + " sur " + t.result.total + "</b> en boîte de réception (Gmail " + t.result.gmail.inbox + ", Outlook " + t.result.outlook.inbox + ")" + (t.result.waiting ? ", " + t.result.waiting + " en attente" : "") + ' · <a href="' + esc(t.result.url) + '" target="_blank" rel="noopener">détail</a>';
+  // Domaines
+  const domains = [...new Set(BX.boxes.map(b => b.address.split("@")[1]))];
+  $("bxDomains").innerHTML = domains.map(d => {
+    const list = BX.boxes.filter(b => b.address.endsWith("@" + d)), ded = list.some(b => b.kind === "dediee");
+    const tests = BX.tests.filter(t => t.box.endsWith("@" + d));
+    return '<div class="card bx"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><h3>' + esc(d) + "</h3>" +
+      (ded ? '<span class="chip v">Premiers mails · montée progressive</span>' : '<span class="chip g">Au repos · relances seulement</span>') + "</div>" +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap" data-dns="' + esc(d) + '"><span class="chip dim">Vérification DNS…</span></div>' +
+      '<p class="note">' + testLine(tests[0]) + "</p>" +
+      '<p class="note">' + list.length + " boîte(s) · " + (ded ? (qn ? "quota du jour " + fmt(qn.plafond) + " (" + fmt(Math.round(qn.plafond / nDed)) + " par boîte)" : "") : (qp ? "relances : " + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + " aujourd'hui, " + fmt(qp.dues) + " en attente" : "")) + "</p></div>";
+  }).join("");
+  domains.forEach(d => domainChecks(d).then(checks => {
+    const el = document.querySelector('[data-dns="' + d + '"]');
+    if (el) el.innerHTML = checks.map(c => '<span class="chip ' + (c.ok ? "ok" : "bad") + '">' + esc(c.k) + (c.ok ? " ✓" : " ✗") + "</span>").join("");
+  }));
+  // Boîtes
+  $("bxGrid").innerHTML = BX.boxes.map((b, i) => {
+    const sec = b.kind === "dediee" ? (boites.find(x => x.address === b.address) || {}) : { password: b.address === s.sender_email ? state.smtp.configured : !!(state.smtp.second && state.smtp.second.configured), token: true };
+    const cap = b.kind === "dediee" ? (qn ? Math.round(qn.plafond / nDed) : 0) : (qp ? qp.plafond : 0);
+    const ramp = b.kind === "dediee" ? Array.from({ length: steps }, (_, k) => '<span class="chip ' + (k + 1 <= week ? "on" : "dim") + '">S' + (k + 1) + " · " + (s.boite_palier || 10) * (k + 1) + "/j</span>").join("") : '<span class="chip g">Relances des anciens prospects</span>';
+    const spark = (b.jours || []).map(j => j.envoyes + j.relances), mx = Math.max(1, ...spark);
+    const err = b.derniere_erreur && b.derniere_erreur.texte ? esc(String(b.derniere_erreur.texte).slice(0, 120)) + " (" + esc(dateFr(b.derniere_erreur.le)) + ")" : "aucune";
+    return '<div class="card bx"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div style="min-width:0"><h3><span class="dot" style="background:' + BOX_DOTS[i % BOX_DOTS.length] + ';margin-right:7px"></span>' + esc(b.address) + '</h3><div class="note">' + (b.premier_envoi ? "depuis le " + esc(dateFr(b.premier_envoi)) : "pas encore d'envoi") + "</div></div>" +
+      '<span class="chip ' + (b.kind === "dediee" ? "v" : "g") + '">' + esc(boxRole(b)) + "</span></div>" +
+      (b.kind === "dediee"
+        ? '<div><div style="display:flex;justify-content:space-between" class="note"><span>Aujourd\'hui</span><b class="num" style="color:var(--ink)">' + fmt(b.aujourdhui) + (cap ? " / " + fmt(cap) : "") + '</b></div><div class="meter" style="margin-top:6px"><i style="width:' + Math.min(100, cap ? Math.round(b.aujourdhui / cap * 100) : 0) + '%"></i></div></div>'
+        : '<div><div style="display:flex;justify-content:space-between" class="note"><span>Aujourd\'hui</span><b class="num" style="color:var(--ink)">' + fmt(b.aujourdhui) + " envoi(s)</b></div>" + (qp ? '<div class="meter" style="margin-top:6px"><i style="width:' + Math.min(100, qp.plafond ? Math.round(qp.envoyes / qp.plafond * 100) : 0) + '%"></i></div><div class="note" style="margin-top:4px">Relances piloz.fr (partagées entre les 2 boîtes) : <b>' + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + "</b></div>" : "") + "</div>") +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">' + ramp + "</div>" +
+      '<div class="spark" aria-hidden="true">' + spark.map(v => '<i style="height:' + Math.max(2, Math.round(v / mx * 30)) + 'px;opacity:' + (v ? 1 : .2) + '"></i>').join("") + "</div>" +
+      "<dl>" + [["Premiers mails", fmt(b.premiers)], ["Relances", fmt(b.relances)], ["Ouverture", pct(b.ouverts, b.premiers)], ["Clics", fmt(b.clics)], ["Réponses", fmt(b.reponses)], ["Rebonds", pct(b.echecs, b.premiers + b.relances)]]
+        .map(([k, v]) => "<div><dt>" + k + '</dt><dd class="num">' + v + "</dd></div>").join("") + "</dl>" +
+      '<div class="note" style="border-top:1px solid var(--line-2);padding-top:10px;display:flex;flex-direction:column;gap:3px"><span>Mot de passe : <b>' + (sec.password ? "posé ✓" : "manquant") + "</b> · lecture des réponses : <b>" + (sec.token ? "active ✓" : "inactive") + "</b></span><span>Dernier envoi : " + (b.dernier_envoi ? esc(dateTimeFr(b.dernier_envoi)) : "—") + "</span><span>Dernière erreur : " + err + "</span><span>" + testLine(lastTest(b.address)) + "</span></div>" +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="b b-main b-sm" data-bx-detail="' + esc(b.address) + '">Voir la fiche</button><button type="button" class="b b-out b-sm" data-bx-test="' + esc(b.address) + '">Test de placement</button><button type="button" class="b b-out b-sm" data-bx-log="' + esc(b.address) + '">Ses envois</button></div></div>';
+  }).join("");
+  // Tests de placement
+  $("bxTests").innerHTML = BX.tests.length ? '<div class="tscroll"><table><thead><tr><th>Boîte</th><th style="width:140px">Lancé le</th><th>Résultat</th></tr></thead><tbody>' + BX.tests.map(t =>
+    "<tr><td><b>" + esc(t.box) + '</b><div class="meta">' + fmt(t.sent) + ' mails envoyés aux adresses témoins</div></td><td class="nw">' + esc(dateTimeFr(t.created_at)) + "</td><td>" +
+    (t.result ? '<span class="chip ' + (t.result.inbox >= t.result.total * .7 ? "ok" : t.result.inbox >= t.result.total * .4 ? "v" : "bad") + '">' + t.result.inbox + " / " + t.result.total + " en réception</span> " + '<span class="note">Gmail ' + t.result.gmail.inbox + " · Outlook " + t.result.outlook.inbox + (t.result.waiting ? " · " + t.result.waiting + " en attente" : "") + ' · <a href="' + esc(t.result.url) + '" target="_blank" rel="noopener">détail</a></span>' : '<span class="note">en cours…</span>') + "</td></tr>").join("") + "</tbody></table></div>"
+    : '<p class="note">Aucun test pour l\'instant. Le bouton « Test de placement » d\'une boîte envoie un vrai premier mail (modèle actif, suivi compris) à une trentaine d\'adresses témoins Gmail et Outlook, puis affiche où il est arrivé.</p>';
+  // Modèles
+  $("bxTpls").innerHTML = (BX.templates || []).filter(t => t.envoyes).map(t =>
+    "<tr><td><b>" + esc(t.name) + '</b><div class="meta">' + (t.active ? "actif" : "inactif") + (KIND[t.kind] ? " · " + esc(KIND[t.kind]) : "") + '</div></td><td class="num">' + fmt(t.envoyes) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : pct(t.ouverts, t.envoyes)) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : fmt(t.clics)) + '</td><td class="num">' + fmt(t.reponses) + " <span class=\"meta\">(" + (t.envoyes ? (Math.round(t.reponses / t.envoyes * 10000) / 10).toString().replace(".", ",") : "0") + " ‰)</span></td></tr>").join("")
+    || '<tr><td colspan="5" class="empty">Aucun envoi pour l\'instant.</td></tr>';
+  $("pillBoites").hidden = false; $("pillBoites").textContent = BX.boxes.length;
+}
+function showBoxDetail(address){
+  const b = BX && BX.boxes.find(x => x.address === address);
+  if (!b) return;
+  $("bxDetail").hidden = false;
+  $("bxDetailT").textContent = b.address;
+  $("bxDetailS").textContent = boxRole(b) + " · " + fmt(b.premiers) + " premiers mails, " + fmt(b.relances) + " relances, " + pct(b.ouverts, b.premiers) + " d'ouverture";
+  const days = b.jours || [], mx = Math.max(1, ...days.map(j => j.envoyes + j.relances));
+  $("bxBars").innerHTML = days.map(j => {
+    const tot = j.envoyes + j.relances;
+    return '<div class="c"><span class="num">' + (tot || "") + '</span><div class="b1" style="height:' + Math.max(2, Math.round(tot / mx * 160)) + 'px"><i class="b2" style="height:' + Math.round(j.ouverts / mx * 160) + 'px"></i></div><span>' + esc(j.d) + "</span></div>";
+  }).join("");
+  $("bxDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("v-boites").addEventListener("click", async ev => {
+  const d = ev.target.closest("[data-bx-detail]"), t = ev.target.closest("[data-bx-test]"), l = ev.target.closest("[data-bx-log]");
+  if (d) return showBoxDetail(d.dataset.bxDetail);
+  if (l){
+    showView("log"); resetLogFilters();
+    document.querySelectorAll("#lBoxes input").forEach(c => { c.checked = c.value === l.dataset.bxLog; });
+    LOG.status = "sent"; LOG.page = 1; loadLog(); return;
+  }
+  if (t){
+    if (!confirm("Lancer un test de placement depuis " + t.dataset.bxTest + " ?\n\nUn vrai premier mail part vers une trentaine d'adresses témoins (Gmail, Outlook). Résultat en quelques minutes.")) return;
+    busy(t, true, "Envoi du test…");
+    try { const r = await api("placement.test", { box: t.dataset.bxTest }); toast(r.sent + " mails de test envoyés. Résultat dans quelques minutes.", 6000); await loadBoxes(); }
+    catch(e){ toast(e.message, 6000); }
+    busy(t, false);
+  }
+});
+$("bxDetailClose").addEventListener("click", () => { $("bxDetail").hidden = true; });
+
+/* ============================================================
+   RÉPONSES — boîtes réunies, classement, réponse dans le fil
+   ============================================================ */
+const REPK = { a_lire: "À lire", interesse: "Intéressé", question: "Question", desinscription: "Désinscription", absence: "Absence", autre: "Autre" };
+const REP = { kind: "todo", items: [], tally: {}, sel: null };
+async function loadReplies(){
+  try {
+    const d = await api("replies.list", { kind: REP.kind });
+    REP.items = d.items || []; REP.tally = d.tally || {};
+    if (!REP.items.find(r => r.id === REP.sel)) REP.sel = REP.items[0] ? REP.items[0].id : null;
+    renderReplies();
+  } catch(e){ if (e.code !== "session") toast(e.message, 5000); }
+}
+function renderReplies(){
+  const tabs = [["todo", "À traiter"], ["interesse", "Intéressés"], ["question", "Questions"], ["a_lire", "À lire"], ["absence", "Absences"], ["desinscription", "Désinscriptions"], ["autre", "Autres"], ["all", "Toutes"]];
+  $("repTabs").innerHTML = tabs.map(([k, l]) => '<button type="button" class="tab' + (REP.kind === k ? " on" : "") + '" data-rk="' + k + '">' + l + '<span class="pill num">' + fmt(REP.tally[k] || 0) + "</span></button>").join("");
+  $("pillRep").hidden = !REP.tally.todo; $("pillRep").textContent = REP.tally.todo || 0;
+  $("repList").innerHTML = REP.items.length ? REP.items.map(r => {
+    const m = r.prospection_messages || {};
+    return '<button type="button" class="rep-it' + (r.id === REP.sel ? " on" : "") + '" data-rid="' + esc(r.id) + '"><span class="chip k-' + esc(r.kind) + '">' + esc(REPK[r.kind] || r.kind) + (r.handled ? " ✓" : "") + "</span>" +
+      '<span style="min-width:0"><b>' + esc(niceCompany(m.company) || r.from_name || r.from_email) + '</b><span class="pv">' + esc((r.snippet || r.subject || "").replace(/\s+/g, " ").slice(0, 140)) + "</span></span>" +
+      '<span class="meta" style="text-align:right;white-space:nowrap">' + esc(dateTimeFr(r.received_at)) + "<br>" + esc(r.box) + "</span></button>";
+  }).join("") : '<p class="empty"><b>Rien ici</b>Les réponses arrivent toutes seules : les boîtes sont lues toutes les 10 minutes.</p>';
+  const r = REP.items.find(x => x.id === REP.sel);
+  if (!r){ $("repDetail").innerHTML = '<p class="note">Choisissez une réponse.</p>'; return; }
+  const m = r.prospection_messages || {};
+  $("repDetail").innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><h2 style="font-family:Manrope,sans-serif;font-size:1.15rem">' + esc(niceCompany(m.company) || r.from_name || r.from_email) + '</h2><div class="meta">' + esc(r.from_email) + " · reçu le " + esc(dateTimeFr(r.received_at)) + " sur " + esc(r.box) + "</div></div>" +
+    '<select class="inp" style="width:auto" data-rkind="' + esc(r.id) + '">' + Object.entries(REPK).map(([k, l]) => '<option value="' + k + '"' + (k === r.kind ? " selected" : "") + ">" + l + "</option>").join("") + "</select></div>" +
+    (r.subject ? '<div class="note">Objet : « ' + esc(r.subject) + " »</div>" : "") +
+    '<div class="msg">' + esc(r.snippet || "(texte vide)") + "</div>" +
+    (m.subject ? '<div class="note">En réponse à : « ' + esc(m.subject) + " »" + (m.sent_at ? ", envoyé le " + esc(dateTimeFr(m.sent_at)) : "") + "</div>" : "") +
+    '<label class="note">Votre réponse (part depuis ' + esc(r.box) + ', dans le même fil)<textarea class="inp" rows="5" id="repText" placeholder="Bonjour,&#10;&#10;Merci pour votre retour…"></textarea></label>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="b b-main b-sm" data-rsend="' + esc(r.id) + '">Répondre</button>' +
+    '<button type="button" class="b b-out b-sm" data-rhandled="' + esc(r.id) + '">' + (r.handled ? "Remettre à traiter" : "Marquer comme traité") + "</button>" +
+    (r.message_id ? '<button type="button" class="b b-out b-sm" data-rmsg="' + esc(r.message_id) + '">Fiche du prospect</button>' : "") + "</div>" +
+    (r.kind === "desinscription" ? '<p class="note">Adresse exclue d\'office : elle ne recevra plus rien.</p>' : "");
+}
+$("repTabs").addEventListener("click", ev => { const t = ev.target.closest("[data-rk]"); if (!t) return; REP.kind = t.dataset.rk; REP.sel = null; loadReplies(); });
+$("repList").addEventListener("click", ev => { const t = ev.target.closest("[data-rid]"); if (!t) return; REP.sel = t.dataset.rid; renderReplies(); });
+$("repDetail").addEventListener("change", async ev => {
+  const s = ev.target.closest("[data-rkind]"); if (!s) return;
+  try { await api("replies.update", { id: s.dataset.rkind, kind: s.value }); toast("Classement enregistré."); await loadReplies(); } catch(e){ toast(e.message, 5000); }
+});
+$("repDetail").addEventListener("click", async ev => {
+  const send = ev.target.closest("[data-rsend]"), done = ev.target.closest("[data-rhandled]"), msg = ev.target.closest("[data-rmsg]");
+  if (msg) return openMessage(msg.dataset.rmsg);
+  if (done){
+    const r = REP.items.find(x => x.id === done.dataset.rhandled);
+    try { await api("replies.update", { id: done.dataset.rhandled, handled: !(r && r.handled) }); await loadReplies(); } catch(e){ toast(e.message, 5000); }
+  }
+  if (send){
+    const text = ($("repText").value || "").trim();
+    if (!text) return toast("Écrivez la réponse.");
+    const r = REP.items.find(x => x.id === send.dataset.rsend);
+    if (!confirm("Envoyer cette réponse à " + (r ? r.from_email : "") + " depuis " + (r ? r.box : "") + " ?")) return;
+    busy(send, true, "Envoi…");
+    try { await api("replies.send", { id: send.dataset.rsend, text }); toast("Réponse envoyée."); await loadReplies(); } catch(e){ toast(e.message, 6000); }
+    busy(send, false);
+  }
+});
+
+/* ============================================================
+   TABLEAU DE BORD — parcours, boîtes, réponses à lire
+   ============================================================ */
+let dashAt = 0;
+async function loadDashExtra(force){
+  if (!force && Date.now() - dashAt < 120000) return;
+  dashAt = Date.now();
+  try {
+    const d = await api("dashboard.extra");
+    const f = d.funnel || {}, comptes = f.comptes || [];
+    const rows = [["Premiers mails", f.premiers, "", "#d7d3fd"], ["Relances", f.relances, "", "#d7d3fd"], ["Ouverts", f.ouverts, pct(f.ouverts, f.premiers), "#a99ffb"],
+      ["Cliqués", f.clics, pct(f.clics, f.premiers), "#6d5ef8"], ["Réponses", f.reponses, pct(f.reponses, f.premiers), "#4a3fd0"], ["Démo ouverte", f.demo, "", "#4a3fd0"], ["Comptes créés", comptes.length, "", "#17a06a"]];
+    const top = Math.max(1, f.premiers || 1);
+    $("dashFunnel").innerHTML = rows.map(([l, v, r, c]) => '<div class="fr"><b>' + l + '</b><div class="bar"><i style="width:' + Math.max(1, Math.round((v || 0) / top * 100)) + "%;background:" + c + '"></i></div><span class="num"><b>' + fmt(v || 0) + "</b> " + (r ? '<span class="meta" style="display:inline">' + r + "</span>" : "") + "</span></div>").join("");
+    $("dashComptes").innerHTML = comptes.length ? "Comptes Piloz ouverts après un mail de prospection : " + comptes.map(c => "<b>" + esc(c.entreprise) + "</b>" + (c.verifie ? "" : " (invitation non acceptée)")).join(", ") + "." : "";
+    const boxes = d.boxes || [];
+    $("dashBoxes").innerHTML = boxes.map((b, i) => {
+      const sp = (b.jours || []).map(j => j.envoyes + j.relances), mx = Math.max(1, ...sp);
+      return '<tr><td><b style="white-space:nowrap"><span class="dot" style="background:' + BOX_DOTS[i % BOX_DOTS.length] + ';margin-right:6px"></span>' + esc(b.address) + '</b><div class="meta">' + esc(boxRole(b)) + '</div></td><td class="num">' + fmt(b.aujourdhui) +
+        '</td><td><div class="spark" aria-hidden="true">' + sp.map(v => '<i style="height:' + Math.max(2, Math.round(v / mx * 30)) + "px;opacity:" + (v ? 1 : .2) + '"></i>').join("") + '</div></td><td class="num">' + pct(b.ouverts, b.premiers) + '</td><td class="num">' + fmt(b.reponses) + "</td></tr>";
+    }).join("");
+    $("dashReplies").innerHTML = d.repliesToRead ? '<b>' + fmt(d.repliesToRead) + " réponse(s) à traiter</b> · <a href=\"#\" data-go=\"rep\">les lire</a>" : "Aucune réponse en attente.";
+    $("pillRep").hidden = !d.repliesToRead; $("pillRep").textContent = d.repliesToRead;
+    $("dashExtra").hidden = false;
+  } catch(e){ /* le tableau de bord de base reste affiché */ }
+}
 
 /* ============================================================
    PERSONNALISATION — miroir de supabase/functions/_shared/prospection-core.ts
@@ -1151,7 +1495,7 @@ function nextOpening(s){
 function renderState(){
   if (!state) return;
   const s = state.settings, c = state.counts, st = STATUS[state.status] || STATUS.paused;
-  $("whoami").textContent = state.adminEmail || "";
+  $("whoami").textContent = state.adminEmail || ""; $("bLogout").title = state.adminEmail ? "Connecté en tant que " + state.adminEmail : "";
   fillSenderFilter();
   $("pillQueue").textContent = fmt(c.queued);
 
@@ -1320,6 +1664,7 @@ function startPolling(){
   pollT = setInterval(() => {
     if (document.hidden || !state || current !== "auto") return;
     loadState().catch(() => {});
+    loadDashExtra(false);
   }, 30000);
 }
 
@@ -1427,7 +1772,7 @@ function fillTarget(){
   // Texte d'origine gardé à part : la mention du moteur de recherche est ajoutée une seule fois.
   const webNote = $("webNote");
   if (!webNote.dataset.base) webNote.dataset.base = webNote.textContent.trim();
-  if (state.search) webNote.textContent = webNote.dataset.base + (state.search.configured ? " Moteur de recherche configuré côté serveur : il est interrogé quand aucun domaine deviné ne convient." : " Sans clé de moteur de recherche côté serveur (secret PROSPECTION_SEARCH_API_KEY, Brave Search), seuls les domaines devinés sont essayés.") + " La recherche tourne en tâche dédiée toutes les deux minutes quand la réserve baisse.";
+  if (state.search) webNote.textContent = webNote.dataset.base + (state.search.configured ? " Moteur de recherche configuré côté serveur : il est interrogé quand aucun domaine deviné ne convient." : " Sans clé de moteur de recherche côté serveur (secret PROSPECTION_SEARCH_API_KEY, Brave Search), seuls les domaines devinés sont essayés.");
   $("tReqFirst").checked = state.settings.require_first_name !== false;
   const score = Number(state.settings.autopilot_min_score || 0);
   const scoreValue = score >= 65 ? "65" : score >= 40 ? "40" : "0";
@@ -1696,9 +2041,10 @@ async function loadLog(){
   // seule la réponse de la dernière demande est affichée.
   const seq = ++logSeq;
   try {
+    const f = logFilters();
     const data = LOG.status === "followups"
-      ? await api("followups.list", { page: LOG.page, search: $("lq").value, stage: $("lStage").value })
-      : await api("queue.list", { status: LOG.status, page: LOG.page, search: $("lq").value, track: LOG.status === "sent" ? $("lTrack").value : "", signal: $("lSignal").value, sender: $("lSender").value });
+      ? await api("followups.list", { ...f, page: LOG.page, stage: $("lStage").value })
+      : await api("queue.list", { ...f, status: LOG.status, page: LOG.page });
     if (seq !== logSeq) return;
     LOG.items = data.items; LOG.total = data.total; LOG.sel.clear();
     renderLog();
@@ -1707,16 +2053,14 @@ async function loadLog(){
 function renderLog(){
   document.querySelectorAll("#logTabs .tab").forEach(t => t.classList.toggle("on", t.dataset.st === LOG.status));
   $("lDateH").textContent = LOG.status === "sent" ? "Envoyé le" : LOG.status === "followups" ? "Relance envoyée le" : LOG.status === "all" ? "Envoyé / ajouté le" : "Ajouté le";
-  $("lTrack").hidden = LOG.status !== "sent";
-  $("lSignal").hidden = LOG.status === "followups";
-  $("lSender").hidden = LOG.status === "followups" || LOG.status === "queued";
-  $("lStage").hidden = LOG.status !== "followups";
+  $("lTrackFg").hidden = !(LOG.status === "sent" || LOG.status === "all");
+  $("lStageFg").hidden = LOG.status !== "followups";
   $("bLogRetry").hidden = LOG.status !== "failed";
   $("bLogRemove").hidden = LOG.status === "sent" || LOG.status === "all" || LOG.status === "followups";
   $("bLogRemove").textContent = LOG.status === "queued" ? "Retirer de la file" : "Supprimer";
   const pages = Math.max(1, Math.ceil(LOG.total / 50));
   $("lPage").textContent = "Page " + LOG.page + " / " + pages + " · " + fmt(LOG.total) + " ligne(s)";
-  const filtered = !!($("lq").value || (!$("lTrack").hidden && $("lTrack").value) || (!$("lSignal").hidden && $("lSignal").value) || (!$("lSender").hidden && $("lSender").value) || (!$("lStage").hidden && $("lStage").value));
+  const filtered = logFilterCount() > 0;
   $("lTotal").textContent = fmt(LOG.total) + (filtered ? " filtré(s)" : "");
   $("lTotal").style.background = filtered ? "var(--violet)" : "";
   $("lTotal").style.color = filtered ? "#fff" : "";
@@ -1754,17 +2098,133 @@ function logSel(){
 }
 $("logTabs").addEventListener("click", ev => { const t = ev.target.closest("[data-st]"); if (!t) return; LOG.status = t.dataset.st; LOG.page = 1; loadLog(); });
 $("lq").addEventListener("input", () => { clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
-$("lTrack").addEventListener("change", () => { LOG.page = 1; loadLog(); });
-$("lSignal").addEventListener("change", () => { LOG.page = 1; loadLog(); });
-$("lSender").addEventListener("change", () => { LOG.page = 1; loadLog(); });
-// Les boîtes d'envoi connues (réglages) alimentent le filtre.
+// Filtres du panneau de gauche : tout changement recharge la liste (page 1).
+["lTrack", "lSignal", "lTpl", "lMetier", "lEff", "lSort", "lFrom", "lTo"].forEach(id => $(id).addEventListener("change", () => { LOG.page = 1; loadLog(); }));
+$("lPeriod").addEventListener("change", () => { $("lDates").hidden = $("lPeriod").value !== "custom"; LOG.page = 1; loadLog(); });
+$("lBoxes").addEventListener("change", () => { LOG.page = 1; loadLog(); });
+$("lDeps").addEventListener("input", () => { clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 400); });
+$("lScore").addEventListener("input", () => { $("lScoreV").textContent = $("lScore").value; clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
+// Couleur de chaque boîte, partout dans l'outil (nouvelles boîtes en violet, piloz.fr en gris).
+const BOX_DOTS = ["#6d5ef8", "#8b7cfb", "#c4bcfd", "#64748b", "#94a3b8"];
+function knownBoxes(){
+  if (!state) return [];
+  return [...((state.smtp && state.smtp.boites) || []).map(b => b.address), state.settings.sender_email, state.settings.sender_email_2].filter(Boolean);
+}
+// Les boîtes d'envoi connues (réglages) alimentent le filtre, une case par boîte.
 function fillSenderFilter(){
   if (!state) return;
-  const keep = $("lSender").value;
-  const boxes = [...((state.smtp && state.smtp.boites) || []).map(b => b.address), state.settings.sender_email, state.settings.sender_email_2].filter(Boolean);
-  $("lSender").innerHTML = '<option value="">Boîte d\'envoi : toutes</option>' + boxes.map(b => '<option value="' + esc(b) + '">' + esc(b) + "</option>").join("");
-  if (boxes.includes(keep)) $("lSender").value = keep;
+  const keep = new Set([...document.querySelectorAll("#lBoxes input:checked")].map(c => c.value));
+  $("lBoxes").innerHTML = knownBoxes().map((b, i) => '<label class="cb"><input type="checkbox" value="' + esc(b) + '"' + (keep.has(b) ? " checked" : "") +
+    '><span class="dot" style="background:' + BOX_DOTS[i % BOX_DOTS.length] + '"></span>' + esc(b) + "</label>").join("");
 }
+function parisDay(offset){ return new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris" }).format(new Date(Date.now() + offset * 864e5)); }
+function logFilters(){
+  const per = $("lPeriod").value;
+  let from = "", to = "";
+  if (per === "today"){ from = to = parisDay(0); }
+  else if (per === "yday"){ from = to = parisDay(-1); }
+  else if (per === "7"){ from = parisDay(-6); to = parisDay(0); }
+  else if (per === "30"){ from = parisDay(-29); to = parisDay(0); }
+  else if (per === "custom"){ from = $("lFrom").value; to = $("lTo").value; }
+  return {
+    search: $("lq").value, signal: $("lSignal").value,
+    senders: [...document.querySelectorAll("#lBoxes input:checked")].map(c => c.value),
+    track: $("lTrackFg").hidden ? "" : $("lTrack").value,
+    from, to, template_id: $("lTpl").value, metier: $("lMetier").value, departements: $("lDeps").value,
+    effectif: $("lEff").value, score_min: Number($("lScore").value) || 0, sort: $("lSort").value
+  };
+}
+function logFilterCount(){
+  const f = logFilters();
+  return [f.search, f.signal, f.senders.length, f.track, f.from || f.to, f.template_id, f.metier, f.departements, f.effectif, f.score_min, f.sort, $("lStageFg").hidden ? "" : $("lStage").value].filter(Boolean).length;
+}
+// Modèles et valeurs proposées (métiers, effectifs) : chargés une fois.
+let logFacetsDone = false;
+async function fillLogFacets(){
+  if (state){
+    const keep = $("lTpl").value;
+    $("lTpl").innerHTML = '<option value="">Tous les modèles</option>' + (state.templates || []).map(t => '<option value="' + esc(t.id) + '">' + esc(t.name) + (t.active ? "" : " (inactif)") + "</option>").join("");
+    $("lTpl").value = keep;
+  }
+  if (logFacetsDone) return;
+  try {
+    const fc = await api("queue.facets");
+    $("lMetier").innerHTML = '<option value="">Tous les métiers</option>' + (fc.metiers || []).map(m => '<option value="' + esc(m) + '">' + esc(m) + "</option>").join("");
+    $("lEff").innerHTML = '<option value="">Tous</option>' + (fc.effectifs || []).map(e => '<option value="' + esc(e) + '">' + esc(e) + " salariés</option>").join("");
+    logFacetsDone = true;
+  } catch(e){ /* filtres de base seulement */ }
+}
+function resetLogFilters(){
+  ["lq", "lDeps", "lFrom", "lTo"].forEach(id => { $(id).value = ""; });
+  ["lPeriod", "lSignal", "lTrack", "lStage", "lTpl", "lMetier", "lEff", "lSort"].forEach(id => { $(id).value = ""; });
+  $("lScore").value = 0; $("lScoreV").textContent = "0"; $("lDates").hidden = true;
+  document.querySelectorAll("#lBoxes input").forEach(c => { c.checked = false; });
+}
+$("bLogReset").addEventListener("click", () => { resetLogFilters(); $("lViews").value = ""; LOG.page = 1; loadLog(); });
+// Vues enregistrées (dans ce navigateur), avec quatre vues prêtes à l'emploi.
+const VIEW_KEY = "piloz_prospection_vues";
+const VIEW_DEFAULTS = {
+  "Cliqués": { status: "sent", track: "clicked" },
+  "Ont répondu": { status: "sent", track: "replied" },
+  "Relances du jour": { status: "followups", period: "today" },
+  "Échecs de la semaine": { status: "failed", period: "7" },
+  "Visiteurs de la démo": { status: "all", signal: "demo" }
+};
+function readViews(){ let v = null; try { v = JSON.parse(localStorage.getItem(VIEW_KEY) || "null"); } catch(e){ v = null; } return v || VIEW_DEFAULTS; }
+function writeViews(v){ try { localStorage.setItem(VIEW_KEY, JSON.stringify(v)); } catch(e){ toast("Enregistrement impossible dans ce navigateur."); } }
+function fillViews(){ const v = readViews(); $("lViews").innerHTML = '<option value="">Choisir une vue enregistrée…</option>' + Object.keys(v).map(n => '<option value="' + esc(n) + '">' + esc(n) + "</option>").join(""); }
+$("lViews").addEventListener("change", () => {
+  const v = readViews()[$("lViews").value];
+  if (!v) return;
+  resetLogFilters();
+  $("lPeriod").value = v.period || ""; $("lFrom").value = v.from || ""; $("lTo").value = v.to || ""; $("lDates").hidden = v.period !== "custom";
+  $("lq").value = v.q || ""; $("lSignal").value = v.signal || ""; $("lTrack").value = v.track || ""; $("lStage").value = v.stage || "";
+  $("lTpl").value = v.tpl || ""; $("lMetier").value = v.metier || ""; $("lDeps").value = v.deps || ""; $("lEff").value = v.eff || "";
+  $("lScore").value = v.score || 0; $("lScoreV").textContent = String(v.score || 0); $("lSort").value = v.sort || "";
+  document.querySelectorAll("#lBoxes input").forEach(c => { c.checked = (v.boxes || []).includes(c.value); });
+  LOG.status = v.status || "all"; LOG.page = 1; loadLog();
+});
+$("bViewSave").addEventListener("click", () => {
+  const name = (prompt("Nom de la vue (onglet et filtres en cours) :", $("lViews").value || "") || "").trim();
+  if (!name) return;
+  const v = readViews();
+  v[name] = { status: LOG.status, period: $("lPeriod").value, from: $("lFrom").value, to: $("lTo").value, q: $("lq").value, signal: $("lSignal").value,
+    boxes: [...document.querySelectorAll("#lBoxes input:checked")].map(c => c.value), track: $("lTrack").value, stage: $("lStage").value, tpl: $("lTpl").value,
+    metier: $("lMetier").value, deps: $("lDeps").value, eff: $("lEff").value, score: $("lScore").value, sort: $("lSort").value };
+  writeViews(v); fillViews(); $("lViews").value = name; toast("Vue « " + name + " » enregistrée.");
+});
+$("bViewDel").addEventListener("click", () => {
+  const name = $("lViews").value, v = readViews();
+  if (!name || !v[name] || !confirm("Supprimer la vue « " + name + " » ?")) return;
+  delete v[name]; writeViews(v); fillViews();
+});
+// Export CSV de l'onglet et des filtres en cours (5 000 lignes au plus).
+$("bLogExport").addEventListener("click", async ev => {
+  const btn = ev.currentTarget;
+  busy(btn, true, "Export…");
+  try {
+    const f = logFilters();
+    const data = LOG.status === "followups"
+      ? await api("followups.list", { ...f, stage: $("lStage").value, export: true })
+      : await api("queue.list", { ...f, status: LOG.status, export: true });
+    const head = ["Date", "Type", "Entreprise", "E-mail", "SIREN", "Ville", "Département", "Métier", "Effectif", "Boîte d'envoi", "Statut", "Ouvert le", "Clic", "A répondu le", "Score", "Source"];
+    const rows = (data.items || []).map(x => {
+      const m = LOG.status === "followups" ? (x.message || {}) : x, d = m.data || {};
+      return [dateTimeFr(LOG.status === "followups" ? x.sent_at : (m.sent_at || m.created_at)), LOG.status === "followups" ? "Relance " + x.stage : "Premier mail",
+        niceCompany(m.company), m.email, m.siren || "", d.ville || "", d.departement || "", d.metier || "", d.effectif || "", m.sender || "",
+        LOG.status === "followups" ? (x.status === "sent" ? "Envoyée" : "Échec") : (BADGE[m.status] || m.status), m.opened_at ? dateTimeFr(m.opened_at) : "",
+        (m.site_clicked_at || m.video_clicked_at) ? "oui" : "", m.replied_at ? dateTimeFr(m.replied_at) : "", m.score == null ? "" : m.score,
+        d.marche ? "Marché public" : d.source === "web" ? "Site web" : m.origin === "demo" ? "Démo" : "Annuaire RGE"];
+    });
+    const csv = "\ufeff" + [head, ...rows].map(r => r.map(v => '"' + String(v ?? "").replace(/"/g, '""') + '"').join(";")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = "piloz-envois-" + parisDay(0) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    toast(fmt(rows.length) + " ligne(s) exportée(s).");
+  } catch(e){ toast(e.message, 5000); }
+  busy(btn, false);
+});
 $("lStage").addEventListener("change", () => { LOG.page = 1; loadLog(); });
 $("lPrev").addEventListener("click", () => { LOG.page--; loadLog(); });
 $("lNext").addEventListener("click", () => { LOG.page++; loadLog(); });
