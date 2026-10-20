@@ -394,6 +394,8 @@
       <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
       <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
       <button class="nav-b" data-view="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span class="t">Réglages</span></button>
+      <div class="nav-sep">Clients</div>
+      <button class="nav-b" data-view="clients"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span class="t">Nouveaux clients</span><span class="pill num" id="pillClients" hidden>0</span></button>
       <div class="nav-sep">Historique</div>
       <button class="nav-b" data-view="log"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg><span class="t">Envois</span><span class="pill num" id="pillQueue">0</span></button>
       <button class="nav-b" data-view="supp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span class="t">Exclusions</span></button>
@@ -562,7 +564,7 @@
               <div class="card-b">
                 <div class="fields tpl-fields">
                   <div class="fld"><label for="tName">Nom interne</label><input class="inp" id="tName" maxlength="120" placeholder="ex. Premier contact — artisans"></div>
-                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option></select>
+                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option></select>
                     <p class="help">Une relance part dans le fil du premier message, en « Re : », aux destinataires qui n'ont pas répondu. Délais et conditions dans Réglages.</p></div>
                   <div class="fld"><label for="tSubject">Objet</label><input class="inp" id="tSubject" maxlength="200"></div>
                   <div class="fld full"><label for="tBody">Message</label><textarea class="inp" id="tBody" rows="12" maxlength="8000"></textarea>
@@ -653,6 +655,24 @@
       </section>
 
       <!-- ==================== EXCLUSIONS ==================== -->
+      <!-- ==================== CLIENTS ==================== -->
+      <section class="view" id="v-clients">
+        <div class="card">
+          <div class="card-h"><h2>Comptes Piloz</h2><span class="sub" id="cliCount"></span>
+            <div class="right"><button type="button" class="b b-main b-sm" id="bCliAll">Écrire à ceux qui n'ont pas reçu le mail</button></div>
+          </div>
+          <div class="card-b" style="padding-bottom:6px">
+            <p class="note">Tous les comptes Piloz réels, du plus récent au plus ancien (comptes démo, archivés et de test exclus). Le mail de prise en main part de l'adresse d'envoi historique (contact@piloz.fr) avec le modèle de type « Client » de l'écran Messages ; la variable <code class="k">{conseil}</code> s'adapte à ce que le client a déjà fait (chantier, planning, pointage). Rien ne part vers une adresse non vérifiée (invitation non acceptée) ou désinscrite.</p>
+          </div>
+          <div class="tscroll">
+            <table>
+              <thead><tr><th>Entreprise</th><th style="width:100px">Créé le</th><th style="width:120px">Offre</th><th style="width:120px">Connexion</th><th>Utilisation</th><th style="width:170px">Mail</th><th style="width:100px"></th></tr></thead>
+              <tbody id="cliBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section class="view" id="v-supp">
         <div id="histBanner"></div>
         <div class="grid2 wide-right" style="margin-top:0">
@@ -929,6 +949,7 @@ const VIEWS = {
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
   log:      { t:"Envois",     s:"File d'attente et historique de tout ce que l'automate a envoyé." },
   supp:     { t:"Exclusions", s:"Adresses qui ne recevront plus jamais de message." },
+  clients:  { t:"Nouveaux clients", s:"Les comptes Piloz et le mail qui les aide à prendre le logiciel en main." },
   settings: { t:"Réglages",   s:"Expéditeur, cadence d'envoi et pilote automatique." }
 };
 let current = "auto";
@@ -942,6 +963,7 @@ function showView(v){
   if (v === "target") fillTarget();
   if (v === "log") loadLog();
   if (v === "supp") loadSupp();
+  if (v === "clients") loadClients();
   if (v === "tpl"){ renderTemplates(); loadSamples(); }
   if (v === "settings") fillSettings();
   if (v === "auto") loadState().catch(() => {});
@@ -953,10 +975,61 @@ document.addEventListener("click", ev => {
 });
 
 /* ============================================================
+   CLIENTS — comptes Piloz réels et mail de prise en main
+   ============================================================ */
+let CLI = [];
+const PLAN = { basic: "Basic (gratuit)", essentiel: "Essentiel", premium: "Premium" };
+const cliTodo = () => CLI.filter(c => c.verifie && !c.desinscrit && !c.mails);
+async function loadClients(){
+  try { CLI = (await api("clients.list")).clients || []; renderClients(); }
+  catch(e){ if (e.code !== "session") toast(e.message, 5000); }
+}
+function renderClients(){
+  const todo = cliTodo();
+  $("cliCount").textContent = CLI.length + " compte(s) · " + todo.length + " à qui écrire";
+  $("bCliAll").disabled = !todo.length;
+  $("pillClients").hidden = !todo.length; $("pillClients").textContent = todo.length;
+  $("cliBody").innerHTML = CLI.length ? CLI.map(c => {
+    const use = [c.chantiers + " chantier(s)", c.plannings + " planning", c.pointages + " pointage(s)", c.salaries + " salarié(s)"].join(" · ");
+    const mail = c.desinscrit ? '<span class="badge unsub">Désinscrit</span>'
+      : !c.verifie ? '<span class="badge off">Invitation non acceptée</span>'
+      : c.mail_envoye ? '<span class="badge sent">Envoyé le ' + esc(dateFr(c.mail_envoye)) + "</span>" + (c.mail_clic ? ' <span class="badge clic">Cliqué</span>' : c.mail_ouvert ? ' <span class="badge open">Ouvert</span>' : "")
+      : '<span class="note">Pas encore écrit</span>';
+    const can = c.verifie && !c.desinscrit;
+    return "<tr><td><b>" + esc(c.entreprise || "—") + '</b><br><span class="note">' + esc(c.email) + '</span></td><td class="nw">' + esc(dateFr(c.created_at)) +
+      "</td><td>" + esc(PLAN[c.plan_key] || c.plan_key || "—") + '</td><td class="nw">' + (c.derniere_connexion ? esc(dateFr(c.derniere_connexion)) : "jamais") +
+      '</td><td class="note">' + esc(use) + "</td><td>" + mail + "</td><td>" +
+      (can ? '<button type="button" class="b b-out b-xs" data-cli-send="' + esc(c.company_id) + '">' + (c.mails ? "Renvoyer" : "Envoyer") + "</button>" : "") + "</td></tr>";
+  }).join("") : '<tr><td colspan="7" class="empty"><b>Aucun client</b>Les comptes créés sur Piloz apparaîtront ici.</td></tr>';
+}
+async function sendClients(ids, force, btn){
+  busy(btn, true, "Envoi…");
+  try {
+    const r = await api("clients.send", { ids, force });
+    const fails = (r.results || []).filter(x => !x.ok);
+    toast(r.sent + " mail(s) envoyé(s)." + (fails.length ? " Non envoyé(s) : " + fails.map(f => f.error).join(", ") + "." : ""), 7000);
+    await loadClients();
+  } catch(e){ toast(e.message, 6000); }
+  busy(btn, false);
+}
+$("bCliAll").addEventListener("click", ev => {
+  const todo = cliTodo();
+  if (!todo.length || !confirm("Envoyer le mail de prise en main à " + todo.length + " client(s) : " + todo.map(c => c.entreprise).join(", ") + " ?")) return;
+  sendClients(todo.map(c => c.company_id), false, ev.currentTarget);
+});
+$("cliBody").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-cli-send]");
+  if (!b) return;
+  const c = CLI.find(x => x.company_id === b.dataset.cliSend);
+  if (!c || !confirm((c.mails ? "Renvoyer" : "Envoyer") + " le mail de prise en main à " + c.entreprise + " (" + c.email + ") ?")) return;
+  sendClients([c.company_id], !!c.mails, b);
+});
+
+/* ============================================================
    PERSONNALISATION — miroir de supabase/functions/_shared/prospection-core.ts
    ============================================================ */
-const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche"];
-const VAR_HELP = { bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
+const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "conseil"];
+const VAR_HELP = { conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -975,7 +1048,7 @@ function templateVars(d){
   d = d || {};
   const prenom = capitalName(d.prenom).split(" ")[0] || "";
   return { bonjour: prenom ? "Bonjour " + prenom : "Bonjour", prenom, nom: capitalName(d.nom), entreprise: niceCompany(d.entreprise),
-    ville: capitalName(d.ville), metier: clean(d.metier, 120), departement: clean(d.departement, 4), effectif: clean(d.effectif, 40) };
+    ville: capitalName(d.ville), metier: clean(d.metier, 120), departement: clean(d.departement, 4), effectif: clean(d.effectif, 40), conseil: clean(d.conseil, 400) };
 }
 function renderTpl(t, v){
   return String(t || "").replace(/\{([a-z_]+)(?:\|([^{}]*))?\}/gi, (m, name, fb) => {
@@ -1008,12 +1081,17 @@ function buildEmail(tpl, s, data){
     lines.map((l, i) => i === 0 ? '<b style="color:#15161f;font-size:15px">' + hesc(l) + "</b>" : linkify(hesc(l))).join("<br>") + "</td></tr></table>" : "";
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
   const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
-    '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">Vous recevez ce message car ' + hesc(company) +
-    ((data || {}).source === "web"
-      ? " figure dans le répertoire public des entreprises (base SIRENE de l'INSEE) et publie ses coordonnées professionnelles sur son site internet. "
-      : " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE). ") +
+    '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
     '<a href="https://piloz.fr/desinscription.html" style="color:#8a8ca0">Ne plus recevoir de message</a>.' + (identity ? "<br>" + hesc(identity) : "") + "</p></div>";
   return { subject: clean(renderTpl(tpl.subject, v), 200), html };
+}
+// Mention d'origine (miroir de dataNotice côté serveur).
+function dataNotice(company, source){
+  const c = hesc(company);
+  if (source === "client") return "Vous recevez ce message car " + c + " a un espace Piloz.";
+  if (source === "demo") return "Vous recevez ce message car vous avez demandé l'accès à la démo de Piloz sur piloz.fr.";
+  if (source === "web") return "Vous recevez ce message car " + c + " figure dans le répertoire public des entreprises (base SIRENE de l'INSEE) et publie ses coordonnées professionnelles sur son site internet.";
+  return "Vous recevez ce message car " + c + " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE).";
 }
 function mailHtml(tpl, s, data, to){
   const mail = buildEmail(tpl, s, data);
@@ -1483,10 +1561,10 @@ async function loadSamples(){
     renderSampleOptions();
   } catch(e){}
 }
-const KIND = { relance1: "relance 1", relance2: "relance 2" };
+const KIND = { relance1: "relance 1", relance2: "relance 2", demo: "après démo", client: "client" };
 // Une relance part toujours en « Re : » sur l'objet du premier message : son objet propre ne sert pas.
 function syncKind(){
-  const relance = $("tKind").value !== "initial";
+  const relance = /^relance/.test($("tKind").value);
   $("tSubject").disabled = relance;
   if (relance) $("tSubject").value = "Re : (objet du premier message)";
 }
@@ -1504,7 +1582,11 @@ function sampleData(){ const m = sampleMessage(); return m ? (m.data || {}) : SA
 function renderPreview(){
   const tpl = { subject: $("tSubject").value, body: $("tBody").value };
   const m = sampleMessage();
-  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, sampleData(), m ? m.email : "j.dupont@dupont-batiment.fr");
+  // Modèles « Après la démo » et « Client » : mention et conseil propres à ces envois.
+  const kind = $("tKind").value;
+  const data = kind === "client" ? { ...sampleData(), source: "client", conseil: "Premier pas conseillé : créez votre premier chantier, puis ajoutez vos salariés ; ils reçoivent leur accès sur leur téléphone." }
+    : kind === "demo" ? { ...sampleData(), source: "demo" } : sampleData();
+  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : "j.dupont@dupont-batiment.fr");
 }
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
 $("tKind").addEventListener("change", () => { $("tName").dataset.dirty = "1"; syncKind(); renderPreview(); });
