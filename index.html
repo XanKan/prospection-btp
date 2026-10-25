@@ -674,7 +674,7 @@
               <div class="inline" style="margin-top:10px"><input class="inp" id="rvDepIn" placeholder="ex. 75, 92" style="width:160px" autocomplete="off"><button type="button" class="b b-out b-sm" id="bRvDepAdd">Exclure</button></div>
             </div>
             <div class="fset">
-              <p class="note">Les <b>experts-comptables</b> sont toujours écartés, quel que soit leur code NAF. Seules les entreprises dont le <b>site internet cite un logiciel de gestion</b> (Sage, EBP, Cegid, ERP, intégrateur, revendeur…) sont gardées : les logiciels repérés alimentent la variable <code class="k">{logiciels}</code> des messages.</p>
+              <p class="note">Les <b>experts-comptables</b> sont toujours écartés, quel que soit leur code NAF. Seules les entreprises dont le <b>site internet cite un logiciel de gestion</b> sont gardées : un éditeur (Sage, EBP, Cegid, Odoo, Divalto…), un ERP ou la gestion commerciale. Les logiciels repérés alimentent la variable <code class="k">{logiciels}</code> des messages ; la mention d'intégrateur, de revendeur ou du bâtiment augmente le score.</p>
             </div>
             <div class="run"><button type="submit" class="b b-main" id="bRvTargetSave">Enregistrer le ciblage</button></div>
           </form>
@@ -684,7 +684,7 @@
           <div class="card-h"><h2>Messages revendeurs</h2><span class="sub">premier contact, relance 1 et relance 2 : rien ne part tant que la campagne est en pause</span></div>
           <div class="card-b">
             <p class="note">Ces modèles ne servent qu'aux revendeurs ; ceux de la campagne BTP restent dans l'écran Messages. Les relances partent dans le fil du premier message, en « Re : », aux revendeurs qui n'ont pas répondu.</p>
-            <p class="note">Variable propre à cette campagne : <code class="k">{logiciels}</code>, les logiciels de gestion repérés sur le site du revendeur (« Sage, EBP »), ou « vos logiciels de gestion » quand aucun nom précis n'a été lu. Les autres variables (<code class="k">{bonjour}</code>, <code class="k">{prenom}</code>, <code class="k">{entreprise}</code>, <code class="k">{ville}</code>…) fonctionnent comme pour le BTP.</p>
+            <p class="note">Variable propre à cette campagne : <code class="k">{logiciels}</code>, les logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide quand aucun nom précis n'a été lu : prévoyez un texte de repli, par exemple <code class="k">{logiciels|des logiciels de gestion}</code>. Les autres variables (<code class="k">{bonjour}</code>, <code class="k">{prenom}</code>, <code class="k">{entreprise}</code>, <code class="k">{ville}</code>…) fonctionnent comme pour le BTP.</p>
           </div>
         </div>
         <div id="rvTplHost" style="margin-top:16px"></div>
@@ -1486,7 +1486,7 @@ async function loadDashExtra(force){
    PERSONNALISATION — miroir de supabase/functions/_shared/prospection-core.ts
    ============================================================ */
 const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "conseil", "logiciels"];
-const VAR_HELP = { logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage, EBP »), sinon « vos logiciels de gestion »", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
+const VAR_HELP = { logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -1506,7 +1506,11 @@ function templateVars(d){
   const prenom = capitalName(d.prenom).split(" ")[0] || "";
   return { bonjour: prenom ? "Bonjour " + prenom : "Bonjour", prenom, nom: capitalName(d.nom), entreprise: niceCompany(d.entreprise),
     ville: capitalName(d.ville), metier: clean(d.metier, 120), departement: clean(d.departement, 4), effectif: clean(d.effectif, 40), conseil: clean(d.conseil, 400),
-    logiciels: clean(d.logiciels, 200) || "vos logiciels de gestion" };
+    logiciels: softwareText(d.logiciels) };
+}
+function softwareText(raw){
+  const list = clean(raw, 120).split(/\s*,\s*/).filter(Boolean).slice(0, 3);
+  return list.length > 1 ? list.slice(0, -1).join(", ") + " et " + list[list.length - 1] : list[0] || "";
 }
 function renderTpl(t, v){
   return String(t || "").replace(/\{([a-z_]+)(?:\|([^{}]*))?\}/gi, (m, name, fb) => {
@@ -2059,8 +2063,8 @@ function rvRenderReport(rep, at){
     $("rvReportNote").textContent = "Aucune recherche pour l'instant : lancez la première avec le bouton ci-dessus.";
     return;
   }
-  $("rvReport").innerHTML = [["Examinées", rep.scanned], ["Experts-comptables écartés", rep.accounting], ["Sans site", rep.no_site],
-    ["Sans logiciel de gestion repéré", rep.no_signal], ["Déjà connues", rep.known], ["Ajoutées à la file", rep.added]]
+  $("rvReport").innerHTML = [["Examinées", rep.scanned], ["Experts-comptables écartés", rep.accounting], ["Dirigeant sans prénom", rep.no_first_name], ["Sans site", rep.no_site],
+    ["Sans logiciel de gestion repéré", rep.no_signal], ["Site sans adresse e-mail", rep.no_email], ["Déjà connues", rep.known], ["Ajoutées à la file", rep.added]]
     .map(([l, v]) => "<div><b>" + fmt(v || 0) + "</b>" + esc(l) + "</div>").join("");
   $("rvReportNote").innerHTML = "<b>Dernier rapport, le " + esc(dateTimeFr(rep.at || at)) + ".</b>" +
     (rep.pages ? " " + fmt(rep.pages) + " page(s) de l'annuaire des entreprises parcourue(s)." : "") +
