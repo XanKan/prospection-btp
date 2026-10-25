@@ -268,6 +268,9 @@
   .badge.open{background:var(--blue-soft);color:var(--blue)} .badge.video{background:var(--violet-soft);color:var(--violet)}
   .badge.clic{background:var(--ok-soft);color:var(--ok)} .badge.off{background:var(--line-2);color:var(--muted);font-weight:600}
   .badge.unsub{background:var(--danger-soft);color:var(--danger)}
+  .badge.rv{background:var(--warn-soft);color:#b96c14}
+  .rv-x{border:0;background:none;color:inherit;font-size:1rem;line-height:1;padding:0 0 0 2px;opacity:.55;cursor:pointer}
+  .rv-x:hover{opacity:1}
   .ic{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:6px;color:var(--muted);transition:background .12s,color .12s}
   .ic:hover{background:var(--line-2);color:var(--ink)}
   .ic.ok{color:var(--ok)}
@@ -439,6 +442,7 @@
       <button class="nav-b" data-view="rep"><span class="t">Réponses</span><span class="pill num hot" id="pillRep" hidden>0</span></button>
       <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
       <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
+      <button class="nav-b" data-view="revendeurs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg><span class="t">Revendeurs</span></button>
       <button class="nav-b" data-view="clients"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span class="t">Clients</span><span class="pill num" id="pillClients" hidden>0</span></button>
       <button class="nav-b" data-view="supp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span class="t">Exclusions</span></button>
       <button class="nav-b" data-view="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span class="t">Réglages</span></button>
@@ -485,6 +489,11 @@
           <div class="kpi kb"><div class="lab">Envoyés au total</div><div class="val num" id="kSent">0</div><div class="foot" id="kSentF"></div></div>
           <div class="kpi kc"><div class="lab">Exclus</div><div class="val num" id="kSupp">0</div><div class="foot">désinscrits, rebonds, déjà contactés</div></div>
           <div class="kpi ke"><div class="lab">Échecs</div><div class="val num" id="kFail">0</div><div class="foot">adresses refusées ou erreurs</div></div>
+        </div>
+
+        <div class="card" id="dashRv" hidden style="margin-top:16px">
+          <div class="card-h" style="border-bottom:0"><h2>Campagne revendeurs</h2><span class="st" id="dashRvSt"><i></i><span>—</span></span><span class="sub" id="dashRvS"></span>
+            <div class="right"><button type="button" class="b b-out b-xs" data-go="revendeurs">Ouvrir</button></div></div>
         </div>
 
         <div class="grid2">
@@ -604,13 +613,105 @@
         <p class="note" style="max-width:80ch;margin-top:14px">L'automate parcourt ces entreprises département par département, à tour de rôle, et en garde toujours une réserve d'avance. Chacune ne reçoit qu'un seul message. Quand vous changez le ciblage, les entreprises en réserve qui n'ont pas encore été contactées sont remplacées par celles du nouveau ciblage.</p>
       </section>
 
+      <!-- ==================== REVENDEURS ==================== -->
+      <section class="view" id="v-revendeurs">
+        <div id="rvBanners"></div>
+        <div class="card">
+          <div class="hero">
+            <div class="hero-dot" id="rvDot"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg></div>
+            <div class="hero-txt">
+              <h2><span id="rvT">Campagne revendeurs</span> <span class="st" id="rvSt" style="vertical-align:middle"><i></i><span>—</span></span></h2>
+              <p id="rvS"></p>
+            </div>
+            <div class="hero-act"><label class="swi"><input type="checkbox" id="rvActive"><i></i> Activer la campagne</label></div>
+          </div>
+          <div class="banner warn" id="rvConfirm" hidden style="margin:0 24px 20px">
+            <div class="grow"><b id="rvConfirmT"></b><div style="margin-top:4px" id="rvConfirmS"></div></div>
+            <button type="button" class="b b-ok b-sm" id="bRvConfirm">Activer</button>
+            <button type="button" class="b b-out b-sm" id="bRvCancel">Annuler</button>
+          </div>
+          <div class="run">
+            <label class="inline" for="rvDaily" style="color:var(--ink)">Envois par jour <input class="inp" type="number" id="rvDaily" min="1" max="500" step="1"></label>
+            <button type="button" class="b b-out b-sm" id="bRvDaily">Enregistrer</button>
+            <span class="note">premiers contacts et relances revendeurs, pris dans le quota global du jour</span>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi kd"><div class="lab">En file</div><div class="val num" id="rvKQueued">0</div><div class="foot" id="rvKQueuedF"></div></div>
+          <div class="kpi ka"><div class="lab">Envoyés aujourd'hui</div><div class="val num" id="rvKToday">0</div><div class="meter"><i id="rvKTodayBar" style="width:0"></i></div><div class="foot" id="rvKTodayF"></div></div>
+          <div class="kpi kb"><div class="lab">Envoyés</div><div class="val num" id="rvKSent">0</div><div class="foot">depuis le début</div></div>
+          <div class="kpi kc"><div class="lab">Ouverts</div><div class="val num" id="rvKOpened">0</div><div class="foot" id="rvKOpenedF"></div></div>
+          <div class="kpi ka"><div class="lab">Cliqués</div><div class="val num" id="rvKClicked">0</div><div class="foot" id="rvKClickedF"></div></div>
+          <div class="kpi kb"><div class="lab">Réponses</div><div class="val num" id="rvKReplied">0</div><div class="foot" id="rvKRepliedF"></div></div>
+        </div>
+
+        <div class="grid2 wide-right">
+          <div class="card">
+            <div class="card-h"><h2>Recherche de revendeurs</h2><span class="sub" id="rvLastAt"></span></div>
+            <div class="card-b">
+              <p class="note">Pour chaque entreprise du ciblage (base SIRENE), l'automate lit son site internet et ne garde que celles qui citent un logiciel de gestion. Une recherche dure environ 90 secondes.</p>
+              <p style="margin-top:12px"><button type="button" class="b b-main" id="bRvRun">Chercher des revendeurs maintenant</button></p>
+              <div id="rvRunBox" hidden><div class="meter" style="margin:12px 0 5px"><i id="rvRunBar" style="width:0"></i></div><p class="note" id="rvRunNote"></p></div>
+              <div class="prog-grid" id="rvReport" style="margin-top:16px"></div>
+              <p class="note" id="rvReportNote" style="margin-top:10px"></p>
+            </div>
+          </div>
+          <form class="card" id="rvTargetForm">
+            <div class="card-h"><h2>Ciblage</h2><span class="sub">éditeurs, intégrateurs et revendeurs de logiciels de gestion</span></div>
+            <div class="fset">
+              <div class="fset-h"><h3>Activité</h3><span class="sub">codes NAF</span></div>
+              <div class="chips" id="rvNafChips"></div>
+            </div>
+            <div class="fset">
+              <div class="fset-h"><h3>Effectif salarié</h3><span class="sub">tranches INSEE</span></div>
+              <div class="chips" id="rvEffChips"></div>
+            </div>
+            <div class="fset">
+              <div class="fset-h"><h3>Départements exclus</h3><span class="sub">par défaut, Bretagne et Pays de la Loire</span><span class="spacer"></span>
+                <button type="button" class="b b-out b-xs" id="bRvOuest" title="Exclure à nouveau 22, 29, 35, 56, 44, 49, 53, 72 et 85">Grand Ouest</button></div>
+              <div class="chips" id="rvDeps"></div>
+              <div class="inline" style="margin-top:10px"><input class="inp" id="rvDepIn" placeholder="ex. 75, 92" style="width:160px" autocomplete="off"><button type="button" class="b b-out b-sm" id="bRvDepAdd">Exclure</button></div>
+            </div>
+            <div class="fset">
+              <p class="note">Les <b>experts-comptables</b> sont toujours écartés, quel que soit leur code NAF. Seules les entreprises dont le <b>site internet cite un logiciel de gestion</b> (Sage, EBP, Cegid, ERP, intégrateur, revendeur…) sont gardées : les logiciels repérés alimentent la variable <code class="k">{logiciels}</code> des messages.</p>
+            </div>
+            <div class="run"><button type="submit" class="b b-main" id="bRvTargetSave">Enregistrer le ciblage</button></div>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-h"><h2>Messages revendeurs</h2><span class="sub">premier contact, relance 1 et relance 2 : rien ne part tant que la campagne est en pause</span></div>
+          <div class="card-b">
+            <p class="note">Ces modèles ne servent qu'aux revendeurs ; ceux de la campagne BTP restent dans l'écran Messages. Les relances partent dans le fil du premier message, en « Re : », aux revendeurs qui n'ont pas répondu.</p>
+            <p class="note">Variable propre à cette campagne : <code class="k">{logiciels}</code>, les logiciels de gestion repérés sur le site du revendeur (« Sage, EBP »), ou « vos logiciels de gestion » quand aucun nom précis n'a été lu. Les autres variables (<code class="k">{bonjour}</code>, <code class="k">{prenom}</code>, <code class="k">{entreprise}</code>, <code class="k">{ville}</code>…) fonctionnent comme pour le BTP.</p>
+          </div>
+        </div>
+        <div id="rvTplHost" style="margin-top:16px"></div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-h"><h2>Prospects en file</h2><span class="sub" id="rvQCount"></span>
+            <div class="right"><button type="button" class="b b-out b-xs" id="bRvLog">Voir dans Envois</button></div></div>
+          <div class="tscroll">
+            <table>
+              <thead><tr><th>Entreprise</th><th style="width:130px">Ville</th><th>Logiciels repérés</th><th style="width:190px">Site</th><th>E-mail</th><th style="width:70px">Score</th><th style="width:90px"></th></tr></thead>
+              <tbody id="rvQBody"></tbody>
+            </table>
+          </div>
+          <div class="pager"><span id="rvQPage"></span><button type="button" class="b b-out b-xs" id="rvQPrev">Précédent</button><button type="button" class="b b-out b-xs" id="rvQNext">Suivant</button></div>
+        </div>
+      </section>
+
       <!-- ==================== MESSAGES ==================== -->
       <section class="view" id="v-tpl">
-        <div class="tpl-wrap">
+        <div id="tplHost">
+        <!-- L'éditeur est partagé : il passe dans l'écran Revendeurs pour les modèles de cette campagne. -->
+        <div class="tpl-wrap" id="tplWrap">
           <div>
             <div id="tplList"></div>
             <button type="button" class="b b-out" id="bTplNew" style="width:100%;justify-content:center">+ Nouveau modèle</button>
             <p class="note" style="margin-top:14px">Si plusieurs modèles sont actifs, l'automate en tire un au hasard pour chaque envoi. Cela évite que tous les messages soient identiques.</p>
+            <p class="note" id="tplOtherCamp"></p>
           </div>
           <div>
             <div class="card">
@@ -645,6 +746,7 @@
             </div>
           </div>
         </div>
+        </div>
       </section>
 
       <!-- ==================== ENVOIS ==================== -->
@@ -661,6 +763,10 @@
               <span class="fl">Période</span>
               <select class="inp" id="lPeriod"><option value="">Tout l'historique</option><option value="today">Aujourd'hui</option><option value="yday">Hier</option><option value="7">7 derniers jours</option><option value="30">30 derniers jours</option><option value="custom">Dates précises</option></select>
               <div class="row2" id="lDates" hidden><label class="note">Du<input class="inp" type="date" id="lFrom"></label><label class="note">Au<input class="inp" type="date" id="lTo"></label></div>
+            </div>
+            <div class="fg">
+              <span class="fl">Campagne</span>
+              <select class="inp" id="lCamp"><option value="">Toutes</option><option value="btp">BTP</option><option value="revendeur">Revendeurs</option></select>
             </div>
             <div class="fg"><span class="fl">Boîte d'envoi</span><div id="lBoxes"></div></div>
             <div class="fg">
@@ -1075,6 +1181,7 @@ const VIEWS = {
   boites:   { t:"Boîtes d'envoi", s:"Chaque boîte et chaque domaine : quotas, montée progressive, résultats et santé." },
   rep:      { t:"Réponses", s:"Les réponses des boîtes d'envoi, réunies et classées automatiquement." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
+  revendeurs: { t:"Revendeurs", s:"Campagne de recrutement des revendeurs de logiciels de gestion : ciblage, messages et prospects en file." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
   log:      { t:"Envois",     s:"File d'attente et historique de tout ce que l'automate a envoyé." },
   supp:     { t:"Exclusions", s:"Adresses qui ne recevront plus jamais de message." },
@@ -1096,7 +1203,8 @@ function showView(v){
   if (v === "boites") loadBoxes();
   if (v === "rep") loadReplies();
   if (v === "log"){ fillLogFacets(); fillViews(); }
-  if (v === "tpl"){ renderTemplates(); loadSamples(); }
+  if (v === "tpl") mountTplEditor("btp");
+  if (v === "revendeurs"){ mountTplEditor("revendeur"); renderRevendeurs(); RV.page = 1; loadRvQueue(); }
   if (v === "settings") fillSettings();
   if (v === "auto"){ loadState().catch(() => {}); loadDashExtra(true); }
 }
@@ -1377,8 +1485,8 @@ async function loadDashExtra(force){
 /* ============================================================
    PERSONNALISATION — miroir de supabase/functions/_shared/prospection-core.ts
    ============================================================ */
-const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "conseil"];
-const VAR_HELP = { conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
+const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "conseil", "logiciels"];
+const VAR_HELP = { logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage, EBP »), sinon « vos logiciels de gestion »", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -1397,7 +1505,8 @@ function templateVars(d){
   d = d || {};
   const prenom = capitalName(d.prenom).split(" ")[0] || "";
   return { bonjour: prenom ? "Bonjour " + prenom : "Bonjour", prenom, nom: capitalName(d.nom), entreprise: niceCompany(d.entreprise),
-    ville: capitalName(d.ville), metier: clean(d.metier, 120), departement: clean(d.departement, 4), effectif: clean(d.effectif, 40), conseil: clean(d.conseil, 400) };
+    ville: capitalName(d.ville), metier: clean(d.metier, 120), departement: clean(d.departement, 4), effectif: clean(d.effectif, 40), conseil: clean(d.conseil, 400),
+    logiciels: clean(d.logiciels, 200) || "vos logiciels de gestion" };
 }
 function renderTpl(t, v){
   return String(t || "").replace(/\{([a-z_]+)(?:\|([^{}]*))?\}/gi, (m, name, fb) => {
@@ -1644,6 +1753,9 @@ function renderState(){
       + (rep.web ? " <b>Sites web (non RGE) :</b> " + fmt(rep.web.examined) + " entreprise(s) examinée(s), " + fmt(rep.web.sites) + " site(s) vérifié(s), " + fmt(rep.web.emails) + " adresse(s) trouvée(s)" + (rep.web.searchBlocked ? ", moteur de recherche au quota" : "") + "." : "")
       + (state.scanned && state.scanned.total ? " <b>Depuis le début :</b> " + fmt(state.scanned.total) + " entreprises non RGE examinées, " + fmt(state.scanned.emails) + " adresses trouvées (" + Math.round(state.scanned.emails / state.scanned.total * 100) + " %)." : "")
     : "Aucun passage pour l'instant : le premier aura lieu dès que l'automate sera démarré.";
+
+  // Campagne revendeurs : carte du tableau de bord et écran dédié.
+  renderRevendeurs();
 }
 
 async function runAction(kind, btn){
@@ -1871,6 +1983,280 @@ $("targetForm").addEventListener("submit", async ev => {
 });
 
 /* ============================================================
+   REVENDEURS — campagne vers les revendeurs de logiciels de gestion,
+   en pause tant qu'elle n'est pas activée ici
+   ============================================================ */
+const RV_NAFS = [
+  { c:"62.02A", n:"Conseil en systèmes et logiciels", on:1 }, { c:"62.09Z", n:"Autres activités informatiques", on:1 },
+  { c:"46.51Z", n:"Commerce de gros de logiciels et matériel informatique", on:1 }, { c:"47.41Z", n:"Commerce de détail informatique", on:1 },
+  { c:"62.01Z", n:"Programmation" }, { c:"62.02B", n:"Tierce maintenance" },
+  { c:"62.03Z", n:"Gestion d'installations" }, { c:"95.11Z", n:"Réparation d'ordinateurs" }
+];
+// Mêmes tranches que l'écran Ciblage ; par défaut 3 à 49 salariés.
+const RV_EFF_CHIPS = [["NN", "Non renseigné"], ["00", "0 salarié"], ["01", "1 à 2"], ["02", "3 à 5"], ["03", "6 à 9"], ["11", "10 à 19"], ["12", "20 à 49"],
+  ["21", "50 à 99"], ["22", "100 à 199"], ["31,32", "200 à 499"], ["41,42,51,52,53", "500 et +"]];
+const RV_EFFS = ["02", "03", "11", "12"];
+const RV_GRAND_OUEST = ["22", "29", "35", "56", "44", "49", "53", "72", "85"];
+const RV_SAMPLE = { prenom: "Julien", entreprise: "Atelier Informatique", ville: "Lyon", logiciels: "Sage, EBP", metier: "conseil en logiciels de gestion", source: "web" };
+const RV = { deps: [], dirty: false, dailyDirty: false, running: false, page: 1, total: 0, items: [], seq: 0 };
+const nafKey = c => String(c || "").replace(/\./g, "").toUpperCase();
+
+$("rvNafChips").innerHTML = RV_NAFS.map(m => '<label class="chip"><input type="checkbox" name="rvNaf" value="' + m.c + '"> ' + esc(m.n) + ' <span style="opacity:.6">' + m.c + "</span></label>").join("");
+$("rvEffChips").innerHTML = RV_EFF_CHIPS.map(([v, l]) => '<label class="chip"><input type="checkbox" name="rvEff" value="' + v + '"> ' + esc(l) + "</label>").join("");
+
+const rvHasInitial = () => ((state && state.templates) || []).some(t => t.campaign === "revendeur" && t.active && (!t.kind || t.kind === "initial"));
+function rvSetSt(el, on){
+  el.className = "st" + (on ? " st-ok" : "");
+  el.querySelector("span").textContent = on ? "Active" : "En pause";
+}
+function renderRevendeurs(){
+  const r = state && state.revendeurs;
+  $("dashRv").hidden = !r;
+  if (!r){
+    $("rvBanners").innerHTML = '<div class="banner warn"><div class="grow"><b>La campagne revendeurs n\'est pas encore disponible sur le serveur.</b> Elle apparaîtra ici dès que la nouvelle version de l\'automate sera déployée.</div></div>';
+    ["rvActive", "bRvDaily", "bRvRun", "bRvTargetSave"].forEach(id => { $(id).disabled = true; });
+    return;
+  }
+  const c = r.counts || {}, on = !r.paused, cap = Number(r.daily_max) || 0;
+  rvSetSt($("dashRvSt"), on); rvSetSt($("rvSt"), on);
+  $("dashRvS").innerHTML = "<b>" + fmt(c.sent_today || 0) + "</b> envoyé(s) aujourd'hui sur " + fmt(cap) + " au plus · <b>" + fmt(c.queued || 0) + "</b> en file";
+
+  const banners = [];
+  if (on && state.settings.paused)
+    banners.push('<div class="banner info"><div class="grow"><b>L\'automate est en pause</b> : aucun message ne part, revendeurs compris.</div><button type="button" class="b b-main b-sm" data-go="auto">Tableau de bord</button></div>');
+  if (!rvHasInitial())
+    banners.push('<div class="banner warn"><div class="grow"><b>Aucun modèle revendeur de premier contact n\'est actif</b> : la campagne ne peut pas être activée. Relisez et activez-en un dans Messages revendeurs, plus bas.</div></div>');
+  $("rvBanners").innerHTML = banners.join("");
+
+  $("rvDot").className = "hero-dot" + (on ? " ok" : "");
+  $("rvT").textContent = on ? "Campagne active" : "Campagne en pause";
+  $("rvS").textContent = on
+    ? "Les revendeurs reçoivent leurs messages dans le créneau d'envoi de l'automate, " + fmt(cap) + " au plus par jour, relances comprises."
+    : "Aucun message ne part vers les revendeurs tant que la campagne est en pause. Relisez les messages ci-dessous, puis activez-la.";
+  ["rvActive", "bRvDaily", "bRvTargetSave"].forEach(id => { $(id).disabled = false; });
+  $("bRvRun").disabled = RV.running;
+  if ($("rvConfirm").hidden) $("rvActive").checked = on;
+  if (!RV.dailyDirty && document.activeElement !== $("rvDaily")) $("rvDaily").value = cap || "";
+
+  $("rvKQueued").textContent = fmt(c.queued || 0);
+  $("rvKQueuedF").textContent = c.queued ? "≈ " + fmt(Math.ceil(c.queued / Math.max(1, cap))) + " jour(s) d'envoi d'avance" : "lancez une recherche";
+  $("rvKToday").innerHTML = fmt(c.sent_today || 0) + " <small>/ " + fmt(cap) + "</small>";
+  $("rvKTodayBar").style.width = Math.min(100, cap ? Math.round((c.sent_today || 0) / cap * 100) : 0) + "%";
+  $("rvKTodayF").textContent = on ? "quota revendeurs du jour" : "campagne en pause";
+  $("rvKSent").textContent = fmt(c.sent || 0);
+  [["rvKOpened", c.opened], ["rvKClicked", c.clicked], ["rvKReplied", c.replied]].forEach(([id, v]) => {
+    $(id).textContent = fmt(v || 0);
+    $(id + "F").textContent = c.sent ? pct(v || 0, c.sent) + " des envoyés" : "";
+  });
+
+  rvRenderReport(r.last_report, r.last_sourcing_at);
+  rvFillTarget();
+}
+function rvRenderReport(rep, at){
+  $("rvLastAt").textContent = at ? "dernière recherche " + ago(at) : "";
+  if (!rep){
+    $("rvReport").innerHTML = "";
+    $("rvReportNote").textContent = "Aucune recherche pour l'instant : lancez la première avec le bouton ci-dessus.";
+    return;
+  }
+  $("rvReport").innerHTML = [["Examinées", rep.scanned], ["Experts-comptables écartés", rep.accounting], ["Sans site", rep.no_site],
+    ["Sans logiciel de gestion repéré", rep.no_signal], ["Déjà connues", rep.known], ["Ajoutées à la file", rep.added]]
+    .map(([l, v]) => "<div><b>" + fmt(v || 0) + "</b>" + esc(l) + "</div>").join("");
+  $("rvReportNote").innerHTML = "<b>Dernier rapport, le " + esc(dateTimeFr(rep.at || at)) + ".</b>" +
+    (rep.pages ? " " + fmt(rep.pages) + " page(s) de l'annuaire des entreprises parcourue(s)." : "") +
+    (rep.errors ? " " + fmt(rep.errors) + " erreur(s) pendant la recherche." : "") +
+    (rep.exhausted ? " <b>Tout le ciblage a été parcouru</b> : élargissez les codes NAF, les effectifs ou les départements pour trouver d'autres revendeurs." : "");
+}
+
+// Activation : confirmée dans la page, avec le quota du jour sous les yeux.
+function rvDailyValue(){
+  const n = Math.round(Number($("rvDaily").value));
+  if (!(n >= 1)) throw new Error("Indiquez le nombre d'envois par jour (1 ou plus).");
+  return n;
+}
+async function rvSave(patch, btn, message){
+  busy(btn, true, "Enregistrement…");
+  let ok = false;
+  try {
+    const { revendeurs } = await api("revendeurs.save", patch);
+    if (revendeurs) state.revendeurs = revendeurs;
+    ok = true;
+    if (message) toast(message, 5000);
+  } catch(e){ toast(e.message, 7000); }
+  busy(btn, false);
+  renderRevendeurs();
+  return ok;
+}
+$("rvActive").addEventListener("change", ev => {
+  if (!state || !state.revendeurs) return;
+  if (!ev.target.checked){
+    $("rvConfirm").hidden = true;
+    rvSave({ paused: true }, null, "Campagne revendeurs en pause : plus aucun message ne part vers les revendeurs.");
+    return;
+  }
+  // L'interrupteur ne bascule qu'après confirmation.
+  ev.target.checked = false;
+  let n;
+  try { n = rvDailyValue(); } catch(e){ return toast(e.message, 5000); }
+  $("rvConfirmT").textContent = "Les envois aux revendeurs vont commencer, dans la limite de " + fmt(n) + " par jour.";
+  $("rvConfirmS").textContent = rvHasInitial()
+    ? "Les messages revendeurs actifs partiront tels quels, dans le créneau d'envoi de l'automate. Vous pourrez remettre la campagne en pause à tout moment."
+    : "Aucun modèle revendeur de premier contact n'est actif : activez-en un dans Messages revendeurs avant de lancer la campagne.";
+  $("bRvConfirm").disabled = !rvHasInitial();
+  $("rvConfirm").hidden = false;
+});
+$("bRvCancel").addEventListener("click", () => { $("rvConfirm").hidden = true; renderRevendeurs(); });
+$("bRvConfirm").addEventListener("click", async ev => {
+  let n;
+  try { n = rvDailyValue(); } catch(e){ return toast(e.message, 5000); }
+  const patch = { paused: false };
+  if (n !== Number(state.revendeurs.daily_max)) patch.daily_max = n;
+  const ok = await rvSave(patch, ev.currentTarget, "Campagne revendeurs activée : " + fmt(n) + " envoi(s) par jour au plus.");
+  if (ok){ $("rvConfirm").hidden = true; RV.dailyDirty = false; renderRevendeurs(); }
+});
+$("rvDaily").addEventListener("input", () => { RV.dailyDirty = true; });
+$("bRvDaily").addEventListener("click", async ev => {
+  let n;
+  try { n = rvDailyValue(); } catch(e){ return toast(e.message, 5000); }
+  const ok = await rvSave({ daily_max: n }, ev.currentTarget, "Quota revendeurs enregistré : " + fmt(n) + " envoi(s) par jour au plus.");
+  if (ok){ RV.dailyDirty = false; renderRevendeurs(); }
+});
+
+// Recherche immédiate : une minute et demie environ, bouton bloqué pendant ce temps.
+$("bRvRun").addEventListener("click", async ev => {
+  const btn = ev.currentTarget, t0 = Date.now();
+  RV.running = true;
+  busy(btn, true, "Recherche en cours…");
+  $("rvRunBox").hidden = false;
+  const tick = () => {
+    const s = Math.round((Date.now() - t0) / 1000);
+    $("rvRunBar").style.width = Math.min(95, Math.round(s / 90 * 100)) + "%";
+    $("rvRunNote").textContent = s < 90 ? "Lecture des sites des entreprises du ciblage… " + s + " s sur environ 90." : "Presque terminé… " + s + " s.";
+  };
+  tick();
+  const timer = setInterval(tick, 1000);
+  try {
+    const { report } = await api("revendeurs.run");
+    const r = report || {};
+    toast(fmt(r.added || 0) + " revendeur(s) ajouté(s) à la file sur " + fmt(r.scanned || 0) + " entreprise(s) examinée(s).", 6000);
+    if (report && state.revendeurs){ state.revendeurs.last_report = report; state.revendeurs.last_sourcing_at = report.at || new Date().toISOString(); }
+    await loadState().catch(() => {});
+    RV.page = 1; loadRvQueue();
+  } catch(e){ toast(e.message, 7000); }
+  clearInterval(timer);
+  $("rvRunBox").hidden = true;
+  RV.running = false;
+  busy(btn, false);
+  renderRevendeurs();
+});
+
+// Ciblage : codes NAF, effectifs, départements exclus.
+function rvFillTarget(){
+  const r = state && state.revendeurs;
+  if (!r || RV.dirty) return;
+  const t = r.target || {};
+  const nafs = (t.nafs && t.nafs.length ? t.nafs : RV_NAFS.filter(m => m.on).map(m => m.c)).map(nafKey);
+  document.querySelectorAll("input[name=rvNaf]").forEach(c => { c.checked = nafs.includes(nafKey(c.value)); });
+  const effs = t.effs && t.effs.length ? t.effs : RV_EFFS;
+  document.querySelectorAll("input[name=rvEff]").forEach(c => { c.checked = c.value.split(",").some(code => effs.includes(code)); });
+  RV.deps = Array.isArray(t.exclude_deps) ? t.exclude_deps.map(String) : RV_GRAND_OUEST.slice();
+  renderRvDeps();
+}
+function rvReadTarget(){
+  const nafs = [...document.querySelectorAll("input[name=rvNaf]:checked")].map(c => c.value);
+  if (!nafs.length) throw new Error("Cochez au moins un code NAF.");
+  const effs = [...document.querySelectorAll("input[name=rvEff]:checked")].flatMap(c => c.value.split(","));
+  if (!effs.length) throw new Error("Cochez au moins une tranche d'effectif.");
+  return { nafs, effs, exclude_deps: RV.deps.slice() };
+}
+function renderRvDeps(){
+  $("rvDeps").innerHTML = RV.deps.length
+    ? RV.deps.map(d => '<span class="chip g">' + esc(d) + '<button type="button" class="rv-x" data-rv-dep="' + esc(d) + '" title="Ne plus exclure" aria-label="Ne plus exclure le ' + esc(d) + '">×</button></span>').join("")
+    : '<span class="note">Aucun département exclu : toute la France est prospectée.</span>';
+}
+function rvAddDeps(){
+  let list;
+  try { list = parseDeps($("rvDepIn").value); } catch(e){ return toast(e.message, 5000); }
+  if (!list.length) return;
+  list.forEach(d => { if (!RV.deps.includes(d)) RV.deps.push(d); });
+  $("rvDepIn").value = "";
+  RV.dirty = true; renderRvDeps();
+}
+$("bRvDepAdd").addEventListener("click", rvAddDeps);
+$("rvDepIn").addEventListener("keydown", ev => { if (ev.key === "Enter"){ ev.preventDefault(); rvAddDeps(); } });
+$("rvDeps").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-rv-dep]");
+  if (!b) return;
+  RV.deps = RV.deps.filter(d => d !== b.dataset.rvDep);
+  RV.dirty = true; renderRvDeps();
+});
+$("bRvOuest").addEventListener("click", () => {
+  RV_GRAND_OUEST.forEach(d => { if (!RV.deps.includes(d)) RV.deps.push(d); });
+  RV.dirty = true; renderRvDeps();
+  toast("Bretagne et Pays de la Loire exclus. Pensez à enregistrer.", 4000);
+});
+$("rvTargetForm").addEventListener("change", () => { RV.dirty = true; });
+$("rvTargetForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  let target;
+  try { target = rvReadTarget(); } catch(e){ return toast(e.message, 5000); }
+  const ok = await rvSave({ target }, $("bRvTargetSave"), "Ciblage revendeurs enregistré.");
+  if (ok){ RV.dirty = false; rvFillTarget(); }
+});
+
+// Prospects revendeurs en file (même retrait que dans Envois).
+async function loadRvQueue(){
+  if (!state || !state.revendeurs) return;
+  const seq = ++RV.seq;
+  try {
+    const data = await api("queue.list", { status: "queued", campaign: "revendeur", page: RV.page });
+    if (seq !== RV.seq) return;
+    RV.items = data.items || []; RV.total = data.total || 0;
+    renderRvQueue();
+  } catch(e){ if (e.code !== "session") toast(e.message, 5000); }
+}
+function renderRvQueue(){
+  const pages = Math.max(1, Math.ceil(RV.total / 50));
+  $("rvQCount").textContent = fmt(RV.total) + " revendeur(s) prêt(s) à contacter";
+  $("rvQPage").textContent = "Page " + RV.page + " / " + pages + " · " + fmt(RV.total) + " ligne(s)";
+  $("rvQPrev").disabled = RV.page <= 1; $("rvQNext").disabled = RV.page >= pages;
+  $("rvQBody").innerHTML = RV.items.length ? RV.items.map(m => {
+    const d = m.data || {}, site = String(d.site || "");
+    return '<tr class="click" data-msg="' + esc(m.id) + '"><td><b>' + esc(niceCompany(m.company) || "—") + "</b>" + (d.metier ? '<div class="meta">' + esc(d.metier) + "</div>" : "") + "</td>" +
+      "<td>" + esc(capitalName(d.ville) || "—") + "</td>" +
+      "<td>" + (d.logiciels ? esc(d.logiciels) : '<span class="muted">—</span>') + "</td>" +
+      '<td style="overflow-wrap:anywhere">' + (site ? '<a href="' + esc(/^https?:/i.test(site) ? site : "https://" + site) + '" target="_blank" rel="noopener">' + esc(site.replace(/^https?:\/\//i, "").replace(/\/$/, "")) + "</a>" : "—") + "</td>" +
+      '<td style="overflow-wrap:anywhere">' + esc(m.email) + "</td>" +
+      '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
+      '<td><button type="button" class="b b-out b-xs" data-rv-remove="' + esc(m.id) + '">Retirer</button></td></tr>';
+  }).join("") : '<tr><td colspan="7" class="empty"><b>Aucun revendeur en file</b>Lancez une recherche : les entreprises retenues apparaîtront ici avant leur premier message.</td></tr>';
+}
+$("rvQBody").addEventListener("click", async ev => {
+  const rm = ev.target.closest("[data-rv-remove]");
+  if (rm){
+    const m = RV.items.find(x => x.id === rm.dataset.rvRemove);
+    if (!confirm("Retirer " + (niceCompany(m && m.company) || "ce revendeur") + " de la file ?\n\nCette entreprise pourra être recontactée plus tard.")) return;
+    busy(rm, true, "…");
+    try {
+      const { removed } = await api("queue.remove", { ids: [rm.dataset.rvRemove] });
+      toast(fmt(removed) + " message(s) retiré(s).");
+      await loadRvQueue(); loadState().catch(() => {});
+    } catch(e){ toast(e.message, 5000); busy(rm, false); }
+    return;
+  }
+  if (ev.target.closest("a")) return;
+  const tr = ev.target.closest("[data-msg]");
+  if (tr) openMessage(tr.dataset.msg);
+});
+$("rvQPrev").addEventListener("click", () => { RV.page--; loadRvQueue(); });
+$("rvQNext").addEventListener("click", () => { RV.page++; loadRvQueue(); });
+$("bRvLog").addEventListener("click", () => {
+  showView("log"); resetLogFilters();
+  $("lCamp").value = "revendeur";
+  LOG.status = "queued"; LOG.page = 1; loadLog();
+});
+
+/* ============================================================
    MODALE
    ============================================================ */
 function openModal(title, sub, body, foot){
@@ -1887,10 +2273,32 @@ document.addEventListener("keydown", ev => { if (ev.key === "Escape") closeModal
 /* ============================================================
    MESSAGES (modèles)
    ============================================================ */
-let tplId = null, lastField = "tBody";
+// Un seul éditeur pour les deux campagnes : « btp » dans Messages, « revendeur » dans l'écran Revendeurs.
+let tplId = null, lastField = "tBody", tplCampaign = "btp";
 const SAMPLE = { entreprise: "DUPONT BATIMENT", prenom: "Jean", nom: "Dupont", ville: "Lyon", cp: "69003", metier: "maçonnerie et gros œuvre", departement: "69", effectif: "6 à 9" };
+const tplCampaignOf = t => t.campaign || "btp";
 
-$("varChips").innerHTML = VARS.map(v => '<button type="button" data-var="' + v + '" title="' + esc(VAR_HELP[v]) + '">{' + v + "}</button>").join("");
+// {marche} et {conseil} ne concernent que le BTP, {logiciels} que les revendeurs.
+function renderVarChips(){
+  const vars = VARS.filter(v => tplCampaign === "revendeur" ? v !== "marche" && v !== "conseil" : v !== "logiciels");
+  $("varChips").innerHTML = vars.map(v => '<button type="button" data-var="' + v + '" title="' + esc(VAR_HELP[v]) + '">{' + v + "}</button>").join("");
+}
+renderVarChips();
+function mountTplEditor(campaign){
+  if (campaign !== tplCampaign){
+    tplCampaign = campaign; tplId = null; samples = [];
+    delete $("tName").dataset.dirty;
+    $("tplSample").value = "";
+  }
+  (campaign === "revendeur" ? $("rvTplHost") : $("tplHost")).appendChild($("tplWrap"));
+  renderVarChips();
+  // Les modèles « Après la démo » et « Client » n'existent que pour le BTP.
+  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && (o.value === "demo" || o.value === "client"); });
+  $("tplOtherCamp").innerHTML = campaign === "revendeur"
+    ? 'Les modèles de la campagne BTP se gèrent dans l\'écran <a href="#" data-go="tpl">Messages</a>.'
+    : 'Les modèles de la campagne revendeurs se gèrent dans l\'écran <a href="#" data-go="revendeurs">Revendeurs</a>.';
+  renderTemplates(); loadSamples();
+}
 ["tSubject", "tBody"].forEach(id => $(id).addEventListener("focus", () => { lastField = id; }));
 $("varChips").addEventListener("click", ev => {
   const b = ev.target.closest("[data-var]");
@@ -1905,7 +2313,7 @@ $("varChips").addEventListener("click", ev => {
 
 function renderTemplates(){
   if (!state) return;
-  const list = state.templates;
+  const list = state.templates.filter(t => tplCampaignOf(t) === tplCampaign);
   if (tplId && !list.some(t => t.id === tplId)) tplId = null;
   if (tplId === null && list.length && !$("tName").dataset.dirty) tplId = list[0].id;
   $("tplList").innerHTML = list.map(t =>
@@ -1919,13 +2327,15 @@ function renderTemplates(){
 let samples = [];
 function renderSampleOptions(){
   const keep = $("tplSample").value;
-  $("tplSample").innerHTML = ['<option value="">Exemple fictif (Dupont Bâtiment)</option>']
+  $("tplSample").innerHTML = ['<option value="">Exemple fictif (' + (tplCampaign === "revendeur" ? "Atelier Informatique" : "Dupont Bâtiment") + ")</option>"]
     .concat(samples.map((m, i) => '<option value="' + i + '">' + esc(niceCompany(m.company) || m.email) + (m.data && m.data.ville ? " — " + esc(m.data.ville) : "") + "</option>")).join("");
   if (keep && samples[Number(keep)]) $("tplSample").value = keep;
 }
 async function loadSamples(){
+  const campaign = tplCampaign;
   try {
-    const data = await api("queue.list", { status: "queued", page: 1 });
+    const data = await api("queue.list", { status: "queued", page: 1, campaign });
+    if (campaign !== tplCampaign) return;
     samples = data.items.slice(0, 25);
     renderSampleOptions();
   } catch(e){}
@@ -1947,7 +2357,7 @@ function fillTemplate(t){
   delete $("tName").dataset.dirty;
 }
 function sampleMessage(){ const v = $("tplSample").value; return v !== "" ? samples[Number(v)] : null; }
-function sampleData(){ const m = sampleMessage(); return m ? (m.data || {}) : SAMPLE; }
+function sampleData(){ const m = sampleMessage(); return m ? (m.data || {}) : tplCampaign === "revendeur" ? RV_SAMPLE : SAMPLE; }
 function renderPreview(){
   const tpl = { subject: $("tSubject").value, body: $("tBody").value };
   const m = sampleMessage();
@@ -1955,7 +2365,7 @@ function renderPreview(){
   const kind = $("tKind").value;
   const data = kind === "client" ? { ...sampleData(), source: "client", conseil: "Premier pas conseillé : créez votre premier chantier, puis ajoutez vos salariés ; ils reçoivent leur accès sur leur téléphone." }
     : kind === "demo" ? { ...sampleData(), source: "demo" } : sampleData();
-  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : "j.dupont@dupont-batiment.fr");
+  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr");
 }
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
 $("tKind").addEventListener("change", () => { $("tName").dataset.dirty = "1"; syncKind(); renderPreview(); });
@@ -1979,7 +2389,7 @@ $("bTplSave").addEventListener("click", async ev => {
   const btn = ev.currentTarget;
   busy(btn, true, "Enregistrement…");
   try {
-    const { template } = await api("templates.save", { id: tplId || undefined, name: $("tName").value, subject: $("tSubject").value, body: $("tBody").value, active: $("tActive").checked, kind: $("tKind").value });
+    const { template } = await api("templates.save", { id: tplId || undefined, name: $("tName").value, subject: $("tSubject").value, body: $("tBody").value, active: $("tActive").checked, kind: $("tKind").value, campaign: tplCampaign });
     tplId = template.id;
     delete $("tName").dataset.dirty;
     await loadState();
@@ -2032,6 +2442,7 @@ function trackBadges(m){
 // Signal d'intention porté par le prospect : marché public de travaux gagné.
 function signalBadge(m){
   const d = m.data || {};
+  if (m.campaign === "revendeur") return ' <span class="badge rv" title="Campagne revendeurs' + (d.logiciels ? " · logiciels repérés : " + esc(d.logiciels) : "") + '">Revendeur</span>';
   if (d.marche) return ' <span class="badge clic" title="Marché public remporté' + (d.marche_date ? ' (notifié le ' + esc(dateFr(d.marche_date)) + ')' : '') + ' : ' + esc(d.marche) + '">Marché public' + (d.marche_date ? ' · ' + esc(dateFr(d.marche_date)) : '') + '</span>';
   if (d.source === "web") return ' <span class="badge open" title="Entreprise non RGE : adresse lue sur ' + esc(String(d.site || "").replace(/^https?:\/\//, "")) + (d.how ? " (" + (/siren/.test(d.how) ? "SIREN vérifié" : "nom et ville vérifiés") + ")" : "") + '">Site web</span>';
   return "";
@@ -2103,7 +2514,7 @@ function logSel(){
 $("logTabs").addEventListener("click", ev => { const t = ev.target.closest("[data-st]"); if (!t) return; LOG.status = t.dataset.st; LOG.page = 1; loadLog(); });
 $("lq").addEventListener("input", () => { clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
 // Filtres du panneau de gauche : tout changement recharge la liste (page 1).
-["lSignal", "lTpl", "lSort", "lFrom", "lTo"].forEach(id => $(id).addEventListener("change", () => { LOG.page = 1; loadLog(); }));
+["lCamp", "lSignal", "lTpl", "lSort", "lFrom", "lTo"].forEach(id => $(id).addEventListener("change", () => { LOG.page = 1; loadLog(); }));
 $("lPeriod").addEventListener("change", () => { $("lDates").hidden = $("lPeriod").value !== "custom"; LOG.page = 1; loadLog(); });
 ["lBoxes", "lTypes", "lSuivi"].forEach(id => $(id).addEventListener("change", () => { LOG.page = 1; loadLog(); }));
 $("lScore").addEventListener("input", () => { $("lScoreV").textContent = $("lScore").value; clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
@@ -2131,27 +2542,30 @@ function logFilters(){
   else if (per === "7"){ from = parisDay(-6); to = parisDay(0); }
   else if (per === "30"){ from = parisDay(-29); to = parisDay(0); }
   else if (per === "custom"){ from = $("lFrom").value; to = $("lTo").value; }
-  return {
+  const f = {
     search: $("lq").value, signal: $("lSignal").value,
     senders: [...document.querySelectorAll("#lBoxes input:checked")].map(c => c.value),
     types: checked("lTypes"), suivis: checked("lSuivi"),
     from, to, template_id: $("lTpl").value, score_min: Number($("lScore").value) || 0, sort: $("lSort").value
   };
+  // Campagne absente = toutes.
+  if ($("lCamp").value) f.campaign = $("lCamp").value;
+  return f;
 }
 function logFilterCount(){
   const f = logFilters();
-  return [f.search, f.signal, f.senders.length, f.types.length, f.suivis.length, f.from || f.to, f.template_id, f.score_min, f.sort].filter(Boolean).length;
+  return [f.campaign, f.search, f.signal, f.senders.length, f.types.length, f.suivis.length, f.from || f.to, f.template_id, f.score_min, f.sort].filter(Boolean).length;
 }
 // Modèles proposés dans le filtre.
 function fillLogFacets(){
   if (!state) return;
   const keep = $("lTpl").value;
-  $("lTpl").innerHTML = '<option value="">Tous les modèles</option>' + (state.templates || []).map(t => '<option value="' + esc(t.id) + '">' + esc(t.name) + (t.active ? "" : " (inactif)") + "</option>").join("");
+  $("lTpl").innerHTML = '<option value="">Tous les modèles</option>' + (state.templates || []).map(t => '<option value="' + esc(t.id) + '">' + esc(t.name) + (t.campaign === "revendeur" ? " · revendeurs" : "") + (t.active ? "" : " (inactif)") + "</option>").join("");
   $("lTpl").value = keep;
 }
 function resetLogFilters(){
   ["lq", "lFrom", "lTo"].forEach(id => { $(id).value = ""; });
-  ["lPeriod", "lSignal", "lTpl", "lSort"].forEach(id => { $(id).value = ""; });
+  ["lPeriod", "lCamp", "lSignal", "lTpl", "lSort"].forEach(id => { $(id).value = ""; });
   setChecked("lTypes", []); setChecked("lSuivi", []);
   $("lScore").value = 0; $("lScoreV").textContent = "0"; $("lDates").hidden = true;
   document.querySelectorAll("#lBoxes input").forEach(c => { c.checked = false; });
@@ -2175,7 +2589,7 @@ $("lViews").addEventListener("change", () => {
   if (!v) return;
   resetLogFilters();
   $("lPeriod").value = v.period || ""; $("lFrom").value = v.from || ""; $("lTo").value = v.to || ""; $("lDates").hidden = v.period !== "custom";
-  $("lq").value = v.q || ""; $("lSignal").value = v.signal || ""; $("lTpl").value = v.tpl || "";
+  $("lq").value = v.q || ""; $("lCamp").value = v.camp || ""; $("lSignal").value = v.signal || ""; $("lTpl").value = v.tpl || "";
   // Vues enregistrées avant les cases à cocher : ancien filtre de suivi et ancien onglet Relances.
   const OLD_TRACK = { opened: ["opened"], unopened: ["unopened"], clicked: ["site", "video"], unclicked: ["unclicked"], replied: ["replied"], scanner: ["scanner"] };
   setChecked("lSuivi", v.suivis || OLD_TRACK[v.track] || []);
@@ -2188,7 +2602,7 @@ $("bViewSave").addEventListener("click", () => {
   const name = (prompt("Nom de la vue (onglet et filtres en cours) :", $("lViews").value || "") || "").trim();
   if (!name) return;
   const v = readViews();
-  v[name] = { status: LOG.status, period: $("lPeriod").value, from: $("lFrom").value, to: $("lTo").value, q: $("lq").value, signal: $("lSignal").value,
+  v[name] = { status: LOG.status, period: $("lPeriod").value, from: $("lFrom").value, to: $("lTo").value, q: $("lq").value, camp: $("lCamp").value, signal: $("lSignal").value,
     boxes: checked("lBoxes"), types: checked("lTypes"), suivis: checked("lSuivi"), tpl: $("lTpl").value,
     score: $("lScore").value, sort: $("lSort").value };
   writeViews(v); fillViews(); $("lViews").value = name; toast("Vue « " + name + " » enregistrée.");
@@ -2205,14 +2619,15 @@ $("bLogExport").addEventListener("click", async ev => {
   try {
     const f = logFilters();
     const data = await api("queue.list", { ...f, status: LOG.status, export: true });
-    const head = ["Date", "Type", "Entreprise", "E-mail", "SIREN", "Ville", "Département", "Métier", "Effectif", "Boîte d'envoi", "Statut", "Ouvert le", "Clic", "A répondu le", "Score", "Source"];
+    const head = ["Date", "Type", "Entreprise", "E-mail", "SIREN", "Ville", "Département", "Métier", "Effectif", "Boîte d'envoi", "Statut", "Ouvert le", "Clic", "A répondu le", "Score", "Source", "Campagne", "Logiciels repérés"];
     const rows = (data.items || []).map(x => {
       const m = x, d = m.data || {};
       return [dateTimeFr(m.sent_at || m.created_at), SEND_TYPE[m.type] || "Premier mail",
         niceCompany(m.company), m.email, m.siren || "", d.ville || "", d.departement || "", d.metier || "", d.effectif || "", m.sender || "",
         BADGE[m.status] || m.status, m.opened_at ? dateTimeFr(m.opened_at) : "",
         (m.site_clicked_at || m.video_clicked_at) ? "oui" : "", m.replied_at ? dateTimeFr(m.replied_at) : "", m.score == null ? "" : m.score,
-        d.marche ? "Marché public" : d.source === "web" ? "Site web" : m.origin === "demo" ? "Démo" : "Annuaire RGE"];
+        d.marche ? "Marché public" : d.source === "web" ? "Site web" : m.origin === "demo" ? "Démo" : "Annuaire RGE",
+        m.campaign === "revendeur" ? "Revendeurs" : "BTP", d.logiciels || ""];
     });
     const csv = "\ufeff" + [head, ...rows].map(r => r.map(v => '"' + String(v ?? "").replace(/"/g, '""') + '"').join(";")).join("\r\n");
     const a = document.createElement("a");
@@ -2243,7 +2658,9 @@ async function openMessage(id){
     if (m.subject && m.body){
       body = '<div class="mail"><div class="mail-h"><div><span>À : </span>' + esc(m.email) + "</div><div><span>Objet : </span><b>" + esc(m.subject) + '</b></div></div><div class="mail-b">' + esc(m.body) + "</div></div>";
     } else {
-      const tpl = state && state.templates.find(t => t.active);
+      // Aperçu avec un modèle actif de la campagne du message, premier contact de préférence.
+      const mine = state ? state.templates.filter(t => t.active && tplCampaignOf(t) === (m.campaign || "btp")) : [];
+      const tpl = mine.find(t => !t.kind || t.kind === "initial") || mine[0];
       body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(tpl, state.settings, d, m.email) + "</div>"
         : '<p class="note">Aucun modèle actif pour l\'aperçu.</p>';
     }
@@ -2255,7 +2672,8 @@ async function openMessage(id){
         "<div><dt>Ville</dt><dd>" + esc([d.cp, d.ville].filter(Boolean).join(" ") || "—") + "</dd></div>" +
         "<div><dt>Métier</dt><dd>" + esc(d.metier || "—") + "</dd></div>" +
         "<div><dt>SIREN</dt><dd>" + (m.siren ? '<a href="https://annuaire-entreprises.data.gouv.fr/entreprise/' + esc(m.siren) + '" target="_blank" rel="noopener">' + esc(m.siren) + "</a>" : "—") + "</dd></div>" +
-        "<div><dt>Origine</dt><dd>" + esc(ORIGIN[m.origin] || m.origin) + (m.score != null ? " · score " + m.score : "") + "</dd></div>" +
+        "<div><dt>Origine</dt><dd>" + esc(ORIGIN[m.origin] || m.origin) + (m.campaign === "revendeur" ? " · campagne revendeurs" : "") + (m.score != null ? " · score " + m.score : "") + "</dd></div>" +
+        (d.logiciels ? "<div><dt>Logiciels repérés</dt><dd>" + esc(d.logiciels) + "</dd></div>" : "") +
         (d.marche ? "<div><dt>Marché public gagné" + (d.marche_date ? " (notifié le " + esc(dateFr(d.marche_date)) + ")" : "") + "</dt><dd>" + esc(d.marche) + "</dd></div>" : "") +
         (d.tel ? "<div><dt>Téléphone</dt><dd>" + esc(d.tel) + "</dd></div>" : "") +
         (d.site ? "<div><dt>Site internet</dt><dd>" + '<a href="' + esc(/^https?:/.test(d.site) ? d.site : "https://" + d.site) + '" target="_blank" rel="noopener">' + esc(String(d.site).replace(/^https?:\/\//, "")) + "</a>" + (d.source === "web" ? ' <span class="muted">(adresse lue sur le site' + (d.how ? ", " + (/siren/.test(d.how) ? "SIREN vérifié" : "nom et ville vérifiés") : "") + ")</span>" : "") + "</dd></div>" : "") +
