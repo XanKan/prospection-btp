@@ -277,6 +277,7 @@
   .empty{padding:42px 20px;text-align:center;color:var(--muted)}
   .empty b{display:block;color:var(--ink);font-size:1rem;margin-bottom:5px}
   .tabs{display:flex;gap:4px;padding:10px 16px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .camp-bar{display:flex;align-items:center;gap:10px;padding:12px 16px 0;flex-wrap:wrap}
   .tab{padding:9px 14px;border-radius:8px 8px 0 0;font-weight:700;font-size:.87rem;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
   .tab:hover{color:var(--ink)}
   .tab.on{color:var(--violet);border-bottom-color:var(--violet)}
@@ -355,7 +356,7 @@
   .filt{padding:16px 16px 18px;display:flex;flex-direction:column;gap:12px}
   .filt h3{font-family:Manrope,sans-serif;font-size:1rem;font-weight:800}
   .filt .fg{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line-2)}
-  .filt .fl{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .filt .fl,.camp-bar .fl{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .filt .cb{display:flex;align-items:center;gap:9px;font-size:.88rem;min-height:30px;cursor:pointer}
   .filt .cb input{width:17px;height:17px;accent-color:var(--violet);flex:none}
   .filt .cb small{margin-left:auto;color:var(--muted);font-size:.75rem}
@@ -812,6 +813,14 @@
             </div>
           </aside>
           <div class="card" style="min-width:0">
+            <div class="camp-bar">
+              <span class="fl">Campagne</span>
+              <div class="seg" id="lCampSeg" role="radiogroup" aria-label="Campagne">
+                <label><input type="radio" name="lCampSeg" value="" checked> Toutes</label>
+                <label><input type="radio" name="lCampSeg" value="btp"> BTP</label>
+                <label><input type="radio" name="lCampSeg" value="revendeur"> Revendeurs</label>
+              </div>
+            </div>
             <div class="tabs" id="logTabs">
               <button type="button" class="tab" data-st="all">Tous<span class="pill num" id="tcAll">0</span></button>
               <button type="button" class="tab on" data-st="queued">En file<span class="pill num" id="tcQueued">0</span></button>
@@ -2472,6 +2481,8 @@ async function loadLog(){
   // Deux chargements qui se croisent (changement de filtre pendant une requête) :
   // seule la réponse de la dernière demande est affichée.
   const seq = ++logSeq;
+  // Le sélecteur au-dessus du tableau suit le filtre Campagne (vues, réinitialisation, écran Revendeurs).
+  document.querySelectorAll('#lCampSeg input').forEach(r => { r.checked = r.value === $("lCamp").value; });
   try {
     const f = logFilters();
     const data = await api("queue.list", { ...f, status: LOG.status, page: LOG.page });
@@ -2519,6 +2530,7 @@ $("logTabs").addEventListener("click", ev => { const t = ev.target.closest("[dat
 $("lq").addEventListener("input", () => { clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
 // Filtres du panneau de gauche : tout changement recharge la liste (page 1).
 ["lCamp", "lSignal", "lTpl", "lSort", "lFrom", "lTo"].forEach(id => $(id).addEventListener("change", () => { LOG.page = 1; loadLog(); }));
+$("lCampSeg").addEventListener("change", ev => { $("lCamp").value = ev.target.value; LOG.page = 1; loadLog(); });
 $("lPeriod").addEventListener("change", () => { $("lDates").hidden = $("lPeriod").value !== "custom"; LOG.page = 1; loadLog(); });
 ["lBoxes", "lTypes", "lSuivi"].forEach(id => $(id).addEventListener("change", () => { LOG.page = 1; loadLog(); }));
 $("lScore").addEventListener("input", () => { $("lScoreV").textContent = $("lScore").value; clearTimeout(logT); logT = setTimeout(() => { LOG.page = 1; loadLog(); }, 300); });
