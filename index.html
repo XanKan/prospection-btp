@@ -732,8 +732,13 @@
         <!-- L'éditeur est partagé : il passe dans l'écran Revendeurs pour les modèles de cette campagne. -->
         <div class="tpl-wrap" id="tplWrap">
           <div>
+            <div class="seg" id="tplFilter" role="radiogroup" aria-label="Modèles affichés" style="margin-bottom:12px">
+              <label><input type="radio" name="tplFilter" value="" checked> <span id="tplFilterOn">En service</span></label>
+              <label><input type="radio" name="tplFilter" value="archived"> <span id="tplFilterArch">Archivés</span></label>
+            </div>
             <div id="tplList"></div>
             <button type="button" class="b b-out" id="bTplNew" style="width:100%;justify-content:center">+ Nouveau modèle</button>
+            <button type="button" class="b b-out b-xs" id="bTplArchInactive" hidden style="width:100%;justify-content:center;margin-top:8px">Archiver les modèles inactifs</button>
             <p class="note" style="margin-top:14px">Si plusieurs modèles sont actifs, l'automate en tire un au hasard pour chaque envoi. Cela évite que tous les messages soient identiques.</p>
             <p class="note" id="tplOtherCamp"></p>
           </div>
@@ -758,6 +763,7 @@
                 <button type="button" class="b b-out" id="bTplTest">Envoyer un test</button>
                 <input class="inp" type="email" id="tTestTo" placeholder="à moi (ou une autre adresse)" style="width:260px" title="Laissez vide pour recevoir le test sur votre adresse. Collez ici l'adresse fournie par mail-tester.com, ou un Gmail / Outlook à vous, pour un test de délivrabilité.">
                 <label class="swi" title="Sans la mention [Test] dans l'objet et avec le suivi (pixel et liens), exactement comme un vrai envoi : indispensable pour un test de délivrabilité."><input type="checkbox" id="tTestReal"><i></i> Comme un vrai envoi</label>
+                <button type="button" class="b b-out" id="bTplArch" hidden>Archiver</button>
                 <button type="button" class="b b-danger" id="bTplDel">Supprimer</button>
                 <span class="note" id="tplMsg"></span>
               </div>
@@ -2452,14 +2458,22 @@ $("varChips").addEventListener("click", ev => {
   renderPreview();
 });
 
+// Filtre de la liste : modèles en service (actifs et inactifs) ou archivés.
+let tplShowArchived = false;
 function renderTemplates(){
   if (!state) return;
-  const list = state.templates.filter(t => tplCampaignOf(t) === tplCampaign);
+  const all = state.templates.filter(t => tplCampaignOf(t) === tplCampaign);
+  const list = all.filter(t => Boolean(t.archived_at) === tplShowArchived);
+  const archivedCount = all.filter(t => t.archived_at).length, inactive = all.filter(t => !t.active && !t.archived_at).length;
+  $("tplFilterOn").textContent = "En service (" + fmt(all.length - archivedCount) + ")";
+  $("tplFilterArch").textContent = "Archivés (" + fmt(archivedCount) + ")";
+  $("bTplArchInactive").hidden = tplShowArchived || !inactive;
+  $("bTplArchInactive").textContent = "Archiver " + (inactive > 1 ? "les " + fmt(inactive) + " modèles inactifs" : "le modèle inactif");
   if (tplId && !list.some(t => t.id === tplId)) tplId = null;
   if (tplId === null && list.length && !$("tName").dataset.dirty) tplId = list[0].id;
   $("tplList").innerHTML = list.map(t =>
-    '<button type="button" class="tpl-item' + (t.id === tplId ? " on" : "") + '" data-tpl="' + esc(t.id) + '"><em class="' + (t.active ? "on" : "off") + '">' + (t.active ? "Actif" : "Inactif") + "</em><b>" + esc(t.name) + (KIND[t.kind] ? ' <code class="k">' + KIND[t.kind] + "</code>" : "") + "</b><span>" + esc(KIND[t.kind] ? "Re : objet du premier message" : t.subject) + "</span></button>"
-  ).join("") || '<p class="note" style="margin-bottom:10px">Aucun modèle pour l\'instant.</p>';
+    '<button type="button" class="tpl-item' + (t.id === tplId ? " on" : "") + '" data-tpl="' + esc(t.id) + '"><em class="' + (t.active ? "on" : "off") + '">' + (t.archived_at ? "Archivé" : t.active ? "Actif" : "Inactif") + "</em><b>" + esc(t.name) + (KIND[t.kind] ? ' <code class="k">' + KIND[t.kind] + "</code>" : "") + "</b><span>" + esc(KIND[t.kind] ? "Re : objet du premier message" : t.subject) + "</span></button>"
+  ).join("") || '<p class="note" style="margin-bottom:10px">' + (tplShowArchived ? "Aucun modèle archivé." : "Aucun modèle pour l'instant.") + "</p>";
   // Une modification en cours n'est jamais écrasée par un rafraîchissement.
   if (!$("tName").dataset.dirty) fillTemplate(list.find(x => x.id === tplId) || { name: "", subject: "", body: "", active: true });
   renderSampleOptions();
@@ -2494,6 +2508,8 @@ function fillTemplate(t){
   $("tActive").checked = t.active !== false;
   $("tKind").value = t.kind || "initial"; syncKind();
   $("bTplDel").hidden = !t.id;
+  $("bTplArch").hidden = !t.id;
+  $("bTplArch").textContent = t.archived_at ? "Désarchiver" : "Archiver";
   $("tplMsg").textContent = "";
   delete $("tName").dataset.dirty;
 }
@@ -2518,7 +2534,45 @@ $("tplList").addEventListener("click", ev => {
   delete $("tName").dataset.dirty;
   renderTemplates();
 });
+$("tplFilter").addEventListener("change", ev => {
+  tplShowArchived = ev.target.value === "archived";
+  tplId = null;
+  delete $("tName").dataset.dirty;
+  renderTemplates();
+});
+// Archiver désactive le modèle ; le désarchiver le remet en service, inactif.
+$("bTplArch").addEventListener("click", async ev => {
+  const t = tplId && state.templates.find(x => x.id === tplId);
+  if (!t) return;
+  const archive = !t.archived_at, btn = ev.currentTarget;
+  if (archive && t.active && !confirm("Ce modèle est actif : l'archiver le retire aussi des envois. Continuer ?")) return;
+  busy(btn, true, archive ? "Archivage…" : "Désarchivage…");
+  try {
+    await api("templates.archive", { id: t.id, archived: archive });
+    tplId = null; delete $("tName").dataset.dirty;
+    await loadState(); renderTemplates();
+    toast(archive ? "Modèle archivé : il est dans le filtre « Archivés »." : "Modèle désarchivé : il est de nouveau en service, inactif.");
+  } catch(e){ toast(e.message, 5000); }
+  busy(btn, false);
+});
+$("bTplArchInactive").addEventListener("click", async ev => {
+  if (!confirm("Archiver tous les modèles inactifs de cette campagne ? Ils restent consultables dans le filtre « Archivés ».")) return;
+  const btn = ev.currentTarget;
+  busy(btn, true, "Archivage…");
+  try {
+    const { archived } = await api("templates.archive_inactive", { campaign: tplCampaign });
+    tplId = null; delete $("tName").dataset.dirty;
+    await loadState(); renderTemplates();
+    toast(fmt(archived || 0) + " modèle(s) archivé(s).");
+  } catch(e){ toast(e.message, 5000); }
+  busy(btn, false);
+});
 $("bTplNew").addEventListener("click", () => {
+  if (tplShowArchived){
+    tplShowArchived = false;
+    document.querySelector('input[name="tplFilter"][value=""]').checked = true;
+    renderTemplates();
+  }
   tplId = "";
   document.querySelectorAll(".tpl-item").forEach(x => x.classList.remove("on"));
   fillTemplate({ name: "", subject: "{entreprise} : ", body: "Bonjour {prenom},\n\n\n\n{video}\n\nBien cordialement,", active: true, kind: "initial" });
@@ -2533,6 +2587,11 @@ $("bTplSave").addEventListener("click", async ev => {
     const { template } = await api("templates.save", { id: tplId || undefined, name: $("tName").value, subject: $("tSubject").value, body: $("tBody").value, active: $("tActive").checked, kind: $("tKind").value, campaign: tplCampaign });
     tplId = template.id;
     delete $("tName").dataset.dirty;
+    // Réactivé depuis les archives : il revient dans les modèles en service.
+    if (tplShowArchived && !template.archived_at){
+      tplShowArchived = false;
+      document.querySelector('input[name="tplFilter"][value=""]').checked = true;
+    }
     await loadState();
     renderTemplates();
     $("tplMsg").textContent = "Modèle enregistré.";
