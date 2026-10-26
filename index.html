@@ -1596,10 +1596,20 @@ function buildEmail(tpl, s, data){
   const video = url ? (thumb ? '<p style="margin:4px 0 6px"><a href="' + hesc(url) + '" style="text-decoration:none"><img src="' + hesc(thumb) + '" width="480" alt="Vidéo : découvrez Piloz en 1 minute" style="display:block;width:100%;max-width:480px;height:auto;border:0;border-radius:12px"></a></p>' : "") +
     '<p style="margin:0 0 16px;font-size:14px"><a href="' + hesc(url) + '" style="color:#4f46e5;font-weight:bold">▶ Découvrez Piloz en 1 minute</a></p>' : "";
   const lines = String(s.signature || "").replace(/\r\n/g, "\n").split("\n").map(l => l.trim()).filter(Boolean);
+  // Miroir de signatureHtml côté serveur (prospection-core) : 1re ligne en avant,
+  // marque en capitales violettes, adresse « @ », site « W », accroche en italique.
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/, siteRe = /^(https?:\/\/)?[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i;
+  const sigLine = (l, i) => {
+    if (i === 0) return '<b style="color:#15161f;font-size:16px">' + hesc(l) + "</b>";
+    if (emailRe.test(l)) return '<span style="color:#e8893a;font-weight:700">@</span>&nbsp;<a href="mailto:' + hesc(l) + '" style="color:#2a2c3f;text-decoration:none">' + hesc(l) + "</a>";
+    if (siteRe.test(l)) return '<span style="color:#e8893a;font-weight:700">W</span>&nbsp;<a href="' + hesc(/^https?:\/\//i.test(l) ? l : "https://" + l) + '" style="color:#6d5ef8;font-weight:700;text-decoration:none">' + hesc(l.replace(/^https?:\/\//i, "")) + "</a>";
+    if (i === 1) return '<span style="font-weight:700;font-size:11px;color:#6d5ef8;letter-spacing:.18em;text-transform:uppercase">' + hesc(l) + "</span>";
+    return '<i style="color:#6d5ef8">' + linkify(hesc(l)) + "</i>";
+  };
   const sig = lines.length ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;border-collapse:collapse"><tr>' +
-    '<td style="padding:0 14px 0 0;vertical-align:top"><img src="' + LOGO_URL + '" width="56" height="56" alt="Piloz" style="display:block;border:0;border-radius:12px"></td>' +
-    '<td style="vertical-align:middle;font:14px/1.5 Arial,Helvetica,sans-serif;color:#5b5d72;border-left:3px solid #6d5ef8;padding:2px 0 2px 14px">' +
-    lines.map((l, i) => i === 0 ? '<b style="color:#15161f;font-size:15px">' + hesc(l) + "</b>" : linkify(hesc(l))).join("<br>") + "</td></tr></table>" : "";
+    '<td style="padding:0 14px 0 0;vertical-align:middle"><img src="' + LOGO_URL + '" width="52" height="52" alt="Piloz" style="display:block;border:0;border-radius:12px"></td>' +
+    '<td style="vertical-align:middle;font:13px/1.7 Arial,Helvetica,sans-serif;color:#2a2c3f;border-left:3px solid #6d5ef8;padding:3px 0 3px 14px">' +
+    lines.map(sigLine).join("<br>") + "</td></tr></table>" : "";
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
   const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
     '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
