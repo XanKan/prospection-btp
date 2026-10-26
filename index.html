@@ -493,9 +493,20 @@
           <div class="kpi ke"><div class="lab">Échecs</div><div class="val num" id="kFail">0</div><div class="foot">adresses refusées ou erreurs</div></div>
         </div>
 
-        <div class="card" id="dashRv" hidden style="margin-top:16px">
-          <div class="card-h" style="border-bottom:0"><h2>Campagne revendeurs</h2><span class="st" id="dashRvSt"><i></i><span>—</span></span><span class="sub" id="dashRvS"></span>
-            <div class="right"><button type="button" class="b b-out b-xs" data-go="revendeurs">Ouvrir</button></div></div>
+        <div id="dashRv" hidden>
+          <div class="card" style="margin-top:16px">
+            <div class="card-h" style="border-bottom:0"><h2>Campagne revendeurs</h2><span class="st" id="dashRvSt"><i></i><span>—</span></span><span class="sub" id="dashRvS"></span>
+              <div class="right"><button type="button" class="b b-out b-xs" data-go="revendeurs">Ouvrir</button></div></div>
+            <div class="card-b" style="padding-top:0"><p class="note" id="dashRvNext"></p></div>
+          </div>
+          <div class="kpis">
+            <div class="kpi ka"><div class="lab">Revendeurs aujourd'hui</div><div class="val num" id="dRvToday">0</div><div class="meter"><i id="dRvTodayBar" style="width:0"></i></div><div class="foot" id="dRvTodayF"></div></div>
+            <div class="kpi kd"><div class="lab">Revendeurs en file</div><div class="val num" id="dRvQueued">0</div><div class="foot" id="dRvQueuedF"></div></div>
+            <div class="kpi kb"><div class="lab">Envoyés</div><div class="val num" id="dRvSent">0</div><div class="foot">depuis le début</div></div>
+            <div class="kpi kc"><div class="lab">Ouverts</div><div class="val num" id="dRvOpened">0</div><div class="foot" id="dRvOpenedF"></div></div>
+            <div class="kpi ka"><div class="lab">Cliqués</div><div class="val num" id="dRvClicked">0</div><div class="foot" id="dRvClickedF"></div></div>
+            <div class="kpi kb"><div class="lab">Réponses</div><div class="val num" id="dRvReplied">0</div><div class="foot" id="dRvRepliedF"></div></div>
+          </div>
         </div>
 
         <div class="grid2">
@@ -536,6 +547,17 @@
           <div class="card">
             <div class="card-h"><h2>Cadence</h2><div class="right"><button type="button" class="b b-out b-xs" data-go="settings">Modifier</button></div></div>
             <div class="card-b"><div id="cadence" class="note"></div></div>
+          </div>
+        </div>
+
+        <div class="grid2" id="dashRvMore" hidden>
+          <div class="card">
+            <div class="card-h"><h2>Derniers envois revendeurs</h2><div class="right"><button type="button" class="b b-out b-xs" id="bDashRvLog">Tout voir</button></div></div>
+            <div class="card-b" style="padding-top:6px;padding-bottom:6px"><ul class="list" id="dashRvRecent"></ul></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2>Recherche de revendeurs</h2><span class="sub" id="dashRvLastAt"></span><div class="right"><button type="button" class="b b-out b-xs" data-go="revendeurs">Ciblage</button></div></div>
+            <div class="card-b"><p class="note" id="dashRvReport"></p></div>
           </div>
         </div>
       </section>
@@ -1127,7 +1149,7 @@ async function needsMfa(){
 async function enter(){
   try {
     await loadState();
-    if (current === "auto") loadDashExtra(true);
+    if (current === "auto"){ loadDashExtra(true); loadDashRvRecent(true); }
   } catch(e){
     if (e.code === "mfa_required") return showLogin("Activez d'abord la double authentification sur admin.piloz.fr, puis reconnectez-vous.");
     if (e.code === "forbidden"){ await sb.auth.signOut(); return showLogin(e.message); }
@@ -1232,7 +1254,7 @@ function showView(v){
   if (v === "tpl") mountTplEditor("btp");
   if (v === "revendeurs"){ mountTplEditor("revendeur"); renderRevendeurs(); RV.page = 1; loadRvQueue(); }
   if (v === "settings") fillSettings();
-  if (v === "auto"){ loadState().catch(() => {}); loadDashExtra(true); }
+  if (v === "auto"){ loadState().catch(() => {}); loadDashExtra(true); loadDashRvRecent(true); }
 }
 document.querySelectorAll(".nav-b").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
 document.addEventListener("click", ev => {
@@ -1833,6 +1855,7 @@ function startPolling(){
     if (document.hidden || !state || current !== "auto") return;
     loadState().catch(() => {});
     loadDashExtra(false);
+    loadDashRvRecent(false);
   }, 30000);
 }
 
@@ -2059,6 +2082,7 @@ function renderRevendeurs(){
   const c = r.counts || {}, on = !r.paused, cap = Number(r.daily_max) || 0;
   rvSetSt($("dashRvSt"), on); rvSetSt($("rvSt"), on);
   $("dashRvS").innerHTML = "<b>" + fmt(c.sent_today || 0) + "</b> envoyé(s) aujourd'hui sur " + fmt(cap) + " au plus · <b>" + fmt(c.queued || 0) + "</b> en file";
+  renderDashRv(r, c, on, cap);
 
   const banners = [];
   if (on && state.settings.paused)
@@ -2255,6 +2279,47 @@ async function loadRvQueue(){
     renderRvQueue();
   } catch(e){ if (e.code !== "session") toast(e.message, 5000); }
 }
+// Tableau de bord : les mêmes indicateurs que l'écran Revendeurs, le prochain envoi,
+// les derniers envois et la dernière recherche.
+function renderDashRv(r, c, on, cap){
+  $("dashRvMore").hidden = false;
+  if (!dashRvAt && current === "auto") loadDashRvRecent(true);
+  $("dashRvNext").textContent = on
+    ? "Créneau : " + rvWindow(state.settings) + ", " + fmt(cap) + " au plus par jour, relances comprises. " + rvNextSend(c, cap)
+    : "Campagne en pause : aucun message ne part vers les revendeurs.";
+  $("dRvToday").innerHTML = fmt(c.sent_today || 0) + " <small>/ " + fmt(cap) + "</small>";
+  $("dRvTodayBar").style.width = Math.min(100, cap ? Math.round((c.sent_today || 0) / cap * 100) : 0) + "%";
+  $("dRvTodayF").textContent = on ? "quota revendeurs du jour" : "campagne en pause";
+  $("dRvQueued").textContent = fmt(c.queued || 0);
+  $("dRvQueuedF").textContent = c.queued ? "≈ " + fmt(Math.ceil(c.queued / Math.max(1, cap))) + " jour(s) d'envoi d'avance" : "lancez une recherche";
+  $("dRvSent").textContent = fmt(c.sent || 0);
+  [["dRvOpened", c.opened], ["dRvClicked", c.clicked], ["dRvReplied", c.replied]].forEach(([id, v]) => {
+    $(id).textContent = fmt(v || 0);
+    $(id + "F").textContent = c.sent ? pct(v || 0, c.sent) + " des envoyés" : "";
+  });
+  const rep = r.last_report, at = r.last_sourcing_at;
+  $("dashRvLastAt").textContent = at ? "dernière recherche " + ago(at) : "";
+  $("dashRvReport").innerHTML = rep
+    ? "<b>" + fmt(rep.added || 0) + "</b> revendeur(s) ajouté(s) à la file sur <b>" + fmt(rep.scanned || 0) + "</b> entreprise(s) examinée(s), le " + esc(dateTimeFr(rep.at || at)) + "." +
+      (rep.known ? " " + fmt(rep.known) + " déjà connue(s)." : "") +
+      (rep.exhausted ? " <b>Tout le ciblage a été parcouru</b> : élargissez-le dans l'écran Revendeurs." : "")
+    : "Aucune recherche pour l'instant : lancez la première depuis l'écran Revendeurs.";
+}
+let dashRvAt = 0;
+async function loadDashRvRecent(force){
+  if (!state || !state.revendeurs || (!force && Date.now() - dashRvAt < 60000)) return;
+  dashRvAt = Date.now();
+  try {
+    const data = await api("queue.list", { status: "sent", campaign: "revendeur", page: 1 });
+    const items = (data.items || []).slice(0, 6);
+    $("dashRvRecent").innerHTML = items.length
+      ? items.map(m => "<li>" + (m.type && m.type !== "premier" ? '<span class="badge sent">Relance ' + esc(m.stage || m.type.slice(-1)) + "</span>" : '<span class="badge sent">Envoyé</span>') + trackBadges(m) +
+        '<div class="grow"><b>' + esc(niceCompany(m.company) || m.email) + "</b><span>" + esc(m.email) + "</span></div>" + '<span class="muted nw">' + esc(ago(m.sent_at)) + "</span></li>").join("")
+      : '<li><div class="grow"><span>Aucun message envoyé aux revendeurs pour l\'instant.</span></div></li>';
+  } catch(e){ if (e.code !== "session") $("dashRvRecent").innerHTML = '<li><div class="grow"><span>Derniers envois indisponibles.</span></div></li>'; }
+}
+$("bDashRvLog").addEventListener("click", () => $("bRvLog").click());
+
 // Créneau des revendeurs : les jours et horaires de l'automate, partagés avec le BTP.
 function rvWindow(s){
   return s.send_days.map(d => DAY_NAMES[d]).join(", ") + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris)";
