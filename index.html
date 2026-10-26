@@ -9,7 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
+<!-- Fichier statique du paquet npm (déjà minifié) : le « .min.js » de jsDelivr est régénéré à la volée, incompatible avec l'empreinte SRI. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <style>
   :root{
     --ink:#15161f; --ink-2:#1e2030; --ink-3:#2a2c3f;
@@ -634,7 +635,7 @@
           <div class="run">
             <label class="inline" for="rvDaily" style="color:var(--ink)">Envois par jour <input class="inp" type="number" id="rvDaily" min="1" max="500" step="1"></label>
             <button type="button" class="b b-out b-sm" id="bRvDaily">Enregistrer</button>
-            <span class="note">premiers contacts et relances revendeurs, pris dans le quota global du jour</span>
+            <span class="note">premiers contacts et relances revendeurs, en plus du plafond BTP</span>
           </div>
         </div>
 
@@ -977,7 +978,7 @@
                 <div class="fld" id="sFuOldFld"><label for="sFuOld">Relances depuis piloz.fr, par jour</label><input class="inp" type="number" id="sFuOld" min="0" max="500" step="1">
                   <p class="help">Anciens prospects contactés depuis contact@ ou commercial@piloz.fr : relancés depuis la même boîte, dans le fil du premier message, en plus du quota des nouvelles boîtes. 0 pour arrêter.</p></div>
                 <div class="fld"><label for="sFuSince">Relancer les messages envoyés depuis le</label><input class="inp" type="date" id="sFuSince">
-                  <p class="help">Par défaut, la date d'activation : les messages envoyés avant ne sont pas relancés. Reculez la date pour relancer l'historique, par petites tranches.</p></div>
+                  <p class="help">Par défaut, la date d'activation : les messages envoyés avant ne sont pas relancés. Reculez la date pour relancer l'historique, par petites tranches. Laissée vide, la date enregistrée ne change pas.</p></div>
               </div>
               <p class="note" id="fuNote" style="margin-top:10px"></p>
             </div>
@@ -1057,7 +1058,23 @@ const API = SUPABASE_URL + "/functions/v1/prospection-api";
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const fmt = n => (n == null ? "—" : Number(n).toLocaleString("fr-FR"));
-function esc(s){ const d = document.createElement("span"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+// Échappement HTML, guillemets compris : le résultat sert aussi dans les attributs (title, data-…, href).
+const ESC_MAP = { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" };
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ESC_MAP[c]); }
+// Lien externe venu des données (site d'une entreprise, page d'un test) : http(s) seulement, sinon pas de lien.
+function safeHref(raw){
+  const s = String(raw == null ? "" : raw).trim();
+  if (!s) return "";
+  try {
+    const u = new URL(/^https?:\/\//i.test(s) ? s : "https://" + s);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.href : "";
+  } catch(e){ return ""; }
+}
+// Lien externe complet (ou le texte seul si l'adresse n'est pas un lien http(s) valide).
+function extLink(raw, label){
+  const href = safeHref(raw);
+  return href ? '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(label) + "</a>" : esc(label);
+}
 const dateFr = d => d ? new Date(d).toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit", year:"numeric" }) : "";
 const timeFr = d => d ? new Date(d).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" }) : "";
 const dateTimeFr = d => d ? dateFr(d) + " à " + timeFr(d) : "";
@@ -1320,12 +1337,14 @@ function renderBoxes(){
   if (!BX || !state) return;
   const s = state.settings, boites = (state.smtp && state.smtp.boites) || [];
   const qn = state.quotas && state.quotas.nouvelles, qp = state.quotas && state.quotas.piloz;
-  const nDed = BX.boxes.filter(b => b.kind === "dediee").length || 1;
+  // Le plafond du jour ne compte que les boîtes dédiées dont le mot de passe est posé.
+  const hasPassword = b => !!(boites.find(x => x.address === b.address) || {}).password;
+  const nDed = BX.boxes.filter(b => b.kind === "dediee" && hasPassword(b)).length || 1;
   const week = s.boites_debut ? Math.floor((new Date(parisDay(0) + "T12:00:00") - new Date(s.boites_debut + "T12:00:00")) / (7 * 864e5)) + 1 : 0;
   const steps = Math.max(1, Math.round((s.boite_max || 40) / (s.boite_palier || 10)));
   const lastTest = box => BX.tests.find(t => t.box === box);
   const testLine = t => !t ? "Aucun test de placement pour l'instant." : !t.result ? "Test du " + dateTimeFr(t.created_at) + " : résultat en cours…"
-    : "Test du " + dateTimeFr(t.created_at) + " : <b>" + t.result.inbox + " sur " + t.result.total + "</b> en boîte de réception (Gmail " + t.result.gmail.inbox + ", Outlook " + t.result.outlook.inbox + ")" + (t.result.waiting ? ", " + t.result.waiting + " en attente" : "") + ' · <a href="' + esc(t.result.url) + '" target="_blank" rel="noopener">détail</a>';
+    : "Test du " + dateTimeFr(t.created_at) + " : <b>" + t.result.inbox + " sur " + t.result.total + "</b> en boîte de réception (Gmail " + t.result.gmail.inbox + ", Outlook " + t.result.outlook.inbox + ")" + (t.result.waiting ? ", " + t.result.waiting + " en attente" : "") + ' · ' + extLink(t.result.url, "détail");
   // Domaines
   const domains = [...new Set(BX.boxes.map(b => b.address.split("@")[1]))];
   $("bxDomains").innerHTML = domains.map(d => {
@@ -1338,13 +1357,13 @@ function renderBoxes(){
       '<p class="note">' + list.length + " boîte(s) · " + (ded ? (qn ? "quota du jour " + fmt(qn.plafond) + " (" + fmt(Math.round(qn.plafond / nDed)) + " par boîte)" : "") : (qp ? "relances : " + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + " aujourd'hui, " + fmt(qp.dues) + " en attente" : "")) + "</p></div>";
   }).join("");
   domains.forEach(d => domainChecks(d).then(checks => {
-    const el = document.querySelector('[data-dns="' + d + '"]');
+    const el = document.querySelector('[data-dns="' + CSS.escape(d) + '"]');
     if (el) el.innerHTML = checks.map(c => '<span class="chip ' + (c.ok ? "ok" : "bad") + '">' + esc(c.k) + (c.ok ? " ✓" : " ✗") + "</span>").join("");
   }));
   // Boîtes
   $("bxGrid").innerHTML = BX.boxes.map((b, i) => {
     const sec = b.kind === "dediee" ? (boites.find(x => x.address === b.address) || {}) : { password: b.address === s.sender_email ? state.smtp.configured : !!(state.smtp.second && state.smtp.second.configured), token: true };
-    const cap = b.kind === "dediee" ? (qn ? Math.round(qn.plafond / nDed) : 0) : (qp ? qp.plafond : 0);
+    const cap = b.kind === "dediee" ? (qn && sec.password ? Math.round(qn.plafond / nDed) : 0) : (qp ? qp.plafond : 0);
     const ramp = b.kind === "dediee" ? Array.from({ length: steps }, (_, k) => '<span class="chip ' + (k + 1 <= week ? "on" : "dim") + '">S' + (k + 1) + " · " + (s.boite_palier || 10) * (k + 1) + "/j</span>").join("") : '<span class="chip g">Relances des anciens prospects</span>';
     const spark = (b.jours || []).map(j => j.envoyes + j.relances), mx = Math.max(1, ...spark);
     const err = b.derniere_erreur && b.derniere_erreur.texte ? esc(String(b.derniere_erreur.texte).slice(0, 120)) + " (" + esc(dateFr(b.derniere_erreur.le)) + ")" : "aucune";
@@ -1363,7 +1382,7 @@ function renderBoxes(){
   // Tests de placement
   $("bxTests").innerHTML = BX.tests.length ? '<div class="tscroll"><table><thead><tr><th>Boîte</th><th style="width:140px">Lancé le</th><th>Résultat</th></tr></thead><tbody>' + BX.tests.map(t =>
     "<tr><td><b>" + esc(t.box) + '</b><div class="meta">' + fmt(t.sent) + ' mails envoyés aux adresses témoins</div></td><td class="nw">' + esc(dateTimeFr(t.created_at)) + "</td><td>" +
-    (t.result ? '<span class="chip ' + (t.result.inbox >= t.result.total * .7 ? "ok" : t.result.inbox >= t.result.total * .4 ? "v" : "bad") + '">' + t.result.inbox + " / " + t.result.total + " en réception</span> " + '<span class="note">Gmail ' + t.result.gmail.inbox + " · Outlook " + t.result.outlook.inbox + (t.result.waiting ? " · " + t.result.waiting + " en attente" : "") + ' · <a href="' + esc(t.result.url) + '" target="_blank" rel="noopener">détail</a></span>' : '<span class="note">en cours…</span>') + "</td></tr>").join("") + "</tbody></table></div>"
+    (t.result ? '<span class="chip ' + (t.result.inbox >= t.result.total * .7 ? "ok" : t.result.inbox >= t.result.total * .4 ? "v" : "bad") + '">' + t.result.inbox + " / " + t.result.total + " en réception</span> " + '<span class="note">Gmail ' + t.result.gmail.inbox + " · Outlook " + t.result.outlook.inbox + (t.result.waiting ? " · " + t.result.waiting + " en attente" : "") + ' · ' + extLink(t.result.url, "détail") + "</span>" : '<span class="note">en cours…</span>') + "</td></tr>").join("") + "</tbody></table></div>"
     : '<p class="note">Aucun test pour l\'instant. Le bouton « Test de placement » d\'une boîte envoie un vrai premier mail (modèle actif, suivi compris) à une trentaine d\'adresses témoins Gmail et Outlook, puis affiche où il est arrivé.</p>';
   // Modèles
   $("bxTpls").innerHTML = (BX.templates || []).filter(t => t.envoyes).map(t =>
@@ -1531,7 +1550,10 @@ function renderTpl(t, v){
 // Miroir exact de composeEmail() côté serveur : l'aperçu est le vrai HTML envoyé.
 const LOGO_URL = "https://piloz.fr/assets/images/email/piloz-logo-112.png";
 const VIDEO_THUMBNAILS = { UycAnUQzzYg: "https://piloz.fr/assets/images/email/presentation-video.jpg" };
-const hesc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[c]));
+const hesc = esc;
+// Responsable du traitement et page de confidentialité (miroir de prospection-core.ts).
+const DATA_CONTROLLER = "Piloz — Quentin Jernot EI, SIREN 929 219 327";
+const PRIVACY_URL = "https://piloz.fr/legal/confidentialite.html";
 const linkify = e => e.replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, u => '<a href="' + u + '" style="color:#4f46e5">' + u + "</a>");
 const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>").join("");
 function youtubeId(url){ const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; }
@@ -1553,6 +1575,8 @@ function buildEmail(tpl, s, data){
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
   const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
     '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
+    "Responsable du traitement : " + hesc(DATA_CONTROLLER) + ". " +
+    '<a href="' + PRIVACY_URL + '" style="color:#8a8ca0">Vos données et vos droits</a> · ' +
     '<a href="https://piloz.fr/desinscription.html" style="color:#8a8ca0">Ne plus recevoir de message</a>.' + (identity ? "<br>" + hesc(identity) : "") + "</p></div>";
   return { subject: clean(renderTpl(tpl.subject, v), 200), html };
 }
@@ -1620,6 +1644,8 @@ function nextOpening(s){
 function renderState(){
   if (!state) return;
   const s = state.settings, c = state.counts, st = STATUS[state.status] || STATUS.paused;
+  // Messages qui peuvent partir (revendeurs exclus tant que leur campagne est en pause) et réserve BTP.
+  const sendable = c.sendable ?? c.queued, reserve = c.queued_btp ?? c.queued;
   $("whoami").textContent = state.adminEmail || ""; $("bLogout").title = state.adminEmail ? "Connecté en tant que " + state.adminEmail : "";
   fillSenderFilter();
   $("pillQueue").textContent = fmt(c.queued);
@@ -1646,9 +1672,9 @@ function renderState(){
   dot.className = "hero-dot" + (st.c ? " " + st.c : "");
   $("heroT").textContent = st.t;
   let sub = "";
-  if (state.status === "running") sub = s.next_send_at && new Date(s.next_send_at) > new Date() ? "Prochain envoi vers " + timeFr(s.next_send_at) + ". " + fmt(c.queued) + " message(s) en attente." : "Envoi imminent. " + fmt(c.queued) + " message(s) en attente.";
+  if (state.status === "running") sub = s.next_send_at && new Date(s.next_send_at) > new Date() ? "Prochain envoi vers " + timeFr(s.next_send_at) + ". " + fmt(sendable) + " message(s) en attente." : "Envoi imminent. " + fmt(sendable) + " message(s) en attente.";
   if (state.status === "paused") sub = (s.pause_reason && !/manuellement/i.test(s.pause_reason) ? s.pause_reason + " " : "") + "Aucun message ne part tant que l'automate est en pause.";
-  if (state.status === "off_hours") sub = "Les envois reprennent " + nextOpening(s) + ". " + fmt(c.queued) + " message(s) en attente.";
+  if (state.status === "off_hours") sub = "Les envois reprennent " + nextOpening(s) + ". " + fmt(sendable) + " message(s) en attente.";
   if (state.status === "off_day") sub = "Pas d'envoi aujourd'hui. Reprise " + nextOpening(s) + ".";
   if (state.status === "cap_reached") sub = "Quota de " + fmt(state.capToday) + " messages atteint. Reprise " + nextOpening(s) + ".";
   if (state.status === "empty") sub = "La réserve est vide : l'automate cherche de nouvelles entreprises selon votre ciblage (un passage toutes les 20 minutes au plus).";
@@ -1696,9 +1722,9 @@ function renderState(){
     $("kTodayF").textContent = boites.length && state.capToday < s.daily_cap ? "montée progressive" + (next ? " · " + next.label + " : " + fmt(next.cap) : "") + ", jusqu'à " + fmt(s.daily_cap) + " par jour"
       : s.warmup_enabled && state.capToday < s.daily_cap ? "montée en charge : quota en hausse chaque jour d'envoi" : "quota du jour";
   }
-  $("kQueue").textContent = fmt(c.queued);
+  $("kQueue").textContent = fmt(reserve);
   const perDayCap = Math.max(1, state.capToday || s.daily_cap);
-  $("kQueueF").textContent = c.queued ? "≈ " + fmt(Math.ceil(c.queued / perDayCap)) + " jour(s) d'envoi d'avance" : "recherche en cours";
+  $("kQueueF").textContent = reserve ? "≈ " + fmt(Math.ceil(reserve / perDayCap)) + " jour(s) d'envoi d'avance" : "recherche en cours";
   $("kSent").textContent = fmt(c.sent);
   const tr = state.tracking || {};
   $("kSentF").textContent = (state.recent[0] ? "dernier " + ago(state.recent[0].sent_at) : "aucun envoi pour l'instant") +
@@ -1732,7 +1758,7 @@ function renderState(){
   $("chDays").innerHTML = days.map(d => '<div title="' + esc(d.key) + " : " + d.p + " premier(s) contact(s)" + (d.r ? ", " + d.r + " relance(s)" : "") + '"><b>' + (d.n || "") + '</b><i class="' + (d.n ? "" : "zero") + '" style="height:' + Math.max(2, Math.round(d.n / max * 86)) + 'px"></i><span>' + esc(d.lab) + "</span></div>").join("") ||
     '<p class="note">Aucun envoi pour l\'instant.</p>';
   const chTitle = $("chDays").closest(".card") && $("chDays").closest(".card").querySelector(".card-h h2");
-  if (chTitle) chTitle.textContent = "Envois par jour · " + fmt(chTotal) + " au total" + (days.length ? " depuis le " + esc(days[0].lab) : "");
+  if (chTitle) chTitle.textContent = "Envois par jour · " + fmt(chTotal) + " au total" + (days.length ? " depuis le " + days[0].lab : "");
 
   // Derniers envois
   $("recent").innerHTML = state.recent.length
@@ -2222,7 +2248,8 @@ async function loadRvQueue(){
   if (!state || !state.revendeurs) return;
   const seq = ++RV.seq;
   try {
-    const data = await api("queue.list", { status: "queued", campaign: "revendeur", page: RV.page });
+    // Premiers contacts seulement : une ligne de relance porte l'identifiant de la relance, pas celui du prospect.
+    const data = await api("queue.list", { status: "queued", campaign: "revendeur", types: ["premier"], page: RV.page });
     if (seq !== RV.seq) return;
     RV.items = data.items || []; RV.total = data.total || 0;
     renderRvQueue();
@@ -2238,7 +2265,7 @@ function renderRvQueue(){
     return '<tr class="click" data-msg="' + esc(m.id) + '"><td><b>' + esc(niceCompany(m.company) || "—") + "</b>" + (d.metier ? '<div class="meta">' + esc(d.metier) + "</div>" : "") + "</td>" +
       "<td>" + esc(capitalName(d.ville) || "—") + "</td>" +
       "<td>" + (d.logiciels ? esc(d.logiciels) : '<span class="muted">—</span>') + "</td>" +
-      '<td style="overflow-wrap:anywhere">' + (site ? '<a href="' + esc(/^https?:/i.test(site) ? site : "https://" + site) + '" target="_blank" rel="noopener">' + esc(site.replace(/^https?:\/\//i, "").replace(/\/$/, "")) + "</a>" : "—") + "</td>" +
+      '<td style="overflow-wrap:anywhere">' + (site ? extLink(site, site.replace(/^https?:\/\//i, "").replace(/\/$/, "")) : "—") + "</td>" +
       '<td style="overflow-wrap:anywhere">' + esc(m.email) + "</td>" +
       '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
       '<td><button type="button" class="b b-out b-xs" data-rv-remove="' + esc(m.id) + '">Retirer</button></td></tr>';
@@ -2628,6 +2655,14 @@ $("bViewDel").addEventListener("click", () => {
   if (!name || !v[name] || !confirm("Supprimer la vue « " + name + " » ?")) return;
   delete v[name]; writeViews(v); fillViews();
 });
+// Cellule CSV. Une valeur venue des données (raison sociale, site, adresse…) qui
+// commence par = + - @, une tabulation ou un retour chariot serait lue comme une
+// formule par Excel ou LibreOffice : elle est préfixée d'une apostrophe.
+function csvCell(v){
+  let s = String(v ?? "");
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
 // Export CSV de l'onglet et des filtres en cours (5 000 lignes au plus).
 $("bLogExport").addEventListener("click", async ev => {
   const btn = ev.currentTarget;
@@ -2645,7 +2680,7 @@ $("bLogExport").addEventListener("click", async ev => {
         d.marche ? "Marché public" : d.source === "web" ? "Site web" : m.origin === "demo" ? "Démo" : "Annuaire RGE",
         m.campaign === "revendeur" ? "Revendeurs" : "BTP", d.logiciels || ""];
     });
-    const csv = "\ufeff" + [head, ...rows].map(r => r.map(v => '"' + String(v ?? "").replace(/"/g, '""') + '"').join(";")).join("\r\n");
+    const csv = "\ufeff" + [head, ...rows].map(r => r.map(csvCell).join(";")).join("\r\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     a.download = "piloz-envois-" + parisDay(0) + ".csv";
@@ -2692,14 +2727,14 @@ async function openMessage(id){
         (d.logiciels ? "<div><dt>Logiciels repérés</dt><dd>" + esc(d.logiciels) + "</dd></div>" : "") +
         (d.marche ? "<div><dt>Marché public gagné" + (d.marche_date ? " (notifié le " + esc(dateFr(d.marche_date)) + ")" : "") + "</dt><dd>" + esc(d.marche) + "</dd></div>" : "") +
         (d.tel ? "<div><dt>Téléphone</dt><dd>" + esc(d.tel) + "</dd></div>" : "") +
-        (d.site ? "<div><dt>Site internet</dt><dd>" + '<a href="' + esc(/^https?:/.test(d.site) ? d.site : "https://" + d.site) + '" target="_blank" rel="noopener">' + esc(String(d.site).replace(/^https?:\/\//, "")) + "</a>" + (d.source === "web" ? ' <span class="muted">(adresse lue sur le site' + (d.how ? ", " + (/siren/.test(d.how) ? "SIREN vérifié" : "nom et ville vérifiés") : "") + ")</span>" : "") + "</dd></div>" : "") +
+        (d.site ? "<div><dt>Site internet</dt><dd>" + extLink(d.site, String(d.site).replace(/^https?:\/\//, "")) + (d.source === "web" ? ' <span class="muted">(adresse lue sur le site' + (d.how ? ", " + (/siren/.test(d.how) ? "SIREN vérifié" : "nom et ville vérifiés") : "") + ")</span>" : "") + "</dd></div>" : "") +
         (m.status === "sent" ? "<div><dt>Suivi</dt><dd>" + ([
           m.opened_at ? "ouvert le " + dateTimeFr(m.opened_at) + (m.open_count > 1 ? " (" + m.open_count + "×)" : "") : "",
           m.video_clicked_at ? "vidéo ouverte le " + dateTimeFr(m.video_clicked_at) : "",
           m.site_clicked_at ? "lien cliqué le " + dateTimeFr(m.site_clicked_at) : "",
         ].filter(Boolean).map(esc).join(" · ") || "pas encore ouvert") + (m.scanner_at ? " · filtre de sécurité : " + esc(m.scanner_hits || 1) + " clic(s) automatique(s) ignoré(s)" : "") + "</dd></div>" : "") +
         (m.status === "sent" ? "<div><dt>Relances</dt><dd>" + ((m.prospection_followups || []).sort((a, b) => a.stage - b.stage).map(f =>
-          "relance " + f.stage + " : " + (f.status === "sent" ? "envoyée le " + dateTimeFr(f.sent_at) : f.status === "failed" ? "échec" : "en attente")).map(esc).join(" · ")
+          "relance " + f.stage + " : " + (f.status === "sent" ? "envoyée le " + dateTimeFr(f.sent_at) : f.status === "failed" ? "échec" : f.status === "skipped" ? "annulée" + (f.error ? " (" + f.error.replace(/^Relance annulée : /, "") + ")" : "") : "en attente")).map(esc).join(" · ")
           || (m.replied_at ? "arrêtées" : "aucune pour l'instant")) + (m.replied_at ? " · marqué « a répondu » le " + esc(dateTimeFr(m.replied_at)) : "") + "</dd></div>" : "") +
         (m.error ? '<div style="grid-column:1/-1"><dt>Détail</dt><dd>' + esc(m.error) + "</dd></div>" : "") +
       "</div>" + body,
@@ -2908,8 +2943,10 @@ $("setForm").addEventListener("submit", async ev => {
     min_gap_seconds: Math.round(Number($("sGapMin").value)), max_gap_seconds: Math.round(Number($("sGapMax").value)),
     max_consecutive_errors: $("sErr").value,
     followup_enabled: $("sFuEnabled").checked, followup1_days: $("sFu1").value, followup2_days: $("sFu2").value,
-    followup_opened_only: $("sFuOpened").checked, followup_since: $("sFuSince").value, relances_piloz_max: $("sFuOld").value
+    followup_opened_only: $("sFuOpened").checked, relances_piloz_max: $("sFuOld").value
   };
+  // Date vide : la date actuelle est conservée (jamais « tout l'historique »).
+  if ($("sFuSince").value) payload.followup_since = $("sFuSince").value;
   const btn = $("bSetSave");
   busy(btn, true, "Enregistrement…");
   try {
