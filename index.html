@@ -696,7 +696,7 @@
             <div class="right"><button type="button" class="b b-out b-xs" id="bRvLog">Voir dans Envois</button></div></div>
           <div class="tscroll">
             <table>
-              <thead><tr><th>Entreprise</th><th style="width:130px">Ville</th><th>Logiciels repérés</th><th style="width:190px">Site</th><th>E-mail</th><th style="width:70px">Score</th><th style="width:90px"></th></tr></thead>
+              <thead><tr><th>Entreprise</th><th style="width:130px">Ville</th><th>Logiciels repérés</th><th style="width:190px">Site</th><th>E-mail</th><th style="width:70px">Score</th><th style="width:130px">Envoi prévu</th><th style="width:90px"></th></tr></thead>
               <tbody id="rvQBody"></tbody>
             </table>
           </div>
@@ -2070,8 +2070,8 @@ function renderRevendeurs(){
   $("rvDot").className = "hero-dot" + (on ? " ok" : "");
   $("rvT").textContent = on ? "Campagne active" : "Campagne en pause";
   $("rvS").textContent = on
-    ? "Les revendeurs reçoivent leurs messages dans le créneau d'envoi de l'automate, " + fmt(cap) + " au plus par jour, relances comprises."
-    : "Aucun message ne part vers les revendeurs tant que la campagne est en pause. Relisez les messages ci-dessous, puis activez-la.";
+    ? "Les revendeurs reçoivent leurs messages dans le créneau de l'automate : " + rvWindow(state.settings) + ", " + fmt(cap) + " au plus par jour, relances comprises. " + rvNextSend(c, cap)
+    : "Aucun message ne part vers les revendeurs tant que la campagne est en pause. Une fois activée, ils partent " + rvWindow(state.settings) + ". Relisez les messages ci-dessous, puis activez-la.";
   ["rvActive", "bRvDaily", "bRvTargetSave"].forEach(id => { $(id).disabled = false; });
   $("bRvRun").disabled = RV.running;
   if ($("rvConfirm").hidden) $("rvActive").checked = on;
@@ -2255,12 +2255,47 @@ async function loadRvQueue(){
     renderRvQueue();
   } catch(e){ if (e.code !== "session") toast(e.message, 5000); }
 }
+// Créneau des revendeurs : les jours et horaires de l'automate, partagés avec le BTP.
+function rvWindow(s){
+  return s.send_days.map(d => DAY_NAMES[d]).join(", ") + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris)";
+}
+function rvNextSend(c, cap){
+  const s = state.settings;
+  if (s.paused || state.status === "paused") return "L'automate est en pause : aucun envoi pour l'instant.";
+  if ((c.sent_today || 0) >= cap) return "Quota du jour atteint : reprise " + nextOpening(s) + ".";
+  if (state.status === "off_hours" || state.status === "off_day") return "Prochains envois " + nextOpening(s) + ".";
+  return "Créneau ouvert : les messages partent maintenant, un toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ", à la suite de ceux du BTP.";
+}
+// Jour d'envoi estimé d'un prospect en file. La file part dans l'ordre affiché (score, puis
+// date d'ajout) au rythme du quota revendeurs ; les relances, prises sur le même quota,
+// peuvent la décaler d'un jour ou deux.
+function rvSendDays(s){
+  const now = new Date(), today = ((now.getDay() + 6) % 7) + 1, days = [];
+  const openToday = s.send_days.includes(today) && now.toTimeString().slice(0, 5) < hm(s.window_end);
+  for (let i = openToday ? 0 : 1; days.length < 60 && i < 400; i++){
+    const d = new Date(now); d.setDate(now.getDate() + i);
+    if (s.send_days.includes(((d.getDay() + 6) % 7) + 1)) days.push({ d, i });
+  }
+  return days;
+}
+function rvPlanned(index, c, cap, days){
+  if (!cap || !days.length) return "—";
+  const today = days[0].i === 0, left = today ? Math.max(0, cap - (c.sent_today || 0)) : 0;
+  const slot = today ? (index < left ? 0 : 1 + Math.floor((index - left) / cap)) : Math.floor(index / cap);
+  const day = days[slot];
+  if (!day) return "plus tard";
+  if (day.i === 0) return "aujourd'hui";
+  if (day.i === 1) return "demain";
+  return DAY_NAMES[((day.d.getDay() + 6) % 7) + 1] + " " + day.d.toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit" });
+}
 function renderRvQueue(){
   const pages = Math.max(1, Math.ceil(RV.total / 50));
+  const r = state.revendeurs, c = r.counts || {}, cap = Number(r.daily_max) || 0, days = rvSendDays(state.settings);
+  const planned = i => r.paused ? "à l'activation" : state.settings.paused ? "automate en pause" : "≈ " + rvPlanned((RV.page - 1) * 50 + i, c, cap, days);
   $("rvQCount").textContent = fmt(RV.total) + " revendeur(s) prêt(s) à contacter";
   $("rvQPage").textContent = "Page " + RV.page + " / " + pages + " · " + fmt(RV.total) + " ligne(s)";
   $("rvQPrev").disabled = RV.page <= 1; $("rvQNext").disabled = RV.page >= pages;
-  $("rvQBody").innerHTML = RV.items.length ? RV.items.map(m => {
+  $("rvQBody").innerHTML = RV.items.length ? RV.items.map((m, i) => {
     const d = m.data || {}, site = String(d.site || "");
     return '<tr class="click" data-msg="' + esc(m.id) + '"><td><b>' + esc(niceCompany(m.company) || "—") + "</b>" + (d.metier ? '<div class="meta">' + esc(d.metier) + "</div>" : "") + "</td>" +
       "<td>" + esc(capitalName(d.ville) || "—") + "</td>" +
@@ -2268,8 +2303,9 @@ function renderRvQueue(){
       '<td style="overflow-wrap:anywhere">' + (site ? extLink(site, site.replace(/^https?:\/\//i, "").replace(/\/$/, "")) : "—") + "</td>" +
       '<td style="overflow-wrap:anywhere">' + esc(m.email) + "</td>" +
       '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
+      '<td class="nw">' + esc(planned(i)) + "</td>" +
       '<td><button type="button" class="b b-out b-xs" data-rv-remove="' + esc(m.id) + '">Retirer</button></td></tr>';
-  }).join("") : '<tr><td colspan="7" class="empty"><b>Aucun revendeur en file</b>Lancez une recherche : les entreprises retenues apparaîtront ici avant leur premier message.</td></tr>';
+  }).join("") : '<tr><td colspan="8" class="empty"><b>Aucun revendeur en file</b>Lancez une recherche : les entreprises retenues apparaîtront ici avant leur premier message.</td></tr>';
 }
 $("rvQBody").addEventListener("click", async ev => {
   const rm = ev.target.closest("[data-rv-remove]");
