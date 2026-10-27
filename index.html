@@ -1368,10 +1368,8 @@ function renderBoxes(){
   if (!BX || !state) return;
   const s = state.settings, boites = (state.smtp && state.smtp.boites) || [];
   const qn = state.quotas && state.quotas.nouvelles, qp = state.quotas && state.quotas.piloz;
-  // Le plafond du jour ne compte que les boîtes dédiées dont le mot de passe est posé.
-  const hasPassword = b => !!(boites.find(x => x.address === b.address) || {}).password;
-  const nDed = BX.boxes.filter(b => b.kind === "dediee" && hasPassword(b)).length || 1;
-  const week = s.boites_debut ? Math.floor((new Date(parisDay(0) + "T12:00:00") - new Date(s.boites_debut + "T12:00:00")) / (7 * 864e5)) + 1 : 0;
+  // Rodage boîte par boîte : semaine et plafond du jour propres à chaque boîte dédiée.
+  const boxWeek = address => { const start = boxStart(s, address); return start ? Math.floor((new Date(parisDay(0) + "T12:00:00") - new Date(start + "T12:00:00")) / (7 * 864e5)) + 1 : 0; };
   const steps = Math.max(1, Math.round((s.boite_max || 40) / (s.boite_palier || 10)));
   const lastTest = box => BX.tests.find(t => t.box === box);
   const testLine = t => !t ? "Aucun test de placement pour l'instant." : !t.result ? "Test du " + dateTimeFr(t.created_at) + " : résultat en cours…"
@@ -1385,7 +1383,7 @@ function renderBoxes(){
       (ded ? '<span class="chip v">Premiers mails · montée progressive</span>' : '<span class="chip g">Au repos · relances seulement</span>') + "</div>" +
       '<div style="display:flex;gap:6px;flex-wrap:wrap" data-dns="' + esc(d) + '"><span class="chip dim">Vérification DNS…</span></div>' +
       '<p class="note">' + testLine(tests[0]) + "</p>" +
-      '<p class="note">' + list.length + " boîte(s) · " + (ded ? (qn ? "quota du jour " + fmt(qn.plafond) + " (" + fmt(Math.round(qn.plafond / nDed)) + " par boîte)" : "") : (qp ? "relances : " + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + " aujourd'hui, " + fmt(qp.dues) + " en attente" : "")) + "</p></div>";
+      '<p class="note">' + list.length + " boîte(s) · " + (ded ? (qn ? "quota du jour " + fmt(qn.plafond) + ", selon le rodage de chaque boîte" : "") : (qp ? "relances : " + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + " aujourd'hui, " + fmt(qp.dues) + " en attente" : "")) + "</p></div>";
   }).join("");
   domains.forEach(d => domainChecks(d).then(checks => {
     const el = document.querySelector('[data-dns="' + CSS.escape(d) + '"]');
@@ -1394,7 +1392,8 @@ function renderBoxes(){
   // Boîtes
   $("bxGrid").innerHTML = BX.boxes.map((b, i) => {
     const sec = b.kind === "dediee" ? (boites.find(x => x.address === b.address) || {}) : { password: b.address === s.sender_email ? state.smtp.configured : !!(state.smtp.second && state.smtp.second.configured), token: true };
-    const cap = b.kind === "dediee" ? (qn && sec.password ? Math.round(qn.plafond / nDed) : 0) : (qp ? qp.plafond : 0);
+    const cap = b.kind === "dediee" ? (qn && sec.password ? boxDayCap(s, b.address, parisDay(0)) : 0) : (qp ? qp.plafond : 0);
+    const week = b.kind === "dediee" ? boxWeek(b.address) : 0;
     const ramp = b.kind === "dediee" ? Array.from({ length: steps }, (_, k) => '<span class="chip ' + (k + 1 <= week ? "on" : "dim") + '">S' + (k + 1) + " · " + (s.boite_palier || 10) * (k + 1) + "/j</span>").join("") : '<span class="chip g">Relances des anciens prospects</span>';
     const spark = (b.jours || []).map(j => j.envoyes + j.relances), mx = Math.max(1, ...spark);
     const err = b.derniere_erreur && b.derniere_erreur.texte ? esc(String(b.derniere_erreur.texte).slice(0, 120)) + " (" + esc(dateFr(b.derniere_erreur.le)) + ")" : "aucune";
@@ -1747,14 +1746,14 @@ function renderState(){
   // Deux quotas avec les boîtes dédiées : nouvelles boîtes (montée progressive) et relances piloz.fr.
   const boites = (state.smtp && state.smtp.boites) || [];
   const qn = boites.length && state.quotas ? state.quotas.nouvelles : null, qp = boites.length && state.quotas ? state.quotas.piloz : null;
-  const next = boites.length ? rampPlan(s, boites.length)[0] : null;
+  const next = boites.length ? rampPlan(s, usableBoxes(boites))[0] : null;
   if (qn && qp){
     // Deux compteurs distincts : premiers mails (quota des nouvelles boîtes) et relances depuis piloz.fr.
     const tot = qn.envoyes + qp.envoyes, capTot = qn.plafond + qp.plafond;
     $("kToday").innerHTML = fmt(tot) + " <small>envoi(s)</small>";
     $("kTodayBar").style.width = Math.min(100, capTot ? Math.round(tot / capTot * 100) : 100) + "%";
     const over = qn.envoyes >= qn.plafond && qp.envoyes >= qp.plafond;
-    const up = rampPlan(s, boites.length).find(p => p.cap > qn.plafond);
+    const up = rampPlan(s, usableBoxes(boites)).find(p => p.cap > qn.plafond);
     $("kTodayF").innerHTML = "Premiers mails : <b>" + fmt(qn.envoyes) + "</b>" + (qn.plafond ? " / " + fmt(qn.plafond) : "")
       + (up ? (qn.plafond ? " · " + fmt(up.cap) + " à partir du " : " · nouvelles boîtes dès le ") + esc(up.label) + (qn.plafond ? "" : " (" + fmt(up.cap) + ")") : "")
       + "<br>Relances piloz.fr : <b>" + fmt(qp.envoyes) + "</b> / " + fmt(qp.plafond)
@@ -3029,13 +3028,22 @@ $("sBody").addEventListener("click", async ev => {
 $("dayChips").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(d => '<label class="chip"><input type="checkbox" name="day" value="' + d + '"> ' + DAY_NAMES[d].charAt(0).toUpperCase() + DAY_NAMES[d].slice(1) + "</label>").join("");
 // Montée progressive des boîtes dédiées : quota d'un jour donné (même règle que
 // prospection_daily_cap côté base), et prochains jours d'envoi.
-function boxCapOn(s, n, day){
-  if (!s.boites_debut || !n) return 0;
-  const days = Math.round((new Date(day + "T12:00:00") - new Date(s.boites_debut + "T12:00:00")) / 864e5);
+// Rodage boîte par boîte (prospection_box_cap) : chaque boîte part de sa propre date,
+// sinon du départ commun ; le quota du jour additionne les boîtes qui ont leur mot de passe.
+function boxStart(s, address){ return String((s.boites_debuts || {})[address] || s.boites_debut || "").slice(0, 10); }
+function boxDayCap(s, address, day){
+  const start = boxStart(s, address);
+  if (!start) return 0;
+  const days = Math.round((new Date(day + "T12:00:00") - new Date(start + "T12:00:00")) / 864e5);
   if (days < 0) return 0;
-  return Math.min(s.daily_cap, n * Math.min(s.boite_max || 40, (s.boite_palier || 10) * (Math.floor(days / 7) + 1)));
+  return Math.min(s.boite_max || 40, (s.boite_palier || 10) * (Math.floor(days / 7) + 1));
 }
-function rampPlan(s, n){
+function usableBoxes(boites){ return (boites || []).filter(b => b.password).map(b => b.address); }
+function boxCapOn(s, addresses, day){
+  if (!s.boites_debut || !addresses.length || day < String(s.boites_debut).slice(0, 10)) return 0;
+  return Math.min(s.daily_cap, addresses.reduce((total, address) => total + boxDayCap(s, address, day), 0));
+}
+function rampPlan(s, addresses){
   const parisDay = d => new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris" }).format(d);
   const isoDow = day => ((new Date(day + "T12:00:00").getDay() + 6) % 7) + 1;
   const label = day => new Date(day + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
@@ -3044,7 +3052,7 @@ function rampPlan(s, n){
   for (let i = 1; i <= 60 && plan.length < 5; i++){
     const day = parisDay(new Date(Date.now() + i * 864e5));
     if (!s.send_days.includes(isoDow(day))) continue;
-    const cap = boxCapOn(s, n, day);
+    const cap = boxCapOn(s, addresses, day);
     if (cap !== last){ plan.push({ day, label: label(day), cap }); last = cap; }
     if (cap >= s.daily_cap) break;
   }
@@ -3081,7 +3089,7 @@ function fillSettings(){
     : "Hostinger accepte jusqu'à 3 000 e-mails par jour. Plafond une fois la montée en charge terminée.";
   $("rampNote").hidden = !dedicated;
   if (dedicated){
-    const plan = rampPlan(s, boites.length);
+    const plan = rampPlan(s, usableBoxes(boites));
     const qp2 = state.quotas && state.quotas.piloz;
     $("rampNote").innerHTML = "Aujourd'hui : <b>" + fmt(state.capToday) + " messages</b> depuis les nouvelles boîtes" + (qp2 ? ", plus <b>" + fmt(qp2.plafond) + " relances</b> depuis piloz.fr" : "") + "." + (plan.length ? "<br>" + plan.map((p, i) => (i ? "À partir du " : "Prochain jour d'envoi, ") + esc(p.label) + " : <b>" + fmt(p.cap) + " messages</b> (" + fmt(Math.round(p.cap / boites.length)) + " par boîte)").join("<br>") : "");
     const ok = boites.every(b => b.password);
