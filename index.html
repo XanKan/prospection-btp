@@ -749,8 +749,9 @@
               <div class="card-b">
                 <div class="fields tpl-fields">
                   <div class="fld"><label for="tName">Nom interne</label><input class="inp" id="tName" maxlength="120" placeholder="ex. Premier contact — artisans"></div>
-                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="relance_demo">Relance démo (jamais ouvert)</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option></select>
-                    <p class="help">Une relance part dans le fil du premier message, en « Re : », aux destinataires qui n'ont pas répondu. Délais et conditions dans Réglages.</p></div>
+                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="relance_demo">Relance démo (jamais ouvert)</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option><option value="chaude">Relance chaude (intéressés)</option></select>
+                    <p class="help">Une relance part dans le fil du premier message, en « Re : », aux destinataires qui n'ont pas répondu. Délais et conditions dans Réglages.</p>
+                    <p class="help" id="tKindChaude" hidden>Relance chaude : un seul message, avant les autres relances, aux prospects BTP intéressés mais silencieux (au moins 3 ouvertures ou un clic, premier mail parti il y a 2 à 60 jours, rien envoyé depuis 2 jours, pas déjà client, pas de relance démo). Il remplace les relances 1 et 2 et termine la séquence. Mettez-y {lien_mois_offert} : le lien d'activation du mois de Premium offert, à l'adresse du prospect.</p></div>
                   <div class="fld"><label for="tSubject">Objet</label><input class="inp" id="tSubject" maxlength="200"></div>
                   <div class="fld full"><label for="tBody">Message</label><textarea class="inp" id="tBody" rows="12" maxlength="8000"></textarea>
                     <div class="vars" id="varChips"></div>
@@ -816,6 +817,8 @@
                 <label class="cb"><input type="checkbox" value="premier">Premier mail</label>
                 <label class="cb"><input type="checkbox" value="relance1">Relance 1</label>
                 <label class="cb"><input type="checkbox" value="relance2">Relance 2</label>
+                <label class="cb"><input type="checkbox" value="relance3">Relance démo</label>
+                <label class="cb"><input type="checkbox" value="chaude">Relance chaude</label>
               </div>
             </div>
             <div class="fg">
@@ -1541,8 +1544,10 @@ async function loadDashExtra(force){
 /* ============================================================
    PERSONNALISATION — miroir de supabase/functions/_shared/prospection-core.ts
    ============================================================ */
-const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "conseil", "logiciels"];
-const VAR_HELP = { logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
+const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "conseil", "logiciels", "lien_mois_offert"];
+// Lien d'activation du mois offert (relance chaude), à l'adresse du prospect.
+const MOIS_OFFERT_URL = "https://piloz.fr/checkout.html?plan=premium&offre=mois-offert";
+const VAR_HELP = { lien_mois_offert:"lien d'activation du mois de Premium offert, à l'adresse du prospect (modèle Relance chaude seulement)", logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -1562,7 +1567,8 @@ function templateVars(d){
   const prenom = capitalName(d.prenom).split(" ")[0] || "";
   return { bonjour: prenom ? "Bonjour " + prenom : "Bonjour", prenom, nom: capitalName(d.nom), entreprise: niceCompany(d.entreprise),
     ville: capitalName(d.ville), metier: clean(d.metier, 120), departement: clean(d.departement, 4), effectif: clean(d.effectif, 40), conseil: clean(d.conseil, 400),
-    logiciels: softwareText(d.logiciels) };
+    logiciels: softwareText(d.logiciels),
+    lien_mois_offert: d.email ? MOIS_OFFERT_URL + "&email=" + encodeURIComponent(String(d.email).trim().toLowerCase()) : "" };
 }
 function softwareText(raw){
   const list = clean(raw, 120).split(/\s*,\s*/).filter(Boolean).slice(0, 3);
@@ -1800,7 +1806,7 @@ function renderState(){
 
   // Derniers envois
   $("recent").innerHTML = state.recent.length
-    ? state.recent.map(r => '<li>' + (r.kind === "followup" ? '<span class="badge sent">Relance ' + esc(r.stage) + '</span>' : '<span class="badge sent">Envoyé</span>') + trackBadges(r) + '<div class="grow"><b>' + esc(niceCompany(r.company) || r.email) + "</b><span>" + esc(r.email) + "</span></div><span class=\"note\">" + esc(ago(r.sent_at)) + "</span></li>").join("")
+    ? state.recent.map(r => '<li>' + (r.kind === "followup" ? '<span class="badge sent">' + esc(relanceLabel(r.stage)) + '</span>' : '<span class="badge sent">Envoyé</span>') + trackBadges(r) + '<div class="grow"><b>' + esc(niceCompany(r.company) || r.email) + "</b><span>" + esc(r.email) + "</span></div><span class=\"note\">" + esc(ago(r.sent_at)) + "</span></li>").join("")
     : '<li><div class="grow"><span>Aucun message envoyé pour l\'instant.</span></div></li>';
 
   // Cadence
@@ -2435,9 +2441,10 @@ let tplId = null, lastField = "tBody", tplCampaign = "btp";
 const SAMPLE = { entreprise: "DUPONT BATIMENT", prenom: "Jean", nom: "Dupont", ville: "Lyon", cp: "69003", metier: "maçonnerie et gros œuvre", departement: "69", effectif: "6 à 9" };
 const tplCampaignOf = t => t.campaign || "btp";
 
-// {marche} et {conseil} ne concernent que le BTP, {logiciels} que les revendeurs.
+// {marche} et {conseil} ne concernent que le BTP, {logiciels} que les revendeurs,
+// {lien_mois_offert} que la relance chaude.
 function renderVarChips(){
-  const vars = VARS.filter(v => tplCampaign === "revendeur" ? v !== "marche" && v !== "conseil" : v !== "logiciels");
+  const vars = VARS.filter(v => (tplCampaign === "revendeur" ? v !== "marche" && v !== "conseil" : v !== "logiciels") && (v !== "lien_mois_offert" || $("tKind").value === "chaude"));
   $("varChips").innerHTML = vars.map(v => '<button type="button" data-var="' + v + '" title="' + esc(VAR_HELP[v]) + '">{' + v + "}</button>").join("");
 }
 renderVarChips();
@@ -2449,8 +2456,8 @@ function mountTplEditor(campaign){
   }
   (campaign === "revendeur" ? $("rvTplHost") : $("tplHost")).appendChild($("tplWrap"));
   renderVarChips();
-  // Les modèles « Après la démo » et « Client » n'existent que pour le BTP.
-  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && (o.value === "demo" || o.value === "relance_demo" || o.value === "client"); });
+  // Les modèles « Après la démo », « Relance démo », « Client » et « Relance chaude » n'existent que pour le BTP.
+  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && (o.value === "demo" || o.value === "relance_demo" || o.value === "client" || o.value === "chaude"); });
   $("tplOtherCamp").innerHTML = campaign === "revendeur"
     ? 'Les modèles de la campagne BTP se gèrent dans l\'écran <a href="#" data-go="tpl">Messages</a>.'
     : 'Les modèles de la campagne revendeurs se gèrent dans l\'écran <a href="#" data-go="revendeurs">Revendeurs</a>.';
@@ -2505,10 +2512,12 @@ async function loadSamples(){
     renderSampleOptions();
   } catch(e){}
 }
-const KIND = { relance1: "relance 1", relance2: "relance 2", demo: "après démo", relance_demo: "relance démo", client: "client" };
+const KIND = { relance1: "relance 1", relance2: "relance 2", chaude: "relance chaude", demo: "après démo", relance_demo: "relance démo", client: "client" };
 // Une relance part toujours en « Re : » sur l'objet du premier message : son objet propre ne sert pas.
 function syncKind(){
-  const relance = /^relance/.test($("tKind").value);
+  const relance = /^(relance|chaude$)/.test($("tKind").value);
+  $("tKindChaude").hidden = $("tKind").value !== "chaude";
+  renderVarChips();
   $("tSubject").disabled = relance;
   if (relance) $("tSubject").value = "Re : (objet du premier message)";
 }
@@ -2531,7 +2540,9 @@ function renderPreview(){
   // Modèles « Après la démo » et « Client » : mention et conseil propres à ces envois.
   const kind = $("tKind").value;
   const data = kind === "client" ? { ...sampleData(), source: "client", conseil: "Premier pas conseillé : créez votre premier chantier, puis ajoutez vos salariés ; ils reçoivent leur accès sur leur téléphone." }
-    : kind === "demo" ? { ...sampleData(), source: "demo" } : sampleData();
+    : kind === "demo" ? { ...sampleData(), source: "demo" }
+    // Relance chaude : lien du mois offert à l'adresse du prospect choisi.
+    : kind === "chaude" ? { ...sampleData(), email: m ? m.email : "j.dupont@dupont-batiment.fr" } : sampleData();
   $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr");
 }
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
@@ -2668,7 +2679,7 @@ function trackState(m){
   if (!m.video_clicked_at && !m.site_clicked_at) parts.push('<span class="badge off">Pas cliqué</span>');
   if (m.scanner_at) parts.push('<span class="badge unsub" style="opacity:.75" title="Filtre de sécurité du destinataire (Hornet, Mimecast, Proofpoint, Defender…) : ' + esc(m.scanner_hits || 1) + ' ouverture(s) ou clic(s) automatiques ignorés, dernier le ' + esc(dateTimeFr(m.scanner_at)) + '">Scanner</span>');
   (m.prospection_followups || []).filter(f => f.status === "sent").sort((a, b) => a.stage - b.stage).forEach(f =>
-    parts.push('<span class="badge sent" title="Relance ' + f.stage + ' envoyée le ' + esc(dateTimeFr(f.sent_at)) + '">Relance ' + f.stage + "</span>"));
+    parts.push('<span class="badge sent" title="' + esc(relanceLabel(f.stage)) + ' envoyée le ' + esc(dateTimeFr(f.sent_at)) + '">' + esc(relanceLabel(f.stage)) + "</span>"));
   if (m.replied_at) parts.push('<span class="badge open" title="Marqué « a répondu » le ' + esc(dateTimeFr(m.replied_at)) + ' : plus de relance">A répondu</span>');
   if (m.suppressed) parts.push('<span class="badge unsub" title="Cette adresse ne sera plus jamais contactée">' + esc(SUPPRESSED[m.suppressed] || "Exclu") + "</span>");
   return " " + parts.join(" ");
@@ -2715,7 +2726,9 @@ function renderLog(){
   logSel();
 }
 // Seuls les premiers mails pas encore partis se retirent ou se relancent.
-const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2" };
+const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2", relance3: "Relance démo", chaude: "Relance chaude" };
+// Rang 3 : relance des visiteurs de la démo ; rang 4 : relance chaude (prospect intéressé mais silencieux).
+function relanceLabel(stage){ return Number(stage) === 4 ? "Relance chaude" : Number(stage) === 3 ? "Relance démo" : "Relance " + stage; }
 function logSelectable(m){ return (!m.type || m.type === "premier") && m.status !== "sent" && m.status !== "sending"; }
 function logSel(){
   $("bLogRemove").disabled = !LOG.sel.size; $("bLogRetry").disabled = !LOG.sel.size;
@@ -2790,7 +2803,7 @@ const VIEW_DEFAULTS = {
   "Cliqués": { status: "sent", suivis: ["site", "video"] },
   "Ouverts ou cliqués": { status: "sent", suivis: ["opened", "site", "video"] },
   "Ont répondu": { status: "sent", suivis: ["replied"] },
-  "Relances du jour": { status: "sent", types: ["relance1", "relance2"], period: "today" },
+  "Relances du jour": { status: "sent", types: ["relance1", "relance2", "relance3", "chaude"], period: "today" },
   "Échecs de la semaine": { status: "failed", period: "7" },
   "Visiteurs de la démo": { status: "all", signal: "demo" }
 };
@@ -2904,7 +2917,7 @@ async function openMessage(id){
           m.site_clicked_at ? "lien cliqué le " + dateTimeFr(m.site_clicked_at) : "",
         ].filter(Boolean).map(esc).join(" · ") || "pas encore ouvert") + (m.scanner_at ? " · filtre de sécurité : " + esc(m.scanner_hits || 1) + " clic(s) automatique(s) ignoré(s)" : "") + "</dd></div>" : "") +
         (m.status === "sent" ? "<div><dt>Relances</dt><dd>" + ((m.prospection_followups || []).sort((a, b) => a.stage - b.stage).map(f =>
-          "relance " + f.stage + " : " + (f.status === "sent" ? "envoyée le " + dateTimeFr(f.sent_at) : f.status === "failed" ? "échec" : f.status === "skipped" ? "annulée" + (f.error ? " (" + f.error.replace(/^Relance annulée : /, "") + ")" : "") : "en attente")).map(esc).join(" · ")
+          relanceLabel(f.stage).toLowerCase() + " : " + (f.status === "sent" ? "envoyée le " + dateTimeFr(f.sent_at) : f.status === "failed" ? "échec" : f.status === "skipped" ? "annulée" + (f.error ? " (" + f.error.replace(/^Relance annulée : /, "") + ")" : "") : "en attente")).map(esc).join(" · ")
           || (m.replied_at ? "arrêtées" : "aucune pour l'instant")) + (m.replied_at ? " · marqué « a répondu » le " + esc(dateTimeFr(m.replied_at)) : "") + "</dd></div>" : "") +
         (m.error ? '<div style="grid-column:1/-1"><dt>Détail</dt><dd>' + esc(m.error) + "</dd></div>" : "") +
       "</div>" + body,
