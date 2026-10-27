@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<!-- Mode clair / sombre, appliqué avant le premier affichage (clair par défaut). -->
+<script>(function(){var t="light";try{if(localStorage.getItem("piloz_theme")==="dark")t="dark"}catch(e){}document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t})();</script>
 <title>Piloz Prospection</title>
 <link rel="icon" type="image/png" href="https://piloz.fr/assets/icons/favicon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -397,12 +399,104 @@
   .k-a_lire,.k-question{background:var(--violet-soft);color:var(--violet-dark)} .k-interesse{background:var(--ok-soft);color:var(--ok)}
   .k-desinscription{background:var(--danger-soft);color:var(--danger)} .k-absence,.k-autre{background:var(--line-2);color:var(--muted)}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ================= MODE CLAIR / SOMBRE ================= */
+  /* Bouton soleil / lune (les deux thèmes). */
+  .theme-b{display:inline-grid;place-items:center;width:34px;height:34px;flex:none;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel);color:var(--ink);transition:background .13s,border-color .13s}
+  .theme-b:hover{border-color:#cfd0e4;background:var(--paper)}
+  .side-foot .theme-b{color:var(--ink);text-decoration:none}
+  #login .theme-b{position:absolute;top:16px;right:16px;width:40px;height:40px;border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff}
+  #login .theme-b:hover{background:rgba(255,255,255,.16)}
+
+  /* Mode sombre : <html data-theme="dark">, choix gardé dans localStorage « piloz_theme ».
+     Jetons d'abord, puis chaque fond clair écrit en dur plus haut. */
+  html[data-theme="dark"]{
+    color-scheme:dark;
+    --ink:#f5f5f5; --ink-2:#d1d1d6; --ink-3:#2a2a2e;
+    --paper:#1c1c1f; --panel:#151517;
+    /* Le violet plein reste #6d5ef8 derrière du texte blanc (règles plus bas) ;
+       en texte et en icône sur fond sombre, il passe à une variante claire. */
+    --violet:#a597ff; --violet-2:#8b7cfb; --violet-soft:rgba(109,94,248,.2); --violet-dark:#b9b0ff;
+    --muted:#a1a1a6; --line:rgba(255,255,255,.11); --line-2:rgba(255,255,255,.075);
+    --ok:#2bbd7e; --ok-soft:rgba(23,160,106,.17);
+    --warn:#f0a64a; --warn-soft:rgba(224,138,44,.16);
+    --danger:#f26b64; --danger-soft:rgba(224,71,63,.17);
+    --blue:#6ea3ff; --blue-soft:rgba(58,125,224,.2);
+    --sh:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);
+  }
+  html[data-theme="dark"] body{background:#0e0e0f}
+  html[data-theme="dark"] ::placeholder{color:#8e8e93;opacity:1}
+  html[data-theme="dark"] input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px #1c1c1f inset;-webkit-text-fill-color:#f5f5f5;caret-color:#f5f5f5}
+  html[data-theme="dark"] .theme-b:hover,
+  html[data-theme="dark"] .chip:hover,
+  html[data-theme="dark"] .tpl-item:hover{border-color:rgba(255,255,255,.24)}
+
+  /* Connexion */
+  html[data-theme="dark"] #login{background:radial-gradient(circle at 20% 10%,#2b2460,#0e0e0f 55%)}
+  html[data-theme="dark"] #login .box{border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 80px rgba(0,0,0,.6)}
+  html[data-theme="dark"] #login input:focus{background:#1c1c1f}
+
+  /* Barre du haut */
+  html[data-theme="dark"] .side{background:#0e0e0f}
+  html[data-theme="dark"] .nav-b{color:#c4c4ca}
+  html[data-theme="dark"] .nav-b .pill.hot,
+  html[data-theme="dark"] .chip.on{background:#6d5ef8;color:#fff}
+  html[data-theme="dark"] #lTotal{--violet:#6d5ef8}
+
+  /* Boutons */
+  html[data-theme="dark"] .b-main{background:#6d5ef8}
+  html[data-theme="dark"] .b-main:hover{background:#7d70fa}
+  html[data-theme="dark"] .b-ok{background:#12895a}
+  html[data-theme="dark"] .b-ok:hover{background:#17a06a}
+  html[data-theme="dark"] .b-dark,
+  html[data-theme="dark"] .chip:has(input:checked){color:#0e0e0f}
+  html[data-theme="dark"] .b-out:hover{border-color:rgba(255,255,255,.24)}
+  html[data-theme="dark"] .b-danger{border-color:rgba(242,107,100,.42)}
+
+  /* Statuts, pastilles, bandeaux */
+  html[data-theme="dark"] .st-warn,
+  html[data-theme="dark"] .hero-dot.warn,
+  html[data-theme="dark"] .sc-prio,
+  html[data-theme="dark"] .badge.rv{color:#f0a64a}
+  html[data-theme="dark"] .banner.warn{border-color:rgba(224,138,44,.36);color:#f5b971}
+  html[data-theme="dark"] .banner.err{border-color:rgba(242,107,100,.38);color:#ff9b94}
+  html[data-theme="dark"] .banner.info,
+  html[data-theme="dark"] .selbar{border-color:rgba(154,140,255,.34)}
+  html[data-theme="dark"] .chip.g{background:#2a2a2e;color:#d1d1d6}
+
+  /* Formulaires */
+  html[data-theme="dark"] .inp{background:#1c1c1f}
+  html[data-theme="dark"] .seg{background:#1c1c1f}
+  html[data-theme="dark"] .seg label:has(input:checked){background:#2f2f34;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  html[data-theme="dark"] .swi i{background:#3a3a40}
+  html[data-theme="dark"] .swi input:checked + i{background:#6d5ef8}
+  html[data-theme="dark"] .vars button{border-color:rgba(154,140,255,.45)}
+  html[data-theme="dark"] .vars button:hover{background:rgba(109,94,248,.3)}
+
+  /* Graphiques */
+  html[data-theme="dark"] .brow .tr>i.t-qual{background:#6b6b75}
+  html[data-theme="dark"] #bxDetail{--violet-dark:#6d5ef8}
+
+  /* Réponses, modale, message flottant */
+  html[data-theme="dark"] .rep-it.on{background:rgba(109,94,248,.18)}
+  html[data-theme="dark"] .ov{background:rgba(0,0,0,.62)}
+  html[data-theme="dark"] .mod{border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 70px rgba(0,0,0,.6)}
+  html[data-theme="dark"] .toast{color:#0e0e0f;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+
+  /* Aperçu d'e-mail : le message tel que le destinataire le reçoit,
+     toile blanche et couleurs du thème clair. */
+  html[data-theme="dark"] .mail{
+    --ink:#15161f; --paper:#f7f6fe; --panel:#fff; --muted:#5b5d72; --line:#ebe9f7; --line-2:#f3f2fb;
+    --violet:#6d5ef8; --violet-dark:#4a3fd0; --violet-soft:#efecff;
+    color-scheme:light;color:var(--ink);border-color:rgba(255,255,255,.14)
+  }
 </style>
 </head>
 <body>
 
 <!-- ============================ CONNEXION ============================ -->
 <div id="login">
+  <button type="button" class="theme-b" aria-label="Passer en mode sombre" title="Passer en mode sombre"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
   <div class="box">
     <div class="logo-row">
       <img src="https://piloz.fr/assets/icons/favicon-192.png" alt="">
@@ -451,6 +545,7 @@
     </nav>
     <div class="side-foot">
       <span class="lbl">Connecté en tant que</span><b id="whoami">—</b>
+      <button type="button" class="theme-b" aria-label="Passer en mode sombre" title="Passer en mode sombre"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
       <button type="button" id="bLogout">Se déconnecter</button>
     </div>
   </aside>
@@ -1075,6 +1170,28 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script>
+/* Mode clair / sombre : bouton soleil / lune, choix gardé sur ce navigateur. */
+(function(){
+"use strict";
+const root = document.documentElement;
+const MOON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+const SUN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+function applyTheme(theme, remember){
+  root.dataset.theme = theme;
+  root.style.colorScheme = theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#0e0e0f" : "#ffffff");
+  if (remember){ try { localStorage.setItem("piloz_theme", theme); } catch(e){} }
+  const label = theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre";
+  document.querySelectorAll(".theme-b").forEach(b => { b.setAttribute("aria-label", label); b.title = label; b.innerHTML = theme === "dark" ? SUN : MOON; });
+}
+document.querySelectorAll(".theme-b").forEach(b => b.addEventListener("click", () => applyTheme(root.dataset.theme === "dark" ? "light" : "dark", true)));
+// Un autre onglet a changé de thème : celui-ci suit.
+window.addEventListener("storage", e => { if (e.key === "piloz_theme") applyTheme(e.newValue === "dark" ? "dark" : "light", false); });
+applyTheme(root.dataset.theme === "dark" ? "dark" : "light", false);
+})();
+</script>
 <script>
 (function(){
 "use strict";
