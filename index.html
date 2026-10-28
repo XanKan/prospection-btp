@@ -301,6 +301,12 @@
   .neg-mail pre{margin:0;padding:12px 16px;white-space:pre-wrap;font:inherit;font-size:.85rem;line-height:1.5;max-height:420px;overflow:auto}
   .neg-vars{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
   .neg-vars button{font:600 .76rem/1 ui-monospace,Consolas,monospace;padding:5px 7px;border-radius:6px;background:var(--violet-soft);color:var(--violet-dark)}
+  .neg-zone-box{margin-top:12px}
+  .neg-zone-box summary{cursor:pointer;font-size:.88rem}
+  .neg-zone-acts{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 8px}
+  .neg-zone{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px 10px;max-height:280px;overflow:auto;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm)}
+  .neg-zone label{display:flex;gap:6px;align-items:center;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .neg-zone label b{font-variant-numeric:tabular-nums;min-width:20px}
   .tab{padding:9px 14px;border-radius:8px 8px 0 0;font-weight:700;font-size:.87rem;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
   .tab:hover{color:var(--ink)}
   .tab.on{color:var(--violet);border-bottom-color:var(--violet)}
@@ -553,13 +559,13 @@
     </div>
     <nav class="side-nav">
       <button class="nav-b on" data-view="auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg><span class="t">Tableau de bord</span></button>
-      <button class="nav-b" data-view="negoces"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 4.5 4h15L21 9"/><path d="M3 9h18v1.5a2.5 2.5 0 0 1-4.5 1.5 2.5 2.5 0 0 1-4.5 0 2.5 2.5 0 0 1-4.5 0A2.5 2.5 0 0 1 3 10.5z"/><path d="M5 12.5V20h14v-7.5"/><path d="M10 20v-4h4v4"/></svg><span class="t">Négoces</span><span class="pill num" id="pillNeg" hidden>0</span></button>
       <button class="nav-b" data-view="boites"><span class="t">Boîtes d'envoi</span><span class="pill num" id="pillBoites" hidden>0</span></button>
       <button class="nav-b" data-view="log"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg><span class="t">Envois</span><span class="pill num" id="pillQueue">0</span></button>
       <button class="nav-b" data-view="rep"><span class="t">Réponses</span><span class="pill num hot" id="pillRep" hidden>0</span></button>
       <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
       <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
       <button class="nav-b" data-view="revendeurs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg><span class="t">Revendeurs</span></button>
+      <button class="nav-b" data-view="negoces"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 4.5 4h15L21 9"/><path d="M3 9h18v1.5a2.5 2.5 0 0 1-4.5 1.5 2.5 2.5 0 0 1-4.5 0 2.5 2.5 0 0 1-4.5 0A2.5 2.5 0 0 1 3 10.5z"/><path d="M5 12.5V20h14v-7.5"/><path d="M10 20v-4h4v4"/></svg><span class="t">Négoces</span><span class="pill num" id="pillNeg" hidden>0</span></button>
       <button class="nav-b" data-view="clients"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><span class="t">Clients</span><span class="pill num" id="pillClients" hidden>0</span></button>
       <button class="nav-b" data-view="supp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span class="t">Exclusions</span></button>
       <button class="nav-b" data-view="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span class="t">Réglages</span></button>
@@ -717,6 +723,30 @@
                 <button type="button" class="b b-out b-sm" id="bNegTest">M'envoyer un test</button>
               </div>
               <div class="neg-mail" id="negPreview" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px" id="negFind">
+          <div class="card-h"><h2>Trouver des négoces</h2><span class="sub">annuaire officiel des entreprises, puis le site de chaque négoce</span>
+            <div class="right">
+              <label class="note" for="negFindMax" style="align-self:center">Combien</label>
+              <input type="number" class="inp" id="negFindMax" min="1" max="100" value="30" style="width:84px">
+              <button type="button" class="b b-main b-sm" id="bNegFind">Trouver des négoces</button>
+              <button type="button" class="b b-danger b-sm" id="bNegFindStop" hidden>Arrêter</button>
+            </div>
+          </div>
+          <div class="card-b">
+            <p class="note">Négoces de bois et de matériaux de construction (NAF 46.73A) : PME actives de 10 à 199 salariés, 10 établissements au plus, sans les grands groupes ni leurs filiales (Point.P, Cedeo, Chausson, Samse…) ; les magasins indépendants sous enseigne Gedimat, Bigmat ou Tout Faire sont gardés. Trois au plus par département. Un négoce n'est ajouté qu'avec une adresse e-mail publiée sur son propre site (jamais devinée) ; il arrive en « Candidat », rien n'est envoyé. Un président holding est noté sur la fiche.</p>
+            <p class="note" id="negFindEngine" hidden>Sans moteur de recherche branché, le site de chaque négoce est déduit de son nom : la recherche prend environ une minute par lot et trouve moins d'adresses.</p>
+            <details class="neg-zone-box" id="negZoneBox">
+              <summary>Zone : <b id="negZoneSum">—</b> <span class="note">(modifier)</span></summary>
+              <div class="neg-zone-acts"><button type="button" class="b b-out b-xs" data-zone="all">Tout cocher</button><button type="button" class="b b-out b-xs" data-zone="none">Tout décocher</button><button type="button" class="b b-out b-xs" data-zone="default">Zone par défaut</button></div>
+              <div class="neg-zone" id="negZone"></div>
+            </details>
+            <div id="negFindRun" hidden>
+              <div class="meter" style="height:8px"><i id="negFindBar" style="width:0"></i></div>
+              <p class="note" id="negFindTxt" style="margin-top:8px"></p>
             </div>
           </div>
         </div>
@@ -1545,7 +1575,7 @@ function renderNegoces(){
   $("nkInsF").textContent = $("nkSubF").textContent = negMonthLabel();
   if (!$("negMonth").value) $("negMonth").value = NEG.month || parisDay(0).slice(0, 7);
   $("negBanner").innerHTML = d.comptoir_actif ? "" : '<div class="banner warn"><span class="grow"><b>L\'offre comptoir est coupée.</b> piloz.fr/comptoir propose l\'essai habituel de 14 jours, quel que soit le négoce.</span></div>';
-  renderNegRanking(); renderNegTemplate(); renderNegTable();
+  renderNegRanking(); renderNegTemplate(); renderNegTable(); negZoneInit();
 }
 function renderNegRanking(){
   const ranking = NEG.data.classement || [], win = ranking[0] && ranking[0].abonnes > 0 ? ranking[0] : null;
@@ -1783,6 +1813,107 @@ async function negSend(ids, box){
   $("negMsg").textContent = ok + " mail(s) envoyé(s)." + (errors.length ? " " + errors.length + " non envoyé(s) : " + errors.join(" ; ") : "");
   await loadNegoces();
 }
+
+// Recherche automatique : l'écran enchaîne les appels negoces.search (40 s au plus chacun)
+// en renvoyant le curseur, jusqu'au nombre voulu ou jusqu'au dernier département coché.
+const DEP_NOMS = {
+  "01":"Ain","02":"Aisne","03":"Allier","04":"Alpes-de-Haute-Provence","05":"Hautes-Alpes","06":"Alpes-Maritimes","07":"Ardèche","08":"Ardennes","09":"Ariège","10":"Aube",
+  "11":"Aude","12":"Aveyron","13":"Bouches-du-Rhône","14":"Calvados","15":"Cantal","16":"Charente","17":"Charente-Maritime","18":"Cher","19":"Corrèze","21":"Côte-d'Or",
+  "22":"Côtes-d'Armor","23":"Creuse","24":"Dordogne","25":"Doubs","26":"Drôme","27":"Eure","28":"Eure-et-Loir","29":"Finistère","30":"Gard","31":"Haute-Garonne",
+  "32":"Gers","33":"Gironde","34":"Hérault","35":"Ille-et-Vilaine","36":"Indre","37":"Indre-et-Loire","38":"Isère","39":"Jura","40":"Landes","41":"Loir-et-Cher",
+  "42":"Loire","43":"Haute-Loire","44":"Loire-Atlantique","45":"Loiret","46":"Lot","47":"Lot-et-Garonne","48":"Lozère","49":"Maine-et-Loire","50":"Manche","51":"Marne",
+  "52":"Haute-Marne","53":"Mayenne","54":"Meurthe-et-Moselle","55":"Meuse","56":"Morbihan","57":"Moselle","58":"Nièvre","59":"Nord","60":"Oise","61":"Orne",
+  "62":"Pas-de-Calais","63":"Puy-de-Dôme","64":"Pyrénées-Atlantiques","65":"Hautes-Pyrénées","66":"Pyrénées-Orientales","67":"Bas-Rhin","68":"Haut-Rhin","69":"Rhône","70":"Haute-Saône","71":"Saône-et-Loire",
+  "72":"Sarthe","73":"Savoie","74":"Haute-Savoie","75":"Paris","76":"Seine-Maritime","77":"Seine-et-Marne","78":"Yvelines","79":"Deux-Sèvres","80":"Somme","81":"Tarn",
+  "82":"Tarn-et-Garonne","83":"Var","84":"Vaucluse","85":"Vendée","86":"Vienne","87":"Haute-Vienne","88":"Vosges","89":"Yonne","90":"Territoire de Belfort","91":"Essonne",
+  "92":"Hauts-de-Seine","93":"Seine-Saint-Denis","94":"Val-de-Marne","95":"Val-d'Oise"
+};
+const NEG_SKIP = [
+  ["no_email", "sans e-mail sur leur site"], ["deja_connu", "déjà dans la liste"], ["deja_examine", "déjà examinés sans e-mail"], ["groupe", "grands groupes"],
+  ["effectif", "hors effectif"], ["etablissements", "plus de 10 établissements"], ["hors_zone", "siège hors zone"], ["exclu", "adresses exclues"], ["quota_departement", "au-delà de 3 par département"]
+];
+const NEGF = { zone: null, running: false, stop: false };
+function negZoneInit(){
+  const s = NEG.data && NEG.data.search;
+  $("negFind").hidden = !s;
+  if (s) $("negFindEngine").hidden = Boolean(s.engine);
+  if (!s || NEGF.zone) return;
+  NEGF.zone = new Set(s.default_deps);
+  renderNegZone();
+}
+function renderNegZone(){
+  const s = NEG.data.search;
+  $("negZone").innerHTML = s.all_deps.map(d => '<label title="' + esc(d + " " + (DEP_NOMS[d] || "")) + '"><input type="checkbox" class="cbx" value="' + esc(d) + '"' + (NEGF.zone.has(d) ? " checked" : "") +
+    "><b>" + esc(d) + "</b> " + esc(DEP_NOMS[d] || "") + "</label>").join("");
+  negZoneSum();
+}
+function negZoneSum(){
+  const s = NEG.data.search, n = NEGF.zone.size, def = new Set(s.default_deps);
+  const isDefault = n === def.size && [...NEGF.zone].every(d => def.has(d));
+  $("negZoneSum").textContent = isDefault ? n + " départements : toute la France sauf le Grand Ouest, la Corse et l'outre-mer" : n + " département" + (n > 1 ? "s" : "") + " choisi" + (n > 1 ? "s" : "");
+  $("bNegFind").disabled = NEGF.running || !n;
+}
+$("negZone").addEventListener("change", ev => {
+  const c = ev.target.closest("input");
+  if (!c) return;
+  if (c.checked) NEGF.zone.add(c.value); else NEGF.zone.delete(c.value);
+  negZoneSum();
+});
+document.querySelector("#negZoneBox .neg-zone-acts").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-zone]");
+  if (!b || !NEG.data || !NEG.data.search) return;
+  const s = NEG.data.search;
+  NEGF.zone = new Set(b.dataset.zone === "all" ? s.all_deps : b.dataset.zone === "none" ? [] : s.default_deps);
+  renderNegZone();
+});
+function negFindProgress(t, target, end){
+  const pct = Math.max(t.added / target, t.total ? t.dep / t.total : 0);
+  $("negFindBar").style.width = Math.min(100, Math.round(pct * 100)) + "%";
+  const parts = [fmt(t.added) + " ajouté" + (t.added > 1 ? "s" : "") + " sur " + fmt(target), fmt(t.examined) + " examiné" + (t.examined > 1 ? "s" : "")]
+    .concat(NEG_SKIP.filter(([k]) => t.skipped[k]).map(([k, l]) => fmt(t.skipped[k]) + " " + l));
+  const where = "départements parcourus : " + fmt(Math.min(t.dep, t.total)) + " / " + fmt(t.total);
+  $("negFindTxt").textContent = (end ? end + " " : "En cours… ") + parts.join(" · ") + " · " + where + ".";
+}
+$("bNegFind").addEventListener("click", async () => {
+  if (NEGF.running || !NEG.data || !NEG.data.search) return;
+  const target = Math.max(1, Math.min(100, Math.round(Number($("negFindMax").value) || 30)));
+  // Ordre tiré au hasard à chaque recherche : les négoces se répartissent sur toute la zone.
+  const deps = [...NEGF.zone];
+  for (let i = deps.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [deps[i], deps[j]] = [deps[j], deps[i]]; }
+  if (!deps.length) return toast("Cochez au moins un département.", 5000);
+  NEGF.running = true; NEGF.stop = false;
+  $("bNegFind").disabled = true; $("bNegFindStop").hidden = false; $("bNegFindStop").disabled = false; $("negFindRun").hidden = false;
+  const t = { added: 0, examined: 0, skipped: {}, dep: 0, total: deps.length };
+  let cursor = null, done = false, failures = 0, error = "";
+  negFindProgress(t, target);
+  while (!NEGF.stop && t.added < target && !done){
+    try {
+      const r = await api("negoces.search", { deps, cursor, max: target - t.added });
+      failures = 0;
+      t.added += r.added || 0; t.examined += r.examined || 0;
+      for (const [k, v] of Object.entries(r.skipped || {})) t.skipped[k] = (t.skipped[k] || 0) + (v || 0);
+      t.dep = r.dep_index || 0; cursor = r.cursor; done = Boolean(r.done);
+    } catch(e){
+      if (e.code === "session"){ error = e.message; break; }
+      if (++failures >= 3){ error = e.message; break; }
+      await sleep(2000);
+    }
+    negFindProgress(t, target);
+  }
+  NEGF.running = false;
+  $("bNegFindStop").hidden = true;
+  const end = error ? "Recherche interrompue (" + error + ")." : NEGF.stop ? "Recherche arrêtée." : t.added >= target ? "Terminé : nombre atteint." : "Terminé : tous les départements cochés ont été parcourus.";
+  negFindProgress(t, target, end);
+  if (!error) $("negFindBar").style.width = "100%";
+  negZoneSum();
+  if (t.added) toast(t.added + " négoce" + (t.added > 1 ? "s ajoutés" : " ajouté") + " en « Candidat ». Rien n'a été envoyé.", 6000);
+  await loadNegoces();
+});
+$("bNegFindStop").addEventListener("click", () => {
+  NEGF.stop = true;
+  $("bNegFindStop").disabled = true;
+  $("negFindTxt").textContent += " Arrêt à la fin de l'étape en cours…";
+});
 
 /* ============================================================
    CLIENTS — comptes Piloz réels et mail de prise en main
