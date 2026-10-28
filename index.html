@@ -288,6 +288,19 @@
   .espace-mail{border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .espace-mail pre{margin:0;padding:12px 16px;white-space:pre-wrap;font:inherit;font-size:.86rem;line-height:1.5;max-height:340px;overflow:auto}
   @media (max-width:900px){.espace-grid{grid-template-columns:1fr}}
+  /* Négoces (offre comptoir) */
+  .neg-win{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:var(--r);background:var(--warn-soft);border:1px solid rgba(245,166,35,.35)}
+  .neg-win .cup{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#b96c14;box-shadow:var(--sh)}
+  .neg-win b{display:block;font-size:1.02rem}
+  .neg-rank{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+  .neg-rank li{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;gap:10px;align-items:center;font-size:.86rem;padding:6px 2px;border-bottom:1px solid var(--line-2)}
+  .neg-rank li .n{font-weight:850;color:var(--muted);text-align:center}
+  .neg-code{display:inline-flex;align-items:center;gap:6px;font:600 .78rem/1.2 ui-monospace,Consolas,monospace;background:var(--line-2);padding:3px 7px;border-radius:6px}
+  .neg-acts{display:flex;gap:4px;flex-wrap:wrap}
+  .neg-mail{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:10px}
+  .neg-mail pre{margin:0;padding:12px 16px;white-space:pre-wrap;font:inherit;font-size:.85rem;line-height:1.5;max-height:420px;overflow:auto}
+  .neg-vars{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .neg-vars button{font:600 .76rem/1 ui-monospace,Consolas,monospace;padding:5px 7px;border-radius:6px;background:var(--violet-soft);color:var(--violet-dark)}
   .tab{padding:9px 14px;border-radius:8px 8px 0 0;font-weight:700;font-size:.87rem;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
   .tab:hover{color:var(--ink)}
   .tab.on{color:var(--violet);border-bottom-color:var(--violet)}
@@ -540,6 +553,7 @@
     </div>
     <nav class="side-nav">
       <button class="nav-b on" data-view="auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg><span class="t">Tableau de bord</span></button>
+      <button class="nav-b" data-view="negoces"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 4.5 4h15L21 9"/><path d="M3 9h18v1.5a2.5 2.5 0 0 1-4.5 1.5 2.5 2.5 0 0 1-4.5 0 2.5 2.5 0 0 1-4.5 0A2.5 2.5 0 0 1 3 10.5z"/><path d="M5 12.5V20h14v-7.5"/><path d="M10 20v-4h4v4"/></svg><span class="t">Négoces</span><span class="pill num" id="pillNeg" hidden>0</span></button>
       <button class="nav-b" data-view="boites"><span class="t">Boîtes d'envoi</span><span class="pill num" id="pillBoites" hidden>0</span></button>
       <button class="nav-b" data-view="log"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg><span class="t">Envois</span><span class="pill num" id="pillQueue">0</span></button>
       <button class="nav-b" data-view="rep"><span class="t">Réponses</span><span class="pill num hot" id="pillRep" hidden>0</span></button>
@@ -660,6 +674,68 @@
           <div class="card">
             <div class="card-h"><h2>Recherche de revendeurs</h2><span class="sub" id="dashRvLastAt"></span><div class="right"><button type="button" class="b b-out b-xs" data-go="revendeurs">Ciblage</button></div></div>
             <div class="card-b"><p class="note" id="dashRvReport"></p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== NÉGOCES (offre comptoir) ==================== -->
+      <section class="view" id="v-negoces">
+        <div id="negBanner"></div>
+        <div class="kpis" style="margin-top:0">
+          <div class="kpi kd"><div class="lab">Candidats</div><div class="val num" id="nkCand">0</div><div class="foot">à contacter</div></div>
+          <div class="kpi ka"><div class="lab">Contactés</div><div class="val num" id="nkSent">0</div><div class="foot">mail de proposition parti</div></div>
+          <div class="kpi kb"><div class="lab">Ont accepté</div><div class="val num" id="nkYes">0</div><div class="foot" id="nkYesF">flyers à envoyer</div></div>
+          <div class="kpi kb"><div class="lab">Flyers envoyés</div><div class="val num" id="nkFly">0</div><div class="foot">partenaires en place</div></div>
+          <div class="kpi kc"><div class="lab">Artisans inscrits</div><div class="val num" id="nkIns">0</div><div class="foot" id="nkInsF">ce mois-ci</div></div>
+          <div class="kpi kc"><div class="lab">Abonnés</div><div class="val num" id="nkSub">0</div><div class="foot" id="nkSubF">ce mois-ci</div></div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h"><h2>Classement du mois</h2><span class="sub">le petit-déjeuner de l'équipe au n° 1</span>
+              <div class="right"><input type="month" class="inp" id="negMonth" style="width:auto" aria-label="Mois du classement"></div>
+            </div>
+            <div class="card-b">
+              <div id="negWinner"></div>
+              <ol class="neg-rank" id="negRank"></ol>
+              <p class="note" style="margin-top:10px">Compte les artisans inscrits par piloz.fr/comptoir avec ce négoce, et ceux passés à un abonnement payant dans le mois. À égalité, le négoce arrivé le premier à ce nombre l'emporte. Il faut au moins un abonné pour gagner.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2>Le mail aux négoces</h2><span class="sub" id="negTplSub"></span></div>
+            <div class="card-b">
+              <div class="fld"><label for="negSubj">Objet</label><input class="inp" id="negSubj" maxlength="200"></div>
+              <div class="fld" style="margin-top:10px"><label for="negBody">Texte</label><textarea class="inp" id="negBody" rows="9"></textarea></div>
+              <div class="neg-vars" id="negVars"></div>
+              <div class="row2">
+                <div class="fld"><label for="negBox">Boîte d'envoi</label><select class="inp" id="negBox" style="width:100%"></select></div>
+                <div class="fld"><label for="negPrevFor">Aperçu pour</label><select class="inp" id="negPrevFor" style="width:100%"></select></div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+                <button type="button" class="b b-main b-sm" id="bNegTplSave">Enregistrer le mail</button>
+                <button type="button" class="b b-out b-sm" id="bNegPreview">Aperçu</button>
+                <button type="button" class="b b-out b-sm" id="bNegTest">M'envoyer un test</button>
+              </div>
+              <div class="neg-mail" id="negPreview" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-h"><h2>Les négoces</h2><span class="sub" id="negCount"></span>
+            <div class="right">
+              <input type="file" id="negFile" accept=".csv,text/csv" hidden>
+              <button type="button" class="b b-out b-sm" id="bNegImport">Importer un CSV</button>
+              <button type="button" class="b b-main b-sm" id="bNegSend" disabled>Envoyer le mail aux candidats cochés</button>
+            </div>
+          </div>
+          <div class="tabs" id="negTabs"></div>
+          <div class="tbar"><input class="inp" id="negQ" type="search" placeholder="Rechercher un négoce, une ville, un département, une adresse…" style="max-width:420px"><span class="note" id="negSelInfo"></span><span class="note" id="negMsg"></span></div>
+          <div class="tscroll">
+            <table>
+              <thead><tr><th style="width:34px"><input type="checkbox" class="cbx" id="negAll" aria-label="Cocher les candidats affichés"></th><th>Négoce</th><th>E-mail</th><th>Dirigeant</th><th style="width:170px">Statut</th><th style="width:200px">Code comptoir</th><th style="width:250px"></th></tr></thead>
+              <tbody id="negRows"></tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -1325,7 +1401,7 @@ async function enter(){
   if (!state) return;
   $("login").hidden = true;
   $("app").hidden = false;
-  if (!booted){ booted = true; startPolling(); }
+  if (!booted){ booted = true; startPolling(); loadNegoces(true); }
 }
 
 async function boot(){
@@ -1391,6 +1467,7 @@ async function api(action, payload){
    ============================================================ */
 const VIEWS = {
   auto:     { t:"Tableau de bord", s:"Recherche d'entreprises et envoi des e-mails de prospection, en continu et sans intervention." },
+  negoces:  { t:"Négoces", s:"Les négoces partenaires de l'offre comptoir : mail de proposition, flyers au comptoir et classement du petit-déjeuner." },
   boites:   { t:"Boîtes d'envoi", s:"Chaque boîte et chaque domaine : quotas, montée progressive, résultats et santé." },
   rep:      { t:"Réponses", s:"Les réponses des boîtes d'envoi, réunies et classées automatiquement." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
@@ -1413,6 +1490,7 @@ function showView(v){
   if (v === "log") loadLog();
   if (v === "supp") loadSupp();
   if (v === "clients") loadClients();
+  if (v === "negoces") loadNegoces();
   if (v === "boites") loadBoxes();
   if (v === "rep") loadReplies();
   if (v === "log"){ fillLogFacets(); fillViews(); }
@@ -1426,6 +1504,285 @@ document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]");
   if (g){ ev.preventDefault(); showView(g.getAttribute("data-go")); }
 });
+
+/* ============================================================
+   NÉGOCES — partenaires de l'offre comptoir (flyers au comptoir)
+   ============================================================ */
+// Statut tenu côté serveur (comptoir_negoces.statut) : un négoce qui « a accepté » ou dont
+// les flyers sont partis est proposé aux artisans sur piloz.fr/comptoir.
+const NEG_STATUTS = {
+  candidat: { l: "Candidat", b: "off" }, mail_envoye: { l: "Mail envoyé", b: "queued" }, accepte: { l: "A accepté", b: "sent" },
+  flyers_envoyes: { l: "Flyers envoyés", b: "clic" }, refuse: { l: "Refus", b: "failed" }, ecarte: { l: "Écarté", b: "skipped" }
+};
+const NEG_TABS = [["all", "Tous"], ["candidat", "Candidats"], ["mail_envoye", "Contactés"], ["accepte", "Ont accepté"], ["flyers_envoyes", "Flyers envoyés"], ["refuse", "Refus"], ["ecarte", "Écartés"]];
+const NEG = { data: null, tab: "all", q: "", sel: new Set(), month: "", dirty: false, field: "negBody" };
+const negLink = code => "https://piloz.fr/comptoir?n=" + encodeURIComponent(code);
+const negList = () => (NEG.data && NEG.data.negoces) || [];
+const negById = id => negList().find(n => n.id === id);
+const negSendable = n => Boolean(n && n.statut === "candidat" && n.email);
+const CUP_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>';
+
+async function loadNegoces(silent){
+  try {
+    NEG.data = await api("negoces.state", NEG.month ? { month: NEG.month } : {});
+    renderNegoces();
+  } catch(e){
+    if (silent || e.code === "session") return;
+    $("negRows").innerHTML = '<tr><td colspan="7" class="empty"><b>Négoces indisponibles</b>' + esc(e.message) + "</td></tr>";
+  }
+}
+function negMonthLabel(){
+  const [y, m] = (NEG.month || parisDay(0).slice(0, 7)).split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+}
+function renderNegoces(){
+  const d = NEG.data, t = d.tally || {}, ranking = d.classement || [];
+  $("pillNeg").hidden = !t.accepte; $("pillNeg").textContent = t.accepte || 0;
+  $("nkCand").textContent = fmt(t.candidat || 0); $("nkSent").textContent = fmt(t.mail_envoye || 0);
+  $("nkYes").textContent = fmt(t.accepte || 0); $("nkFly").textContent = fmt(t.flyers_envoyes || 0);
+  $("nkYesF").textContent = t.accepte ? "affiche et flyers à poster" : "aucun envoi en attente";
+  $("nkIns").textContent = fmt(ranking.reduce((s, r) => s + r.inscrits, 0)); $("nkSub").textContent = fmt(ranking.reduce((s, r) => s + r.abonnes, 0));
+  $("nkInsF").textContent = $("nkSubF").textContent = negMonthLabel();
+  if (!$("negMonth").value) $("negMonth").value = NEG.month || parisDay(0).slice(0, 7);
+  $("negBanner").innerHTML = d.comptoir_actif ? "" : '<div class="banner warn"><span class="grow"><b>L\'offre comptoir est coupée.</b> piloz.fr/comptoir propose l\'essai habituel de 14 jours, quel que soit le négoce.</span></div>';
+  renderNegRanking(); renderNegTemplate(); renderNegTable();
+}
+function renderNegRanking(){
+  const ranking = NEG.data.classement || [], win = ranking[0] && ranking[0].abonnes > 0 ? ranking[0] : null;
+  $("negWinner").innerHTML = win
+    ? '<div class="neg-win"><span class="cup">' + CUP_SVG + "</span><div><b>" + esc(win.nom) + (win.ville ? " · " + esc(win.ville) : "") + '</b><span class="note">' +
+      fmt(win.abonnes) + " abonné(s) et " + fmt(win.inscrits) + " inscrit(s) en " + esc(negMonthLabel()) + " : le petit-déjeuner de l'équipe lui revient.</span></div></div>"
+    : '<p class="note">Pas encore de gagnant en ' + esc(negMonthLabel()) + " : il faut au moins un artisan abonné.</p>";
+  $("negRank").innerHTML = ranking.length
+    ? ranking.map((r, i) => '<li><span class="n">' + (i + 1) + "</span><span><b>" + esc(r.nom) + '</b> <span class="note">' + esc(r.ville || "") + '</span></span><span class="note">' +
+      fmt(r.inscrits) + " inscrit(s)</span><span><b>" + fmt(r.abonnes) + "</b> abonné(s)</span></li>").join("")
+    : '<li><span></span><span class="note">Aucun négoce partenaire pour l\'instant.</span></li>';
+}
+function renderNegTemplate(){
+  const d = NEG.data;
+  if (!NEG.dirty){ $("negSubj").value = (d.template && d.template.subject) || ""; $("negBody").value = (d.template && d.template.body) || ""; }
+  $("negVars").innerHTML = (d.variables || []).map(v => '<button type="button" data-negvar="' + esc(v) + '">{' + esc(v) + "}</button>").join("");
+  $("negTplSub").textContent = "{bonjour} donne « Bonjour Prénom », ou « Bonjour » sans prénom";
+  const box = $("negBox"), keep = box.value, boxes = d.boxes || [];
+  box.innerHTML = boxes.length
+    ? boxes.map(b => '<option value="' + esc(b) + '">' + esc(b) + " · " + fmt((d.sent_today || {})[b] || 0) + "/" + fmt(d.daily_max) + " aujourd'hui</option>").join("")
+    : '<option value="">Aucune boîte dédiée avec mot de passe</option>';
+  box.value = keep && boxes.includes(keep) ? keep : (d.default_box || "");
+  const prev = $("negPrevFor"), keepP = prev.value;
+  prev.innerHTML = '<option value="">Négoce d\'exemple</option>' + negList().filter(n => n.statut !== "ecarte")
+    .map(n => '<option value="' + esc(n.id) + '">' + esc(n.nom) + (n.ville ? " · " + esc(n.ville) : "") + "</option>").join("");
+  if (keepP && negById(keepP)) prev.value = keepP;
+}
+function negFiltered(){
+  const q = NEG.q.trim().toLowerCase();
+  return negList().filter(n => (NEG.tab === "all" || n.statut === NEG.tab) &&
+    (!q || [n.nom, n.enseigne, n.ville, n.departement, n.email, n.dirigeant_prenom, n.dirigeant_nom, n.code, n.note].some(v => String(v || "").toLowerCase().includes(q))));
+}
+function negBtn(act, id, label, cls){ return '<button type="button" class="b ' + (cls || "b-out") + ' b-xs" data-negact="' + act + '" data-id="' + esc(id) + '">' + esc(label) + "</button>"; }
+function negRow(n){
+  const st = NEG_STATUTS[n.statut] || { l: n.statut, b: "off" };
+  const dates = [
+    n.mail_envoye_le ? "mail le " + dateFr(n.mail_envoye_le) + (n.mail_boite ? " (" + n.mail_boite + ")" : "") : "",
+    n.accepte_le ? "accord le " + dateFr(n.accepte_le) : "", n.flyers_envoyes_le ? "flyers le " + dateFr(n.flyers_envoyes_le) : ""
+  ].filter(Boolean).map(esc).join("<br>");
+  const acts = [negBtn("preview", n.id, "Aperçu")];
+  if (n.statut === "candidat" || n.statut === "mail_envoye") acts.push(negBtn("accept", n.id, "A accepté", "b-ok"));
+  if (n.statut === "accepte") acts.push(negBtn("flyers", n.id, "Flyers envoyés", "b-ok"));
+  if (["candidat", "mail_envoye", "accepte"].includes(n.statut)) acts.push(negBtn("refuse", n.id, "Refus"));
+  if (["candidat", "mail_envoye", "accepte", "refuse"].includes(n.statut)) acts.push(negBtn("ecarte", n.id, "Écarter"));
+  if (n.statut === "refuse" || n.statut === "ecarte") acts.push(negBtn("restore", n.id, "Rétablir"));
+  acts.push(negBtn("note", n.id, n.note ? "Modifier la note" : "Note"));
+  const where = [n.enseigne, [n.ville, n.departement ? "(" + n.departement + ")" : ""].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
+  const boss = [capitalName(n.dirigeant_prenom || ""), n.dirigeant_prenom ? capitalName(n.dirigeant_nom || "") : (n.dirigeant_nom || "")].filter(Boolean).join(" ");
+  return "<tr><td>" + (negSendable(n) ? '<input type="checkbox" class="cbx" data-negsel="' + esc(n.id) + '"' + (NEG.sel.has(n.id) ? " checked" : "") + ' aria-label="Cocher ' + esc(n.nom) + '">' : "") + "</td>" +
+    "<td><b>" + esc(n.nom) + '</b><br><span class="note">' + esc(where) + "</span>" + (n.site ? ' <span class="note">· ' + extLink(n.site, "site") + "</span>" : "") +
+    (n.adresse_postale ? '<br><span class="note"><b>Adresse :</b> ' + esc(n.adresse_postale) + "</span>" : "") + (n.note ? '<br><span class="note"><b>Note :</b> ' + esc(n.note) + "</span>" : "") + "</td>" +
+    "<td>" + (n.email ? esc(n.email) + (n.email_source ? '<br><span class="note">' + extLink(n.email_source, "trouvée ici") + "</span>" : "") : '<span class="note">aucune</span>') + "</td>" +
+    "<td>" + (boss ? esc(boss) : '<span class="note">—</span>') + "</td>" +
+    '<td><span class="badge ' + st.b + '">' + esc(st.l) + "</span>" + (dates ? '<br><span class="note">' + dates + "</span>" : "") + "</td>" +
+    '<td><span class="neg-code">' + esc(n.code) + '</span><br><button type="button" class="b b-out b-xs" style="margin-top:4px" data-negcopy="' + esc(n.code) + '">Copier le lien</button></td>' +
+    '<td><div class="neg-acts">' + acts.join("") + "</div></td></tr>";
+}
+function renderNegTable(){
+  const all = negList(), t = (NEG.data && NEG.data.tally) || {};
+  $("negTabs").innerHTML = NEG_TABS.map(([k, l]) => '<button type="button" class="tab' + (NEG.tab === k ? " on" : "") + '" data-negtab="' + k + '">' + l +
+    '<span class="pill num">' + fmt(k === "all" ? all.length : t[k] || 0) + "</span></button>").join("");
+  const rows = negFiltered();
+  $("negCount").textContent = all.length ? fmt(all.length) + " négoce(s), " + fmt(all.filter(n => n.email).length) + " avec une adresse e-mail" : "";
+  $("negRows").innerHTML = rows.length ? rows.map(negRow).join("")
+    : '<tr><td colspan="7" class="empty"><b>' + (all.length ? "Aucun négoce ici" : "Aucun négoce") + "</b>" + (all.length ? "Changez d'onglet ou de recherche." : "Importez le fichier des candidats (CSV, séparateur point-virgule).") + "</td></tr>";
+  negSelUpdate();
+}
+function negSelUpdate(){
+  for (const id of [...NEG.sel]) if (!negSendable(negById(id))) NEG.sel.delete(id);
+  const n = NEG.sel.size, visible = negFiltered().filter(negSendable);
+  $("bNegSend").disabled = !n;
+  $("bNegSend").textContent = n ? "Envoyer le mail à " + n + " candidat" + (n > 1 ? "s" : "") : "Envoyer le mail aux candidats cochés";
+  $("negSelInfo").textContent = n ? n + " coché(s)" : "";
+  $("negAll").checked = Boolean(visible.length) && visible.every(x => NEG.sel.has(x.id));
+  $("negAll").disabled = !visible.length;
+}
+$("negTabs").addEventListener("click", ev => { const t = ev.target.closest("[data-negtab]"); if (!t) return; NEG.tab = t.dataset.negtab; renderNegTable(); });
+$("negQ").addEventListener("input", () => { NEG.q = $("negQ").value; renderNegTable(); });
+$("negMonth").addEventListener("change", () => { NEG.month = $("negMonth").value; loadNegoces(); });
+$("negRows").addEventListener("change", ev => {
+  const c = ev.target.closest("[data-negsel]");
+  if (!c) return;
+  if (c.checked) NEG.sel.add(c.dataset.negsel); else NEG.sel.delete(c.dataset.negsel);
+  negSelUpdate();
+});
+$("negAll").addEventListener("change", ev => {
+  negFiltered().filter(negSendable).forEach(n => { if (ev.target.checked) NEG.sel.add(n.id); else NEG.sel.delete(n.id); });
+  renderNegTable();
+});
+
+// Modèle du mail : saisie libre, variables des négoces seulement, aperçu exact (pied de page compris).
+["negSubj", "negBody"].forEach(id => {
+  $(id).addEventListener("input", () => { NEG.dirty = true; });
+  $(id).addEventListener("focus", () => { NEG.field = id; });
+});
+$("negVars").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-negvar]");
+  if (!b) return;
+  const field = $(NEG.field), token = "{" + b.dataset.negvar + "}";
+  const start = field.selectionStart ?? field.value.length, end = field.selectionEnd ?? field.value.length;
+  field.value = field.value.slice(0, start) + token + field.value.slice(end);
+  field.focus(); field.selectionStart = field.selectionEnd = start + token.length;
+  NEG.dirty = true;
+});
+const negTemplate = () => ({ subject: $("negSubj").value, body: $("negBody").value });
+function negMailHtml(p){
+  return '<div class="mail-h"><div><span>De : </span>' + esc(p.from) + "</div><div><span>À : </span>" + esc(p.to) + '</div><div><span>Objet : </span><b>' + esc(p.subject) + "</b></div></div><pre>" + esc(p.body) + "</pre>";
+}
+$("bNegTplSave").addEventListener("click", async ev => {
+  const btn = ev.currentTarget;
+  busy(btn, true, "Enregistrement…");
+  try { await api("negoces.template.save", negTemplate()); NEG.dirty = false; toast("Mail aux négoces enregistré."); }
+  catch(e){ if (e.code !== "session") toast(e.message, 7000); }
+  finally { busy(btn, false); }
+});
+$("bNegPreview").addEventListener("click", async ev => {
+  const btn = ev.currentTarget;
+  busy(btn, true, "Aperçu…");
+  try {
+    const p = await api("negoces.preview", { id: $("negPrevFor").value || undefined, box: $("negBox").value, template: negTemplate() });
+    $("negPreview").innerHTML = negMailHtml(p); $("negPreview").hidden = false;
+  } catch(e){ if (e.code !== "session") toast(e.message, 7000); }
+  finally { busy(btn, false); }
+});
+$("bNegTest").addEventListener("click", async ev => {
+  const btn = ev.currentTarget;
+  busy(btn, true, "Envoi…");
+  try {
+    const r = await api("negoces.test", { id: $("negPrevFor").value || undefined, box: $("negBox").value, template: negTemplate() });
+    toast("Test envoyé à " + r.to + " depuis " + r.box + ".", 6000);
+  } catch(e){ if (e.code !== "session") toast(e.message, 7000); }
+  finally { busy(btn, false); }
+});
+
+// Import du fichier des candidats (negoces-candidats.csv) : un négoce déjà connu garde son statut.
+$("bNegImport").addEventListener("click", () => $("negFile").click());
+$("negFile").addEventListener("change", async () => {
+  const file = $("negFile").files[0];
+  $("negFile").value = "";
+  if (!file) return;
+  if (file.size > 500000) return toast("Fichier trop gros (500 Ko au plus).", 5000);
+  busy($("bNegImport"), true, "Import…");
+  try {
+    const r = await api("negoces.import", { csv: await file.text() });
+    toast(r.added + " négoce(s) ajouté(s), " + r.updated + " mis à jour." + (r.error_count ? " " + r.error_count + " ligne(s) écartée(s)." : ""), 7000);
+    if (r.error_count) openModal("Lignes écartées", r.error_count + " ligne(s) du fichier n'ont pas été importées",
+      '<ul style="margin:0;padding-left:18px">' + (r.errors || []).map(x => "<li>" + esc(x) + "</li>").join("") + "</ul>" + (r.error_count > (r.errors || []).length ? '<p class="note">… et ' + (r.error_count - r.errors.length) + " autre(s).</p>" : ""));
+    await loadNegoces();
+  } catch(e){ if (e.code !== "session") toast(e.message, 7000); }
+  finally { busy($("bNegImport"), false); }
+});
+
+// Actions d'une ligne.
+async function negUpdate(id, patch, message){
+  try { await api("negoces.update", { id, ...patch }); closeModal(); toast(message || "Enregistré."); await loadNegoces(); }
+  catch(e){ if (e.code !== "session") toast(e.message, 7000); }
+}
+function negModalButtons(okLabel, okClass){
+  return '<button type="button" class="b b-out" id="negCancel">Annuler</button><button type="button" class="b ' + (okClass || "b-main") + '" id="negOk">' + esc(okLabel) + "</button>";
+}
+function negModal(title, sub, body, okLabel, okClass, onOk){
+  openModal(title, sub, body, negModalButtons(okLabel, okClass));
+  $("negCancel").addEventListener("click", closeModal);
+  $("negOk").addEventListener("click", onOk);
+}
+$("negRows").addEventListener("click", async ev => {
+  const copy = ev.target.closest("[data-negcopy]");
+  if (copy){
+    const link = negLink(copy.dataset.negcopy);
+    try { await navigator.clipboard.writeText(link); toast("Lien copié : " + link); } catch(e){ toast(link, 8000); }
+    return;
+  }
+  const b = ev.target.closest("[data-negact]");
+  if (!b) return;
+  const n = negById(b.dataset.id);
+  if (!n) return;
+  const act = b.dataset.negact;
+  if (act === "preview"){
+    try {
+      const p = await api("negoces.preview", { id: n.id, box: $("negBox").value });
+      openModal("Le mail pour « " + n.nom + " »", "Texte enregistré, tel qu'il partira", '<div class="neg-mail" style="margin-top:0">' + negMailHtml(p) + "</div>");
+    } catch(e){ if (e.code !== "session") toast(e.message, 7000); }
+  } else if (act === "accept"){
+    negModal("« " + n.nom + " » a accepté", "Adresse postale de l'agence, pour l'affiche et les flyers",
+      '<div class="fld"><label for="negAddr">Adresse postale</label><textarea class="inp" id="negAddr" rows="4" placeholder="Nom de l\'agence, rue, code postal et ville">' + esc(n.adresse_postale || "") + "</textarea></div>" +
+      '<p class="note" style="margin-top:8px">Le négoce apparaît aussitôt dans la liste de piloz.fr/comptoir. Son lien d\'affiche : ' + esc(negLink(n.code)) + "</p>",
+      "Enregistrer l'accord", "b-ok", () => {
+        const address = $("negAddr").value.trim();
+        if (!address) return toast("Indiquez l'adresse postale de l'agence.", 5000);
+        negUpdate(n.id, { statut: "accepte", adresse_postale: address }, "« " + n.nom + " » est partenaire : il apparaît sur piloz.fr/comptoir.");
+      });
+  } else if (act === "flyers"){
+    negModal("Flyers envoyés à « " + n.nom + " » ?", "", '<p>Envoi à :</p><p class="note" style="white-space:pre-line">' + esc(n.adresse_postale || "adresse non renseignée") + "</p>",
+      "Oui, ils sont partis", "b-ok", () => negUpdate(n.id, { statut: "flyers_envoyes" }, "Flyers notés comme envoyés."));
+  } else if (act === "refuse"){
+    negModal("« " + n.nom + " » a refusé", "",
+      '<label class="cb"><input type="checkbox" id="negStop"> A répondu « stop » : ne plus jamais lui écrire (l\'adresse rejoint les exclusions)</label>',
+      "Noter le refus", "b-danger", () => negUpdate(n.id, { statut: "refuse", stop: $("negStop").checked }, "Refus noté."));
+  } else if (act === "ecarte"){
+    negModal("Écarter « " + n.nom + " » ?", "Il ne recevra pas le mail et disparaît de piloz.fr/comptoir.", '<p class="note">Vous pourrez le rétablir plus tard.</p>',
+      "Écarter", "b-danger", () => negUpdate(n.id, { statut: "ecarte" }, "Négoce écarté."));
+  } else if (act === "restore"){
+    negUpdate(n.id, { statut: n.mail_envoye_le ? "mail_envoye" : "candidat" }, "Négoce rétabli.");
+  } else if (act === "note"){
+    negModal("Note sur « " + n.nom + " »", "", '<textarea class="inp" id="negNote" rows="4" maxlength="1000">' + esc(n.note || "") + "</textarea>",
+      "Enregistrer", "b-main", () => negUpdate(n.id, { note: $("negNote").value }, "Note enregistrée."));
+  }
+});
+
+// Envoi groupé : confirmation (nombre, boîte, plafond du jour), puis lots de 10.
+$("bNegSend").addEventListener("click", () => {
+  const list = [...NEG.sel].map(negById).filter(negSendable);
+  if (!list.length) return;
+  const box = $("negBox").value, d = NEG.data;
+  if (!box) return toast("Aucune boîte d'envoi utilisable : ajoutez son mot de passe (script boite-google.ps1).", 6000);
+  const left = Math.max(0, d.daily_max - ((d.sent_today || {})[box] || 0));
+  negModal("Envoyer le mail à " + list.length + " négoce" + (list.length > 1 ? "s" : "") + " ?", "Depuis " + box,
+    "<p><b>" + list.length + " mail" + (list.length > 1 ? "s partent" : " part") + "</b> maintenant depuis <b>" + esc(box) + "</b>, un par un, avec le texte enregistré" + (NEG.dirty ? ' <span style="color:var(--danger)">(vos modifications du mail ne sont pas enregistrées)</span>' : "") + ".</p>" +
+    (list.length > left ? '<p class="note" style="color:var(--danger)">Cette boîte peut encore envoyer ' + left + " mail(s) aux négoces aujourd'hui (limite " + d.daily_max + ") : les suivants seront refusés. Choisissez une autre boîte pour le reste.</p>" : "") +
+    '<ul style="margin:10px 0 0;padding-left:18px;max-height:260px;overflow:auto">' + list.map(n => "<li>" + esc(n.nom) + ' <span class="note">' + esc(n.email) + "</span></li>").join("") + "</ul>",
+    "Envoyer " + list.length + " mail" + (list.length > 1 ? "s" : ""), "b-main", () => { closeModal(); negSend(list.map(n => n.id), box); });
+});
+async function negSend(ids, box){
+  $("bNegSend").disabled = true;
+  let ok = 0;
+  const errors = [];
+  for (let i = 0; i < ids.length; i += 10){
+    $("negMsg").textContent = "Envoi… " + i + " / " + ids.length;
+    try {
+      const r = await api("negoces.send", { ids: ids.slice(i, i + 10), box });
+      for (const x of r.results || []){ if (x.ok) ok++; else errors.push((x.nom || "") + " : " + x.error); }
+    } catch(e){ errors.push(e.message); if (e.code === "session") break; }
+  }
+  NEG.sel.clear();
+  $("negMsg").textContent = ok + " mail(s) envoyé(s)." + (errors.length ? " " + errors.length + " non envoyé(s) : " + errors.join(" ; ") : "");
+  await loadNegoces();
+}
 
 /* ============================================================
    CLIENTS — comptes Piloz réels et mail de prise en main
