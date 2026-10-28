@@ -13,6 +13,7 @@ Connexion avec le compte **super administrateur Piloz** (le même que sur admin.
 | Écran | Rôle |
 |---|---|
 | Automate | État en direct (en marche, en pause, hors créneau, quota atteint…), envois du jour, file d'attente, 14 derniers jours, pilote automatique |
+| Négoces | Négoces partenaires de l'offre comptoir (flyers au comptoir, piloz.fr/comptoir) : import du fichier des candidats (CSV), mail de proposition modifiable avec aperçu et test, envoi groupé depuis une boîte dédiée (20 par boîte et par jour), suivi (a accepté, flyers envoyés, refus), lien comptoir de chaque négoce et classement du mois (petit-déjeuner de l'équipe) |
 | Recherche | Ciblage par métier (NAF), effectif, zone (départements) et source RGE ; balayage en tourniquet département par département |
 | Résultats | Prospects classés par score Piloz, fiche détaillée avec l'e-mail exact qui partira, bouton « Envoyer à l'automate », export CSV |
 | Carte | Répartition géographique des résultats |
