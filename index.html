@@ -2837,7 +2837,7 @@ function renderLog(){
   $("lCount").textContent = "";
   const empty = { all: "Aucun message pour l'instant.", queued: "La file est vide. Envoyez des prospects depuis l'écran Résultats ou activez le pilote automatique.", sent: "Aucun message envoyé pour l'instant.", failed: "Aucun échec.", skipped: "Aucun message ignoré.", followups: "Aucune relance envoyée pour l'instant. Les relances se règlent dans Réglages." };
   $("lBody").innerHTML = LOG.items.length ? LOG.items.map(m =>
-    '<tr class="click' + (LOG.sel.has(m.id) ? " sel" : "") + '" data-msg="' + esc(m.message_id || m.id) + '">' +
+    '<tr class="click' + (LOG.sel.has(m.id) ? " sel" : "") + '" data-msg="' + esc(m.message_id || m.id) + '" data-stage="' + esc(m.stage || 0) + '">' +
     '<td><input type="checkbox" class="cbx" data-lsel="' + esc(m.id) + '"' + (LOG.sel.has(m.id) ? " checked" : "") + (logSelectable(m) ? "" : " disabled") + "></td>" +
     "<td><b>" + esc(niceCompany(m.company) || "—") + '</b><div class="meta">' + esc(m.email) + (m.status === "sent" && (m.sender || state.settings.sender_email) ? ' <span title="Boîte d\'envoi">· depuis ' + esc(m.sender || state.settings.sender_email) + "</span>" : "") + "</div></td>" +
     '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
@@ -3004,15 +3004,22 @@ $("lBody").addEventListener("click", ev => {
   const cb = ev.target.closest("[data-lsel]");
   if (cb){ const id = cb.getAttribute("data-lsel"); cb.checked ? LOG.sel.add(id) : LOG.sel.delete(id); cb.closest("tr").classList.toggle("sel", cb.checked); logSel(); return; }
   const tr = ev.target.closest("[data-msg]");
-  if (tr) openMessage(tr.getAttribute("data-msg"));
+  if (tr) openMessage(tr.getAttribute("data-msg"), Number(tr.getAttribute("data-stage")) || 0);
 });
-async function openMessage(id){
+// stage : rang de la ligne cliquée dans « Envois » (0 = premier mail). Une relance montre son
+// propre texte, le premier mail reste consultable en dessous.
+async function openMessage(id, stage = 0){
   try {
     const { message: m } = await api("queue.get", { id });
     const d = m.data || {};
+    const relance = stage ? (m.prospection_followups || []).find(f => Number(f.stage) === stage && f.body) : null;
+    const mail = (subject, text) => '<div class="mail"><div class="mail-h"><div><span>À : </span>' + esc(m.email) + "</div><div><span>Objet : </span><b>" + esc(subject) + '</b></div></div><div class="mail-b">' + esc(text) + "</div></div>";
     let body;
-    if (m.subject && m.body){
-      body = '<div class="mail"><div class="mail-h"><div><span>À : </span>' + esc(m.email) + "</div><div><span>Objet : </span><b>" + esc(m.subject) + '</b></div></div><div class="mail-b">' + esc(m.body) + "</div></div>";
+    if (relance){
+      body = mail(relance.subject || m.subject, relance.body) +
+        (m.body ? '<details style="margin-top:14px"><summary class="note" style="cursor:pointer">Voir le premier mail' + (m.sent_at ? " (envoyé le " + esc(dateTimeFr(m.sent_at)) + ")" : "") + '</summary><div style="margin-top:10px">' + mail(m.subject, m.body) + "</div></details>" : "");
+    } else if (m.subject && m.body){
+      body = mail(m.subject, m.body);
     } else {
       // Aperçu avec un modèle actif de la campagne du message, premier contact de préférence.
       const mine = state ? state.templates.filter(t => t.active && tplCampaignOf(t) === (m.campaign || "btp")) : [];
@@ -3020,7 +3027,8 @@ async function openMessage(id){
       body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(tpl, state.settings, d, m.email) + "</div>"
         : '<p class="note">Aucun modèle actif pour l\'aperçu.</p>';
     }
-    openModal(niceCompany(m.company) || m.email, (BADGE[m.status] || m.status) + (m.sent_at ? " le " + dateTimeFr(m.sent_at) : " · ajouté le " + dateTimeFr(m.created_at)),
+    openModal(niceCompany(m.company) || m.email, relance ? relanceLabel(stage) + (relance.sent_at ? " envoyée le " + dateTimeFr(relance.sent_at) : " · " + (BADGE[relance.status] || relance.status))
+      : (BADGE[m.status] || m.status) + (m.sent_at ? " le " + dateTimeFr(m.sent_at) : " · ajouté le " + dateTimeFr(m.created_at)),
       '<div class="dl">' +
         "<div><dt>E-mail</dt><dd>" + esc(m.email) + "</dd></div>" +
         (m.sender ? "<div><dt>Envoyé depuis</dt><dd>" + esc(m.sender) + "</dd></div>" : "") +
