@@ -1029,6 +1029,7 @@
           </div>
           <div class="card-b" style="padding-bottom:6px">
             <p class="note">Tous les comptes Piloz réels, du plus récent au plus ancien (comptes démo, archivés et de test exclus). Le mail de prise en main part de l'adresse d'envoi historique (contact@piloz.fr) avec le modèle de type « Client » de l'écran Messages ; la variable <code class="k">{conseil}</code> s'adapte à ce que le client a déjà fait (chantier, planning, pointage). Rien ne part vers une adresse non vérifiée (invitation non acceptée) ou désinscrite.</p>
+            <p class="note">« Issu de la prospection » : le compte a été ouvert après un mail de prospection reçu par l'entreprise, reconnue par la même adresse, le même SIREN, le même domaine d'entreprise ou le même nom (même département). Une entreprise cliente ne reçoit plus aucun mail de prospection : premier mail en file ignoré, relances arrêtées.</p>
           </div>
           <div class="tscroll">
             <table>
@@ -1394,13 +1395,16 @@ document.addEventListener("click", ev => {
 let CLI = [];
 const PLAN = { basic: "Basic (gratuit)", essentiel: "Essentiel", premium: "Premium" };
 const cliTodo = () => CLI.filter(c => c.verifie && !c.desinscrit && !c.mails);
+// Compte ouvert après un mail de prospection reçu par l'entreprise (rapprochement côté serveur).
+const RECONNU = { email: "par l'adresse", siren: "par le SIREN", domaine: "par le domaine", nom: "par le nom" };
+const cliProspecte = c => Boolean(c.prospection_premier_mail) && new Date(c.prospection_premier_mail) < new Date(c.created_at);
 async function loadClients(){
   try { CLI = (await api("clients.list")).clients || []; renderClients(); }
   catch(e){ if (e.code !== "session") toast(e.message, 5000); }
 }
 function renderClients(){
   const todo = cliTodo();
-  $("cliCount").textContent = CLI.length + " compte(s) · " + todo.length + " à qui écrire";
+  $("cliCount").textContent = CLI.length + " compte(s) · " + CLI.filter(cliProspecte).length + " issu(s) de la prospection · " + todo.length + " à qui écrire";
   $("bCliAll").disabled = !todo.length;
   $("pillClients").hidden = !todo.length; $("pillClients").textContent = todo.length;
   $("cliBody").innerHTML = CLI.length ? CLI.map(c => {
@@ -1410,7 +1414,9 @@ function renderClients(){
       : c.mail_envoye ? '<span class="badge sent">Envoyé le ' + esc(dateFr(c.mail_envoye)) + "</span>" + (c.mail_clic ? ' <span class="badge clic">Cliqué</span>' : c.mail_ouvert ? ' <span class="badge open">Ouvert</span>' : "")
       : '<span class="note">Pas encore écrit</span>';
     const can = c.verifie && !c.desinscrit;
-    return "<tr><td><b>" + esc(c.entreprise || "—") + '</b><br><span class="note">' + esc(c.email) + '</span></td><td class="nw">' + esc(dateFr(c.created_at)) +
+    const prosp = cliProspecte(c) ? '<br><span class="badge sent">Issu de la prospection</span> <span class="note">1er mail le ' + esc(dateFr(c.prospection_premier_mail)) +
+      (RECONNU[c.prospection_reconnu] ? " · reconnu " + esc(RECONNU[c.prospection_reconnu]) : "") + "</span>" : "";
+    return "<tr><td><b>" + esc(c.entreprise || "—") + '</b><br><span class="note">' + esc(c.email) + "</span>" + prosp + '</td><td class="nw">' + esc(dateFr(c.created_at)) +
       "</td><td>" + esc(PLAN[c.plan_key] || c.plan_key || "—") + '</td><td class="nw">' + (c.derniere_connexion ? esc(dateFr(c.derniere_connexion)) : "jamais") +
       '</td><td class="note">' + esc(use) + "</td><td>" + mail + "</td><td>" +
       (can ? '<button type="button" class="b b-out b-xs" data-cli-send="' + esc(c.company_id) + '">' + (c.mails ? "Renvoyer" : "Envoyer") + "</button>" : "") + "</td></tr>";
