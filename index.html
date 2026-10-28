@@ -307,6 +307,14 @@
   .neg-zone{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px 10px;max-height:280px;overflow:auto;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm)}
   .neg-zone label{display:flex;gap:6px;align-items:center;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .neg-zone label b{font-variant-numeric:tabular-nums;min-width:20px}
+  .neg-auto-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+  @media(max-width:980px){.neg-auto-grid{grid-template-columns:1fr}}
+  .neg-days,.neg-boxes{display:flex;gap:6px 14px;flex-wrap:wrap}
+  .neg-auto-state{list-style:none;margin:0;padding:0;display:grid;gap:7px;font-size:.88rem}
+  .neg-auto-state li{display:flex;gap:8px;align-items:baseline}
+  .neg-auto-state li .dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--line);transform:translateY(-1px)}
+  .neg-auto-state li.ok .dot{background:var(--ok)} .neg-auto-state li.warn .dot{background:var(--warn)} .neg-auto-state li.err .dot{background:var(--danger)}
+  .neg-h3{font-size:.95rem;margin:18px 0 8px}
   .tab{padding:9px 14px;border-radius:8px 8px 0 0;font-weight:700;font-size:.87rem;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
   .tab:hover{color:var(--ink)}
   .tab.on{color:var(--violet);border-bottom-color:var(--violet)}
@@ -727,6 +735,34 @@
           </div>
         </div>
 
+        <div class="card" style="margin-top:16px" id="negAuto" hidden>
+          <div class="card-h"><h2>Envoi automatique</h2><span class="st" id="negAutoSt"><i></i><span>—</span></span><span class="sub" id="negAutoSub"></span>
+            <div class="right"><label class="swi"><input type="checkbox" id="negAutoOn"><i></i><span id="negAutoOnTxt">Désactivé</span></label></div>
+          </div>
+          <div class="card-b">
+            <div class="neg-auto-grid">
+              <div>
+                <div class="row2">
+                  <div class="fld"><label for="negAutoMax">Mails par jour</label><input type="number" class="inp" id="negAutoMax" min="1" max="100"></div>
+                  <div class="fld"><label for="negAutoDeb">Créneau (heure de Paris)</label><div class="inline"><input type="time" class="inp" id="negAutoDeb" style="width:auto" aria-label="Début du créneau"> à <input type="time" class="inp" id="negAutoFin" style="width:auto" aria-label="Fin du créneau"></div></div>
+                </div>
+                <div class="fld" style="margin-top:12px"><label>Jours</label><div class="neg-days" id="negAutoJours"></div></div>
+                <div class="fld" style="margin-top:12px"><label>Boîtes d'envoi (en alternance : la moins chargée du jour d'abord)</label><div class="neg-boxes" id="negAutoBoites"></div></div>
+                <p class="note" style="margin-top:10px">Un mail toutes les 4 à 8 minutes, au plus <b id="negAutoPlafond">20</b> mails aux négoces par boîte et par jour, envois à la main compris. Seuls les candidats avec une adresse partent ; les adresses exclues jamais. Les négoces dont la note contient « À vérifier » ne partent qu'à la main, ou une fois « À vérifier » retiré de la note.</p>
+                <button type="button" class="b b-out b-sm" id="bNegAutoSave" style="margin-top:6px">Enregistrer les réglages</button>
+              </div>
+              <div><ul class="neg-auto-state" id="negAutoState"></ul></div>
+            </div>
+            <h3 class="neg-h3">Derniers envois automatiques</h3>
+            <div class="tscroll" style="max-height:300px">
+              <table>
+                <thead><tr><th style="width:150px">Quand</th><th>Négoce</th><th style="width:220px">Boîte</th><th>Résultat</th></tr></thead>
+                <tbody id="negAutoLog"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div class="card" style="margin-top:16px" id="negFind">
           <div class="card-h"><h2>Trouver des négoces</h2><span class="sub">annuaire officiel des entreprises, puis le site de chaque négoce</span>
             <div class="right">
@@ -1005,7 +1041,7 @@
             </div>
             <div class="fg">
               <span class="fl">Campagne</span>
-              <select class="inp" id="lCamp"><option value="">Toutes</option><option value="btp">BTP</option><option value="revendeur">Revendeurs</option><option value="espace">Comptes prêts</option></select>
+              <select class="inp" id="lCamp"><option value="">Toutes</option><option value="btp">BTP</option><option value="revendeur">Revendeurs</option><option value="espace">Comptes prêts</option><option value="negoce">Négoces</option></select>
             </div>
             <div class="fg"><span class="fl">Boîte d'envoi</span><div id="lBoxes"></div></div>
             <div class="fg">
@@ -1028,6 +1064,7 @@
                 <label class="cb"><input type="checkbox" value="relance3">Relance démo</label>
                 <label class="cb"><input type="checkbox" value="chaude">Relance chaude</label>
                 <label class="cb"><input type="checkbox" value="espace">Espace prêt</label>
+                <label class="cb"><input type="checkbox" value="negoce">Mail négoce</label>
               </div>
             </div>
             <div class="fg">
@@ -1061,6 +1098,7 @@
                 <label><input type="radio" name="lCampSeg" value="btp"> BTP</label>
                 <label><input type="radio" name="lCampSeg" value="revendeur"> Revendeurs</label>
                 <label><input type="radio" name="lCampSeg" value="espace"> Comptes prêts</label>
+                <label><input type="radio" name="lCampSeg" value="negoce"> Négoces</label>
               </div>
             </div>
             <section id="espacePanel" class="espace-panel" hidden>
@@ -1575,7 +1613,7 @@ function renderNegoces(){
   $("nkInsF").textContent = $("nkSubF").textContent = negMonthLabel();
   if (!$("negMonth").value) $("negMonth").value = NEG.month || parisDay(0).slice(0, 7);
   $("negBanner").innerHTML = d.comptoir_actif ? "" : '<div class="banner warn"><span class="grow"><b>L\'offre comptoir est coupée.</b> piloz.fr/comptoir propose l\'essai habituel de 14 jours, quel que soit le négoce.</span></div>';
-  renderNegRanking(); renderNegTemplate(); renderNegTable(); negZoneInit();
+  renderNegRanking(); renderNegTemplate(); renderNegTable(); negZoneInit(); renderNegAuto();
 }
 function renderNegRanking(){
   const ranking = NEG.data.classement || [], win = ranking[0] && ranking[0].abonnes > 0 ? ranking[0] : null;
@@ -1621,6 +1659,7 @@ function negRow(n){
   if (["candidat", "mail_envoye", "accepte"].includes(n.statut)) acts.push(negBtn("refuse", n.id, "Refus"));
   if (["candidat", "mail_envoye", "accepte", "refuse"].includes(n.statut)) acts.push(negBtn("ecarte", n.id, "Écarter"));
   if (n.statut === "refuse" || n.statut === "ecarte") acts.push(negBtn("restore", n.id, "Rétablir"));
+  if (negStuck(n)) acts.push(negBtn("unblock", n.id, "Débloquer l'envoi"));
   acts.push(negBtn("note", n.id, n.note ? "Modifier la note" : "Note"));
   const where = [n.enseigne, [n.ville, n.departement ? "(" + n.departement + ")" : ""].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
   const boss = [capitalName(n.dirigeant_prenom || ""), n.dirigeant_prenom ? capitalName(n.dirigeant_nom || "") : (n.dirigeant_nom || "")].filter(Boolean).join(" ");
@@ -1629,7 +1668,10 @@ function negRow(n){
     (n.adresse_postale ? '<br><span class="note"><b>Adresse :</b> ' + esc(n.adresse_postale) + "</span>" : "") + (n.note ? '<br><span class="note"><b>Note :</b> ' + esc(n.note) + "</span>" : "") + "</td>" +
     "<td>" + (n.email ? esc(n.email) + (n.email_source ? '<br><span class="note">' + extLink(n.email_source, "trouvée ici") + "</span>" : "") : '<span class="note">aucune</span>') + "</td>" +
     "<td>" + (boss ? esc(boss) : '<span class="note">—</span>') + "</td>" +
-    '<td><span class="badge ' + st.b + '">' + esc(st.l) + "</span>" + (dates ? '<br><span class="note">' + dates + "</span>" : "") + "</td>" +
+    '<td><span class="badge ' + st.b + '">' + esc(st.l) + "</span>" + (n.envoi_reserve_le && n.statut === "candidat" ? ' <span class="badge sending">Envoi en cours</span>' : "") +
+    (n.statut === "candidat" && negAVerifier(n.note) ? '<br><span class="badge rv" title="L\'envoi automatique saute ce négoce : envoi à la main seulement, ou retirez « À vérifier » de la note.">À vérifier : à la main</span>' : "") +
+    (n.statut === "candidat" && n.envoi_erreur ? '<br><span class="note" title="' + esc(n.envoi_erreur) + '">Dernier essai refusé' + (n.envoi_echecs >= 2 ? " deux fois : plus d'essai automatique" : "") + "</span>" : "") +
+    (dates ? '<br><span class="note">' + dates + "</span>" : "") + "</td>" +
     '<td><span class="neg-code">' + esc(n.code) + '</span><br><button type="button" class="b b-out b-xs" style="margin-top:4px" data-negcopy="' + esc(n.code) + '">Copier le lien</button></td>' +
     '<td><div class="neg-acts">' + acts.join("") + "</div></td></tr>";
 }
@@ -1779,6 +1821,12 @@ $("negRows").addEventListener("click", async ev => {
       "Écarter", "b-danger", () => negUpdate(n.id, { statut: "ecarte" }, "Négoce écarté."));
   } else if (act === "restore"){
     negUpdate(n.id, { statut: n.mail_envoye_le ? "mail_envoye" : "candidat" }, "Négoce rétabli.");
+  } else if (act === "unblock"){
+    negModal("Débloquer l'envoi à « " + n.nom + " » ?", "Envoi commencé le " + dateTimeFr(n.envoi_reserve_le) + " et jamais terminé",
+      '<p class="note">Vérifiez d\'abord dans les messages envoyés de ' + esc(n.envoi_boite || "la boîte") + " que le mail n'est pas parti : une fois débloqué, le négoce peut recevoir le mail à nouveau.</p>",
+      "Débloquer", "b-main", async () => {
+        try { await api("negoces.unblock", { id: n.id }); closeModal(); toast("Envoi débloqué."); await loadNegoces(); } catch(e){ if (e.code !== "session") toast(e.message, 7000); }
+      });
   } else if (act === "note"){
     negModal("Note sur « " + n.nom + " »", "", '<textarea class="inp" id="negNote" rows="4" maxlength="1000">' + esc(n.note || "") + "</textarea>",
       "Enregistrer", "b-main", () => negUpdate(n.id, { note: $("negNote").value }, "Note enregistrée."));
@@ -1813,6 +1861,97 @@ async function negSend(ids, box){
   $("negMsg").textContent = ok + " mail(s) envoyé(s)." + (errors.length ? " " + errors.length + " non envoyé(s) : " + errors.join(" ; ") : "");
   await loadNegoces();
 }
+
+// Envoi automatique du mail aux négoces (prospection-sender, tâche piloz-negoces-envoi) :
+// réglages, état du moment et journal viennent de negoces.state (champ auto).
+const NEG_JOURS = [[1, "Lun"], [2, "Mar"], [3, "Mer"], [4, "Jeu"], [5, "Ven"], [6, "Sam"], [7, "Dim"]];
+const NEGA = { dirty: false };
+// Même règle que la file de l'automate (comptoir_negoces_auto_file) : « À vérifier » dans la note.
+const negAVerifier = note => /[àÀaA] [vV][éÉeE]rifier/.test(String(note || ""));
+const negStuck = n => n.statut === "candidat" && n.envoi_reserve_le && Date.now() - new Date(n.envoi_reserve_le).getTime() > 15 * 60000;
+function hmFr(t){ const [h, m] = String(t || "").split(":"); return Number(h) + " h" + (m && m !== "00" ? " " + m : ""); }
+function negDaysText(jours){
+  const set = (jours || []).map(Number).sort((a, b) => a - b);
+  if (set.join() === "1,2,3,4,5") return "du lundi au vendredi";
+  if (set.length === 7) return "tous les jours";
+  const noms = { 1: "lundi", 2: "mardi", 3: "mercredi", 4: "jeudi", 5: "vendredi", 6: "samedi", 7: "dimanche" };
+  return set.map(j => noms[j]).join(", ");
+}
+function negAutoForm(){
+  return {
+    par_jour: Math.round(Number($("negAutoMax").value) || 0), debut: $("negAutoDeb").value, fin: $("negAutoFin").value,
+    jours: [...document.querySelectorAll("#negAutoJours input:checked")].map(c => Number(c.value)),
+    boites: [...document.querySelectorAll("#negAutoBoites input:checked")].map(c => c.value)
+  };
+}
+function renderNegAuto(){
+  const a = NEG.data && NEG.data.auto;
+  $("negAuto").hidden = !a;
+  if (!a) return;
+  const s = a.settings, e = a.etat || {}, usable = new Set(NEG.data.boxes || []);
+  $("negAutoOn").checked = Boolean(s.actif);
+  $("negAutoOnTxt").textContent = s.actif ? "Activé" : "Désactivé";
+  if (!NEGA.dirty){
+    $("negAutoMax").value = s.par_jour; $("negAutoDeb").value = s.debut; $("negAutoFin").value = s.fin;
+    $("negAutoJours").innerHTML = NEG_JOURS.map(([j, l]) => '<label class="cb"><input type="checkbox" value="' + j + '"' + ((s.jours || []).includes(j) ? " checked" : "") + "> " + l + "</label>").join("");
+    const known = [...new Set([...(s.boites || []), ...(a.boites_connues || [])])];
+    $("negAutoBoites").innerHTML = known.map(b => '<label class="cb"><input type="checkbox" value="' + esc(b) + '"' + ((s.boites || []).includes(b) ? " checked" : "") + "> " + esc(b) +
+      (usable.has(b) ? "" : ' <span class="note">(sans mot de passe : sautée)</span>') + "</label>").join("");
+  }
+  $("negAutoPlafond").textContent = fmt(s.plafond);
+  const st = !s.actif ? ["", "Désactivé"] : !e.jour_ok ? ["st-warn", "En pause : jour sans envoi"] : !e.creneau_ok ? ["st-warn", "En pause : hors créneau"]
+    : e.envoyes >= e.par_jour ? ["st-blue", "Quota du jour atteint"] : !e.restants ? ["st-blue", "Plus de négoce à envoyer"] : ["st-ok", "En marche"];
+  $("negAutoSt").className = "st " + st[0]; $("negAutoSt").querySelector("span").textContent = st[1];
+  $("negAutoSub").textContent = negDaysText(s.jours) + ", de " + hmFr(s.debut) + " à " + hmFr(s.fin) + " (heure de Paris)";
+  const items = [];
+  const li = (cls, html) => items.push('<li class="' + cls + '"><span class="dot"></span><span>' + html + "</span></li>");
+  li(e.envoyes ? "ok" : "", "<b>" + fmt(e.envoyes) + "</b> envoyé" + (e.envoyes > 1 ? "s" : "") + " aujourd'hui sur " + fmt(e.par_jour));
+  if (s.actif){
+    const next = e.prochain && new Date(e.prochain).getTime() > Date.now() ? new Date(e.prochain) : null;
+    if (!e.jour_ok || !e.creneau_ok) li("warn", "Hors créneau : reprise au prochain créneau, " + negDaysText(s.jours) + " à " + hmFr(s.debut));
+    else if (e.envoyes >= e.par_jour) li("", "Quota du jour atteint : reprise demain à " + hmFr(s.debut));
+    else if (!e.restants) li("", "Plus aucun négoce à envoyer tout seul");
+    else li("ok", next ? "Prochain envoi vers " + next.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }) : "Prochain envoi dans la minute");
+  } else li("", "L'envoi automatique est désactivé : rien ne part tout seul.");
+  li(e.restants ? "ok" : "", "<b>" + fmt(e.restants) + "</b> négoce" + (e.restants > 1 ? "s" : "") + " à envoyer");
+  if (e.a_verifier) li("warn", "<b>" + fmt(e.a_verifier) + "</b> mis de côté « À vérifier » : ils ne partent qu'à la main, ou une fois « À vérifier » retiré de la note");
+  if (e.exclus) li("", "<b>" + fmt(e.exclus) + "</b> dans les exclusions : jamais envoyés");
+  if (e.refuses) li("err", "<b>" + fmt(e.refuses) + "</b> adresse" + (e.refuses > 1 ? "s refusées" : " refusée") + " deux fois : plus d'essai automatique");
+  if (e.en_cours) li("warn", "<b>" + fmt(e.en_cours) + "</b> envoi" + (e.en_cours > 1 ? "s" : "") + " en cours");
+  for (const b of e.boites || []) li(b.pause ? "err" : "", esc(b.boite) + " : " + fmt(b.envoyes) + "/" + fmt(e.plafond) + " aujourd'hui" +
+    (b.pause ? " · mise de côté aujourd'hui (connexion refusée)" : !usable.has(b.boite) ? " · sans mot de passe, sautée" : ""));
+  if (e.derniere_erreur) li("err", "Dernière erreur de boîte : " + esc(e.derniere_erreur));
+  $("negAutoState").innerHTML = items.join("");
+  const journal = a.journal || [];
+  $("negAutoLog").innerHTML = journal.length ? journal.map(j => '<tr><td class="nw">' + esc(dateTimeFr(j.at)) + "</td><td><b>" + esc(j.nom || "—") + '</b><br><span class="note">' + esc(j.email || "") + "</span></td><td>" + esc(j.boite || "—") +
+    "</td><td>" + (j.ok ? '<span class="badge sent">Envoyé</span>' : '<span class="badge failed">Échec</span> <span class="note">' + esc(j.erreur) + "</span>") + "</td></tr>").join("")
+    : '<tr><td colspan="4" class="empty"><b>Aucun envoi automatique</b>Les mails partis tout seuls apparaîtront ici.</td></tr>';
+}
+["negAutoMax", "negAutoDeb", "negAutoFin"].forEach(id => $(id).addEventListener("input", () => { NEGA.dirty = true; }));
+["negAutoJours", "negAutoBoites"].forEach(id => $(id).addEventListener("change", () => { NEGA.dirty = true; }));
+async function negAutoSave(payload, message){
+  try { await api("negoces.auto.save", payload); NEGA.dirty = false; toast(message, 5000); }
+  catch(e){ if (e.code !== "session") toast(e.message, 7000); }
+  await loadNegoces(true);
+}
+$("bNegAutoSave").addEventListener("click", () => negAutoSave({ ...negAutoForm(), actif: Boolean(NEG.data && NEG.data.auto && NEG.data.auto.settings.actif) }, "Réglages de l'envoi automatique enregistrés."));
+$("negAutoOn").addEventListener("change", ev => {
+  if (!NEG.data || !NEG.data.auto) return;
+  const form = negAutoForm();
+  if (!ev.target.checked){ negAutoSave({ ...form, actif: false }, "Envoi automatique désactivé : plus rien ne part tout seul."); return; }
+  ev.target.checked = false;
+  const e = NEG.data.auto.etat || {}, s = NEG.data.auto.settings, usable = new Set(NEG.data.boxes || []);
+  const missing = form.boites.filter(b => !usable.has(b));
+  negModal("Activer l'envoi automatique ?", "Le mail aux négoces partira tout seul",
+    "<p><b>" + fmt(e.restants) + " négoce" + (e.restants > 1 ? "s recevront" : " recevra") + " le mail</b>, " + fmt(form.par_jour) + " par jour, de " + hmFr(form.debut) + " à " + hmFr(form.fin) + " (" + negDaysText(form.jours) +
+    "), depuis " + esc(form.boites.join(" et ") || "aucune boîte") + ".</p>" +
+    (e.a_verifier ? '<p class="note">' + fmt(e.a_verifier) + " négoce(s) « À vérifier » restent de côté : ils ne partent qu'à la main, ou une fois « À vérifier » retiré de la note.</p>" : "") +
+    '<p class="note">Un mail toutes les 4 à 8 minutes, au plus ' + fmt(s.plafond) + " par boîte et par jour, envois à la main compris. Vous pouvez désactiver à tout moment.</p>" +
+    (missing.length ? '<p class="note" style="color:var(--danger)">Sans mot de passe, donc sautée' + (missing.length > 1 ? "s" : "") + " : " + esc(missing.join(", ")) + ".</p>" : ""),
+    "Activer l'envoi automatique", "b-main", () => { closeModal(); negAutoSave({ ...form, actif: true }, "Envoi automatique activé."); });
+});
+// L'état bouge pendant le créneau : rafraîchi chaque minute tant que l'onglet est ouvert.
+setInterval(() => { if (current === "negoces" && document.visibilityState === "visible" && NEG.data && NEG.data.auto && NEG.data.auto.settings.actif && !NEGF.running) loadNegoces(true); }, 60000);
 
 // Recherche automatique : l'écran enchaîne les appels negoces.search (40 s au plus chacun)
 // en renvoyant le curseur, jusqu'au nombre voulu ou jusqu'au dernier département coché.
@@ -3300,7 +3439,7 @@ $("bTplTest").addEventListener("click", async ev => {
    ENVOIS (journal)
    ============================================================ */
 const LOG = { status: "queued", page: 1, total: 0, items: [], sel: new Set() };
-const ORIGIN = { manuel: "Recherche", autopilote: "Pilote auto" };
+const ORIGIN = { manuel: "Recherche", autopilote: "Pilote auto", negoce: "Négoce (comptoir)" };
 const BADGE = { queued: "En file", sending: "Envoi…", sent: "Envoyé", failed: "Échec", skipped: "Ignoré" };
 function gapLabel(sec){ return sec < 120 ? sec + " seconde(s)" : Math.round(sec / 60) + " minute(s)"; }
 // Badges de suivi d'un message envoyé : ouverture, vidéo vue, lien cliqué.
@@ -3373,18 +3512,18 @@ function renderLog(){
   $("lCount").textContent = "";
   const empty = { all: "Aucun message pour l'instant.", queued: "La file est vide. Envoyez des prospects depuis l'écran Résultats ou activez le pilote automatique.", sent: "Aucun message envoyé pour l'instant.", failed: "Aucun échec.", skipped: "Aucun message ignoré.", followups: "Aucune relance envoyée pour l'instant. Les relances se règlent dans Réglages." };
   $("lBody").innerHTML = LOG.items.length ? LOG.items.map(m =>
-    '<tr class="click' + (LOG.sel.has(m.id) ? " sel" : "") + '" data-msg="' + esc(m.message_id || m.id) + '" data-stage="' + esc(m.stage || 0) + '">' +
+    '<tr class="click' + (LOG.sel.has(m.id) ? " sel" : "") + '" data-msg="' + esc(m.message_id || m.id) + '" data-stage="' + esc(m.stage || 0) + '"' + (m.type === "negoce" ? ' data-negoce="' + esc(m.id) + '"' : "") + ">" +
     '<td><input type="checkbox" class="cbx" data-lsel="' + esc(m.id) + '"' + (LOG.sel.has(m.id) ? " checked" : "") + (logSelectable(m) ? "" : " disabled") + "></td>" +
     "<td><b>" + esc(niceCompany(m.company) || "—") + '</b><div class="meta">' + esc(m.email) + (m.status === "sent" && (m.sender || state.settings.sender_email) ? ' <span title="Boîte d\'envoi">· depuis ' + esc(m.sender || state.settings.sender_email) + "</span>" : "") + "</div></td>" +
     '<td class="num">' + (m.score == null ? "—" : m.score) + "</td>" +
     '<td class="nw"><span class="badge ' + (m.type && m.type !== "premier" ? "sent" : "off") + '">' + esc(SEND_TYPE[m.type] || "Premier mail") + "</span>" + signalBadge(m) + '<div class="meta">' + esc(ORIGIN[m.origin] || m.origin) + "</div></td>" +
     '<td class="nw">' + esc(dateTimeFr(LOG.status === "sent" || (LOG.status === "all" && m.sent_at) ? m.sent_at : m.created_at)) + "</td>" +
-    '<td><span class="badge ' + esc(m.status) + '">' + esc(BADGE[m.status] || m.status) + "</span>" + (m.status === "sent" ? trackState(m) : "") + (m.error && m.status !== "sent" ? '<div class="meta">' + esc(m.error) + "</div>" : "") + "</td></tr>"
+    '<td><span class="badge ' + esc(m.status) + '">' + esc(BADGE[m.status] || m.status) + "</span>" + (m.type === "negoce" ? '<div class="meta">' + esc((NEG_STATUTS[(m.data || {}).statut_negoce] || {}).l || "") + ((m.data || {}).auto ? " · envoi automatique" : " · envoi à la main") + "</div>" : m.status === "sent" ? trackState(m) : "") + (m.error && m.status !== "sent" ? '<div class="meta">' + esc(m.error) + "</div>" : "") + "</td></tr>"
   ).join("") : '<tr><td colspan="6" class="empty"><b>Rien ici</b>' + esc(empty[LOG.status]) + "</td></tr>";
   logSel();
 }
 // Seuls les premiers mails pas encore partis se retirent ou se relancent.
-const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2", relance3: "Relance démo", chaude: "Relance chaude", espace: "Espace prêt" };
+const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2", relance3: "Relance démo", chaude: "Relance chaude", espace: "Espace prêt", negoce: "Mail négoce" };
 // Rang 3 : relance des visiteurs de la démo ; rang 4 : relance chaude (prospect intéressé mais silencieux) ;
 // rang 5 : mail « Espace prêt » (comptes prêts).
 function relanceLabel(stage){ return Number(stage) === 5 ? "Espace prêt" : Number(stage) === 4 ? "Relance chaude" : Number(stage) === 3 ? "Relance démo" : "Relance " + stage; }
@@ -3609,8 +3748,26 @@ $("lBody").addEventListener("click", ev => {
   const cb = ev.target.closest("[data-lsel]");
   if (cb){ const id = cb.getAttribute("data-lsel"); cb.checked ? LOG.sel.add(id) : LOG.sel.delete(id); cb.closest("tr").classList.toggle("sel", cb.checked); logSel(); return; }
   const tr = ev.target.closest("[data-msg]");
+  if (tr && tr.hasAttribute("data-negoce")) return openNegoceEnvoi(tr.getAttribute("data-negoce"));
   if (tr) openMessage(tr.getAttribute("data-msg"), Number(tr.getAttribute("data-stage")) || 0);
 });
+// Mail parti à un négoce (offre comptoir) : la fiche du négoce et un lien vers l'onglet Négoces.
+async function openNegoceEnvoi(id){
+  try {
+    const { negoce: n } = await api("negoces.get", { id });
+    const st = NEG_STATUTS[n.statut] || { l: n.statut, b: "off" };
+    const lines = [["Négoce", esc(n.nom) + (n.ville ? " · " + esc(n.ville) + (n.departement ? " (" + esc(n.departement) + ")" : "") : "")], ["Adresse", esc(n.email || "—")],
+      ["Boîte d'envoi", esc(n.mail_boite || "—")], ["Envoyé le", esc(dateTimeFr(n.mail_envoye_le))], ["Envoi", n.mail_auto ? "automatique" : "à la main"],
+      ["Statut du négoce", '<span class="badge ' + st.b + '">' + esc(st.l) + "</span>"]];
+    openModal("Mail négoce · " + (n.nom || ""), "Offre comptoir : affiche et flyers au comptoir du négoce",
+      '<div class="mail-h" style="border:1px solid var(--line);border-radius:10px">' + lines.map(([k, v]) => "<div><span>" + k + " : </span>" + v + "</div>").join("") + "</div>" +
+      (n.mail_corps ? '<div class="neg-mail"><div class="mail-h"><div><span>Objet : </span><b>' + esc(n.mail_sujet || "") + '</b></div></div><pre>' + esc(n.mail_corps) + "</pre></div>"
+        : '<p class="note" style="margin-top:10px">Texte non conservé pour ce mail (envoyé avant l\'envoi automatique).</p>'),
+      '<button type="button" class="b b-out" id="negEnvClose">Fermer</button><button type="button" class="b b-main" id="negEnvOpen">Ouvrir dans l\'onglet Négoces</button>');
+    $("negEnvClose").addEventListener("click", closeModal);
+    $("negEnvOpen").addEventListener("click", () => { closeModal(); NEG.tab = "all"; NEG.q = n.nom || ""; $("negQ").value = NEG.q; showView("negoces"); });
+  } catch(e){ if (e.code !== "session") toast(e.message, 6000); }
+}
 // stage : rang de la ligne cliquée dans « Envois » (0 = premier mail). Une relance montre son
 // propre texte, le premier mail reste consultable en dessous.
 async function openMessage(id, stage = 0){
