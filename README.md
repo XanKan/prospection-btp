@@ -13,12 +13,12 @@ Connexion avec le compte **super administrateur Piloz** (le même que sur admin.
 | Écran | Rôle |
 |---|---|
 | Automate | État en direct (en marche, en pause, hors créneau, quota atteint…), envois du jour, file d'attente, 14 derniers jours, pilote automatique |
-| Négoces | Négoces partenaires de l'offre comptoir (flyers au comptoir, piloz.fr/comptoir) : recherche automatique (« Trouver des négoces » : annuaire officiel, PME de 10 à 199 salariés hors grands groupes, 3 par département, adresse lue sur leur site), import du fichier des candidats (CSV), mail de proposition modifiable avec aperçu et test, envoi groupé depuis une boîte dédiée (20 par boîte et par jour), suivi (a accepté, flyers envoyés, refus), lien comptoir de chaque négoce et classement du mois (petit-déjeuner de l'équipe) |
+| Négoces | Négoces partenaires de l'offre comptoir (flyers au comptoir, piloz.fr/comptoir) : recherche automatique (« Trouver des négoces » : annuaire officiel, PME de 10 à 199 salariés hors grands groupes, 3 par département, adresse lue sur leur site), import du fichier des candidats (CSV), mail de proposition modifiable avec aperçu et test, envoi groupé depuis une boîte dédiée (20 par boîte et par jour), suivi (a accepté, flyers envoyés, refus), lien comptoir de chaque négoce et classement du mois (petit-déjeuner de l'équipe) ; envoi automatique (désactivé par défaut) : nombre par jour, boîtes en alternance, créneau et jours de Paris, un mail toutes les 4 à 8 minutes, « À vérifier » toujours à la main, état en direct et journal |
 | Recherche | Ciblage par métier (NAF), effectif, zone (départements) et source RGE ; balayage en tourniquet département par département |
 | Résultats | Prospects classés par score Piloz, fiche détaillée avec l'e-mail exact qui partira, bouton « Envoyer à l'automate », export CSV |
 | Carte | Répartition géographique des résultats |
 | Messages | Modèles d'e-mail avec variables (`{bonjour}`, `{prenom}`, `{entreprise}`, `{ville}`, `{metier}`…), aperçu en direct, envoi de test |
-| Envois | File d'attente et historique (envoyés, échecs, ignorés), contenu exact de chaque message envoyé |
+| Envois | File d'attente et historique (envoyés, échecs, ignorés), contenu exact de chaque message envoyé ; campagne « Négoces » : les mails partis aux négoces, avec leur fiche |
 | Exclusions | Désinscriptions, adresses refusées, ajouts manuels, import de l'ancien historique Brevo du navigateur |
 | Réglages | Expéditeur, signature, cadence (quota, montée en charge, créneau, jours, intervalle), pilote automatique |
 
