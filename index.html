@@ -2375,9 +2375,6 @@ function renderTpl(t, v){
 const LOGO_URL = "https://piloz.fr/assets/images/email/piloz-logo-112.png";
 const VIDEO_THUMBNAILS = { UycAnUQzzYg: "https://piloz.fr/assets/images/email/presentation-video.jpg" };
 const hesc = esc;
-// Responsable du traitement et page de confidentialité (miroir de prospection-core.ts).
-const DATA_CONTROLLER = "Piloz — Quentin Jernot EI, SIREN 929 219 327";
-const PRIVACY_URL = "https://piloz.fr/legal/confidentialite.html";
 const linkify = e => e.replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, u => '<a href="' + u + '" style="color:#4f46e5">' + u + "</a>");
 const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>").join("");
 function youtubeId(url){ const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; }
@@ -2409,8 +2406,6 @@ function buildEmail(tpl, s, data){
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
   const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
     '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
-    "Responsable du traitement : " + hesc(DATA_CONTROLLER) + ". " +
-    '<a href="' + PRIVACY_URL + '" style="color:#8a8ca0">Vos données et vos droits</a> · ' +
     '<a href="https://piloz.fr/desinscription.html" style="color:#8a8ca0">Ne plus recevoir de message</a>.' + (identity ? "<br>" + hesc(identity) : "") + "</p></div>";
   return { subject: clean(renderTpl(tpl.subject, v), 200), html };
 }
