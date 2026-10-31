@@ -1122,7 +1122,7 @@
                   <p class="note" id="espMsg"></p>
                 </div>
               </div>
-              <span class="fl">Prospects proposés (vidéo vue, les plus engagés, 6 à 49 salariés)</span>
+              <span class="fl">Prospects proposés (vidéo ou site vu en premier, puis 4 ouvertures et plus ; 6 à 49 salariés)</span>
               <div class="tscroll" style="max-height:360px">
                 <table>
                   <thead><tr><th style="width:34px"><input type="checkbox" class="cbx" id="espAll" checked></th><th>Entreprise</th><th>Dirigeant</th><th>Métier</th><th>Salariés</th><th>Ville</th><th>Ouvertures</th><th>Vidéo vue le</th></tr></thead>
@@ -3549,7 +3549,7 @@ function parisToIso(local){
 async function loadEspaces(){
   $("espMsg").textContent = "";
   try {
-    const data = await api("espaces.state", {});
+    const data = await api("espaces.state", { max: 60 }); // 60 mails « Espace prêt » par jour au plus
     ESP.loaded = true; ESP.candidates = data.candidates || [];
     const p = data.prepared || {};
     $("espSummary").textContent = p.total
