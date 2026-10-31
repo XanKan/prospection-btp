@@ -993,7 +993,7 @@
               <div class="card-b">
                 <div class="fields tpl-fields">
                   <div class="fld"><label for="tName">Nom interne</label><input class="inp" id="tName" maxlength="120" placeholder="ex. Premier contact — artisans"></div>
-                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="relance_demo">Relance démo (jamais ouvert)</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option><option value="chaude">Relance chaude (intéressés)</option><option value="espace">Espace prêt (comptes prêts)</option></select>
+                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="relance_demo">Relance démo (jamais ouvert)</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option><option value="chaude">Relance chaude (intéressés)</option><option value="espace">Espace prêt (comptes prêts)</option><option value="espace_rappel">Rappel espace prêt</option></select>
                     <p class="help">Une relance part dans le fil du premier message, en « Re : », aux destinataires qui n'ont pas répondu. Délais et conditions dans Réglages.</p>
                     <p class="help" id="tKindChaude" hidden>Relance chaude : un seul message, avant les autres relances, aux prospects BTP intéressés mais silencieux (au moins 3 ouvertures ou un clic, premier mail parti il y a 2 à 60 jours, rien envoyé depuis 2 jours, pas déjà client, pas de relance démo). Il remplace les relances 1 et 2 et termine la séquence. Mettez-y {lien_mois_offert} : le lien d'activation du mois de Premium offert, à l'adresse du prospect.</p></div>
                   <div class="fld"><label for="tSubject">Objet</label><input class="inp" id="tSubject" maxlength="200"></div>
@@ -1064,6 +1064,7 @@
                 <label class="cb"><input type="checkbox" value="relance3">Relance démo</label>
                 <label class="cb"><input type="checkbox" value="chaude">Relance chaude</label>
                 <label class="cb"><input type="checkbox" value="espace">Espace prêt</label>
+                <label class="cb"><input type="checkbox" value="rappel_espace">Rappel espace prêt</label>
                 <label class="cb"><input type="checkbox" value="negoce">Mail négoce</label>
               </div>
             </div>
@@ -1122,7 +1123,7 @@
                   <p class="note" id="espMsg"></p>
                 </div>
               </div>
-              <span class="fl">Prospects proposés (vidéo ou site vu en premier, puis 4 ouvertures et plus ; 6 à 49 salariés)</span>
+              <span class="fl">Prospects proposés (vidéo ou site vu en premier, puis 4 ouvertures et plus ; 6 à 49 salariés ; 50 au plus)</span>
               <div class="tscroll" style="max-height:360px">
                 <table>
                   <thead><tr><th style="width:34px"><input type="checkbox" class="cbx" id="espAll" checked></th><th>Entreprise</th><th>Dirigeant</th><th>Métier</th><th>Salariés</th><th>Ville</th><th>Ouvertures</th><th>Vidéo vue le</th></tr></thead>
@@ -1313,7 +1314,11 @@
                   <label class="swi" style="margin:4px 0 10px"><input type="checkbox" id="sWarm"><i></i> Augmenter le quota progressivement</label>
                   <div class="inline">départ <input class="inp" type="number" id="sWarmStart" min="1" max="3000"> + <input class="inp" type="number" id="sWarmStep" min="0" max="1000"> par jour d'envoi</div></div>
                 <div class="fld"><label>Créneau d'envoi (heure de Paris)</label>
-                  <div class="inline">de <input class="inp" type="time" id="sWinStart" style="width:120px"> à <input class="inp" type="time" id="sWinEnd" style="width:120px"></div></div>
+                  <div class="inline">de <input class="inp" type="time" id="sWinStart" style="width:120px"> à <input class="inp" type="time" id="sWinEnd" style="width:120px"></div>
+                  <div class="inline" style="margin-top:8px">pauses <input class="inp" type="text" id="sPauses" placeholder="11:00-13:00, 14:00-17:00" style="width:230px"></div>
+                  <p class="help">Aucun envoi pendant une pause (4 au plus, format 11:00-13:00).</p></div>
+                <div class="fld"><label for="sPiloz">contact@ et commercial@ (piloz.fr), premiers mails par jour chacune</label><input class="inp" type="number" id="sPiloz" min="0" max="1000" step="1">
+                  <p class="help">En plus des boîtes dédiées, sans montée progressive. 0 : ces boîtes n'envoient que les relances de leurs anciens prospects.</p></div>
                 <div class="fld"><label>Intervalle entre deux messages</label>
                   <div class="inline">entre <input class="inp" type="number" id="sGapMin" min="5" max="7200"> et <input class="inp" type="number" id="sGapMax" min="5" max="7200"> secondes</div>
                   <p class="help">Tiré au hasard à chaque envoi. Pour 1 000 messages/jour sur un créneau de 10 h, visez 20 à 45 secondes.</p></div>
@@ -2336,7 +2341,7 @@ const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "no
 const ESPACE_SAMPLE_LINK = "https://app.piloz.fr/?invitation=exemple-de-lien";
 // Lien d'activation du mois offert (relance chaude), à l'adresse du prospect.
 const MOIS_OFFERT_URL = "https://piloz.fr/checkout.html?plan=premium&offre=mois-offert";
-const VAR_HELP = { lien_espace:"lien d'activation de l'espace Piloz préparé au nom du prospect (modèle Espace prêt seulement)", lien_mois_offert:"lien d'activation du mois de Premium offert, à l'adresse du prospect (modèle Relance chaude seulement)", logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
+const VAR_HELP = { lien_espace:"lien d'activation de l'espace Piloz préparé au nom du prospect (modèles Espace prêt et Rappel espace prêt seulement)", lien_mois_offert:"lien d'activation du mois de Premium offert, à l'adresse du prospect (modèle Relance chaude seulement)", logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -2599,9 +2604,11 @@ function renderState(){
   $("cadence").innerHTML =
     "<b>" + fmt(state.capToday) + " messages aujourd'hui</b> au maximum" + (boites.length && state.capToday < s.daily_cap ? ", jusqu'à " + fmt(s.daily_cap) + " par jour une fois la montée progressive des boîtes terminée (+" + (s.boite_palier || 10) + " par boîte chaque semaine)" : s.warmup_enabled && state.capToday < s.daily_cap ? ", jusqu'à " + fmt(s.daily_cap) + " par jour une fois la montée en charge terminée (+" + s.warmup_step + " par jour d'envoi)" : "") + ".<br>" +
     (qp ? "Relances des anciens prospects depuis piloz.fr (ceux qui ont ouvert ou cliqué), dans le fil de leur premier message : <b>" + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + " aujourd'hui</b>, en plus, " + fmt(qp.dues) + " en attente.<br>" : "") +
-    "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris), un message toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ".<br>" +
+    "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + esc(pausesText(s)) + " (heure de Paris), un message toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ".<br>" +
     (boites.length
       ? "Expéditeur : <b>" + esc(s.sender_name || "Piloz") + "</b>, depuis " + boites.map(b => "<b>" + esc(b.address) + "</b>").join(", ")
+        // Boîtes piloz.fr remises dans la rotation des premiers mails (boites_piloz_max, 31/10).
+        + (s.boites_piloz_max > 0 ? ", plus <b>" + [s.sender_email, state.smtp && state.smtp.second && state.smtp.second.configured ? s.sender_email_2 : ""].filter(Boolean).map(esc).join("</b> et <b>") + "</b> (" + fmt(s.boites_piloz_max) + " premiers mails par jour chacune)" : "")
       : "Expéditeur : <b>" + esc(s.sender_email ? (s.sender_name + " <" + s.sender_email + ">") : "à renseigner") + "</b>" +
         (state.smtp && state.smtp.second && state.smtp.second.configured ? " en rotation avec <b>" + esc(state.smtp.second.address) + "</b>" : ""));
 
@@ -3127,9 +3134,11 @@ async function loadDashRvRecent(force){
 }
 $("bDashRvLog").addEventListener("click", () => $("bRvLog").click());
 
+// Pauses du créneau d'envoi : « , sauf 11:00-13:00 et 14:00-17:00 ».
+function pausesText(s){ const p = (s.send_pauses || []).map(x => String(x).replace("-", " - ")); return p.length ? ", sauf " + (p.length > 1 ? p.slice(0, -1).join(", ") + " et " + p[p.length - 1] : p[0]) : ""; }
 // Créneau des revendeurs : les jours et horaires de l'automate, partagés avec le BTP.
 function rvWindow(s){
-  return s.send_days.map(d => DAY_NAMES[d]).join(", ") + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris)";
+  return s.send_days.map(d => DAY_NAMES[d]).join(", ") + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + pausesText(s) + " (heure de Paris)";
 }
 function rvNextSend(c, cap){
   const s = state.settings;
@@ -3230,7 +3239,7 @@ const tplCampaignOf = t => t.campaign || "btp";
 // {lien_mois_offert} que la relance chaude.
 function renderVarChips(){
   const vars = VARS.filter(v => (tplCampaign === "revendeur" ? v !== "marche" && v !== "conseil" : v !== "logiciels") && (v !== "lien_mois_offert" || $("tKind").value === "chaude")
-    && (v !== "lien_espace" || $("tKind").value === "espace"));
+    && (v !== "lien_espace" || $("tKind").value === "espace" || $("tKind").value === "espace_rappel"));
   $("varChips").innerHTML = vars.map(v => '<button type="button" data-var="' + v + '" title="' + esc(VAR_HELP[v]) + '">{' + v + "}</button>").join("");
 }
 renderVarChips();
@@ -3243,7 +3252,7 @@ function mountTplEditor(campaign){
   (campaign === "revendeur" ? $("rvTplHost") : $("tplHost")).appendChild($("tplWrap"));
   renderVarChips();
   // Les modèles « Après la démo », « Relance démo », « Client » et « Relance chaude » n'existent que pour le BTP.
-  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && (o.value === "demo" || o.value === "relance_demo" || o.value === "client" || o.value === "chaude" || o.value === "espace"); });
+  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && (o.value === "demo" || o.value === "relance_demo" || o.value === "client" || o.value === "chaude" || o.value === "espace" || o.value === "espace_rappel"); });
   $("tplOtherCamp").innerHTML = campaign === "revendeur"
     ? 'Les modèles de la campagne BTP se gèrent dans l\'écran <a href="#" data-go="tpl">Messages</a>.'
     : 'Les modèles de la campagne revendeurs se gèrent dans l\'écran <a href="#" data-go="revendeurs">Revendeurs</a>.';
@@ -3298,7 +3307,7 @@ async function loadSamples(){
     renderSampleOptions();
   } catch(e){}
 }
-const KIND = { relance1: "relance 1", relance2: "relance 2", chaude: "relance chaude", demo: "après démo", relance_demo: "relance démo", client: "client", espace: "espace prêt" };
+const KIND = { relance1: "relance 1", relance2: "relance 2", chaude: "relance chaude", demo: "après démo", relance_demo: "relance démo", client: "client", espace: "espace prêt", espace_rappel: "rappel espace prêt" };
 // Une relance part toujours en « Re : » sur l'objet du premier message : son objet propre ne sert pas.
 function syncKind(){
   const relance = /^(relance|chaude$)/.test($("tKind").value);
@@ -3330,7 +3339,7 @@ function renderPreview(){
     // Relance chaude : lien du mois offert à l'adresse du prospect choisi.
     : kind === "chaude" ? { ...sampleData(), email: m ? m.email : "j.dupont@dupont-batiment.fr" }
     // Espace prêt : lien d'exemple (le vrai lien est propre à chaque prospect).
-    : kind === "espace" ? { ...sampleData(), lien_espace: ESPACE_SAMPLE_LINK } : sampleData();
+    : kind === "espace" || kind === "espace_rappel" ? { ...sampleData(), lien_espace: ESPACE_SAMPLE_LINK } : sampleData();
   $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr");
 }
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
@@ -3518,10 +3527,10 @@ function renderLog(){
   logSel();
 }
 // Seuls les premiers mails pas encore partis se retirent ou se relancent.
-const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2", relance3: "Relance démo", chaude: "Relance chaude", espace: "Espace prêt", negoce: "Mail négoce" };
+const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2", relance3: "Relance démo", chaude: "Relance chaude", espace: "Espace prêt", rappel_espace: "Rappel espace prêt", negoce: "Mail négoce" };
 // Rang 3 : relance des visiteurs de la démo ; rang 4 : relance chaude (prospect intéressé mais silencieux) ;
-// rang 5 : mail « Espace prêt » (comptes prêts).
-function relanceLabel(stage){ return Number(stage) === 5 ? "Espace prêt" : Number(stage) === 4 ? "Relance chaude" : Number(stage) === 3 ? "Relance démo" : "Relance " + stage; }
+// rang 5 : mail « Espace prêt » (comptes prêts) ; rang 6 : son rappel.
+function relanceLabel(stage){ return Number(stage) === 6 ? "Rappel espace prêt" : Number(stage) === 5 ? "Espace prêt" : Number(stage) === 4 ? "Relance chaude" : Number(stage) === 3 ? "Relance démo" : "Relance " + stage; }
 function logSelectable(m){ return (!m.type || m.type === "premier") && m.status !== "sent" && m.status !== "sending"; }
 function logSel(){
   $("bLogRemove").disabled = !LOG.sel.size; $("bLogRetry").disabled = !LOG.sel.size;
@@ -3549,11 +3558,11 @@ function parisToIso(local){
 async function loadEspaces(){
   $("espMsg").textContent = "";
   try {
-    const data = await api("espaces.state", { max: 60 }); // 60 mails « Espace prêt » par jour au plus
+    const data = await api("espaces.state", {});
     ESP.loaded = true; ESP.candidates = data.candidates || [];
     const p = data.prepared || {};
     $("espSummary").textContent = p.total
-      ? p.total + " espace(s) déjà préparé(s) : " + p.queued + " mail(s) programmé(s), " + p.sent + " parti(s), " + p.activated + " activé(s)" + (p.failed ? ", " + p.failed + " non parti(s)" : "") + "."
+      ? p.total + " espace(s) déjà préparé(s) : " + p.queued + " mail(s) programmé(s), " + p.sent + " parti(s), " + p.activated + " activé(s)" + (p.failed ? ", " + p.failed + " non parti(s)" : "") + "." + (p.reminders_queued || p.reminders_sent ? " Rappels : " + p.reminders_queued + " programmé(s), " + p.reminders_sent + " parti(s)." : "")
       : "Aucun espace préparé pour l'instant.";
     $("espPreview").innerHTML = data.preview
       ? '<div class="mail-h"><div><span>À : </span>' + esc(data.preview.to) + '</div><div><span>Objet : </span><b>' + esc(data.preview.subject) + "</b></div></div><pre>" + esc(data.preview.body + "\n" + data.preview.signature) + "</pre>"
@@ -3561,7 +3570,7 @@ async function loadEspaces(){
     $("espRows").innerHTML = ESP.candidates.map(c => '<tr><td><input type="checkbox" class="cbx" data-esp="' + esc(c.message_id) + '" checked></td><td><b>' + esc(niceCompany(c.entreprise)) + '</b><br><span class="note">' + esc(c.email) +
       "</span></td><td>" + esc((capitalName(c.prenom) + " " + capitalName(c.nom)).trim()) + "</td><td>" + esc(c.metier || "") + "</td><td>" + esc(c.effectif || "") + "</td><td>" + esc(capitalName(c.ville)) +
       "</td><td>" + esc(c.ouvertures) + "</td><td>" + esc(c.video_le ? dateTimeFr(c.video_le) : "—") + "</td></tr>").join("") || '<tr><td colspan="8" class="note">Aucun prospect à proposer.</td></tr>';
-    if (!$("espAt").value) $("espAt").value = parisDay(1) + "T08:30";
+    if (!$("espAt").value) $("espAt").value = nextWeekday() + "T07:00";
     espSel();
   } catch(e){ if (e.code !== "session") $("espPreview").textContent = e.message; }
 }
@@ -3618,6 +3627,8 @@ function fillSenderFilter(){
   $("lBoxes").innerHTML = knownBoxes().map((b, i) => '<label class="cb"><input type="checkbox" value="' + esc(b) + '"' + (keep.has(b) ? " checked" : "") +
     '><span class="dot" style="background:' + BOX_DOTS[i % BOX_DOTS.length] + '"></span>' + esc(b) + "</label>").join("");
 }
+// Prochain jour du lundi au vendredi (heure de Paris), demain au plus tôt.
+function nextWeekday(){ for (let i = 1; ; i++){ const day = parisDay(i), w = new Date(day + "T12:00:00Z").getUTCDay(); if (w !== 0 && w !== 6) return day; } }
 function parisDay(offset){ return new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris" }).format(new Date(Date.now() + offset * 864e5)); }
 function checked(id){ return [...document.querySelectorAll("#" + id + " input:checked")].map(c => c.value); }
 function setChecked(id, values){ document.querySelectorAll("#" + id + " input").forEach(c => { c.checked = (values || []).includes(c.value); }); }
@@ -3953,6 +3964,7 @@ function fillSettings(){
   $("sSig").value = s.signature || ""; $("sFooter").value = s.footer_identity || ""; $("sVideo").value = s.video_url || "";
   $("sCap").value = s.daily_cap; $("sWarm").checked = !!s.warmup_enabled; $("sWarmStart").value = s.warmup_start; $("sWarmStep").value = s.warmup_step;
   $("sWinStart").value = hm(s.window_start); $("sWinEnd").value = hm(s.window_end);
+  $("sPauses").value = (s.send_pauses || []).join(", "); $("sPiloz").value = s.boites_piloz_max ?? 0;
   $("sGapMin").value = s.min_gap_seconds; $("sGapMax").value = s.max_gap_seconds;
   $("sErr").value = s.max_consecutive_errors;
   $("sFuEnabled").checked = !!s.followup_enabled; $("sFu1").value = s.followup1_days || 7; $("sFu2").value = s.followup2_days || 21;
@@ -4019,6 +4031,7 @@ $("setForm").addEventListener("submit", async ev => {
     signature: $("sSig").value, footer_identity: $("sFooter").value, video_url: $("sVideo").value.trim(),
     daily_cap: $("sCap").value, warmup_enabled: $("sWarm").checked, warmup_start: $("sWarmStart").value, warmup_step: $("sWarmStep").value,
     window_start: $("sWinStart").value, window_end: $("sWinEnd").value, send_days: days,
+    send_pauses: $("sPauses").value, boites_piloz_max: $("sPiloz").value,
     min_gap_seconds: Math.round(Number($("sGapMin").value)), max_gap_seconds: Math.round(Number($("sGapMax").value)),
     max_consecutive_errors: $("sErr").value,
     followup_enabled: $("sFuEnabled").checked, followup1_days: $("sFu1").value, followup2_days: $("sFu2").value,
