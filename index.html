@@ -669,6 +669,12 @@
           </div>
         </div>
 
+        <div class="card" id="dashParcours" hidden style="margin-bottom:16px">
+          <div class="card-h"><h2>Après le clic</h2><span class="sub">prospects BTP contactés sur la période</span>
+            <select id="pcDays" style="margin-left:auto" onchange="loadParcours()"><option value="7">7 derniers jours</option><option value="30" selected>30 derniers jours</option><option value="0">Depuis le début</option></select></div>
+          <div class="card-b"><div class="funnel" id="pcFunnel"></div><p class="note" id="pcNote" style="margin-top:12px"></p></div>
+        </div>
+
         <div class="grid2">
           <div class="card">
             <div class="card-h"><h2>Derniers envois</h2><div class="right"><button type="button" class="b b-out b-xs" data-go="log">Tout voir</button></div></div>
@@ -827,6 +833,8 @@
             <div class="fset-h"><h3>Signal d'intention : marchés publics gagnés</h3><span class="sub">un marché de travaux notifié, c'est un chantier qui démarre dans les semaines qui viennent</span></div>
             <label class="swi"><input type="checkbox" id="tMarches"><i></i> Chercher aussi les entreprises qui viennent de remporter un marché public de travaux (données essentielles de la commande publique, 60 derniers jours)</label>
             <p class="note" style="margin-top:10px">Source ouverte, sans clé ni inscription : environ 1 000 entreprises par mois en France, avec leur SIRET. Les marchés paraissent en open data une à plusieurs semaines après leur notification : à chaque passage, les derniers parus sont pris en premier, puis l'arriéré page par page, même quand la file est pleine. Chaque titulaire passe par le même entonnoir (tranche d'effectif du ciblage, adresse RGE, prénom, score), gagne 15 points et reçoit le modèle « Chantier public » grâce à la variable <code class="k">{marche}</code>.</p>
+            <label class="swi" style="margin-top:14px"><input type="checkbox" id="tBodacc" checked><i></i> Chercher aussi les entreprises qui viennent de changer de dirigeant ou d'être reprises (annonces légales du BODACC, 14 derniers jours puis chaque jour)</label>
+            <p class="note" style="margin-top:10px">Source ouverte, sans clé ni inscription. Un changement de direction ou une reprise, c'est le moment où l'on revoit son organisation. Environ 5 entreprises du bâtiment de 6 à 49 salariés par jour de parution, qui passent par le même entonnoir (code NAF et tranche d'effectif du ciblage, adresse RGE ou site internet, prénom, score), gagnent 10 points et partent en tête de file. Une reprise reçoit le modèle « Reprise d'entreprise » grâce à <code class="k">{evenement}</code> ; un changement de dirigeant n'est jamais cité dans le mail, car l'annonce ne dit pas ce qui a changé.</p>
           </div>
           <div class="fset">
             <div class="fset-h"><h3>Secteur</h3><span class="sub">codes NAF de la construction</span></div>
@@ -993,9 +1001,11 @@
               <div class="card-b">
                 <div class="fields tpl-fields">
                   <div class="fld"><label for="tName">Nom interne</label><input class="inp" id="tName" maxlength="120" placeholder="ex. Premier contact — artisans"></div>
-                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="relance_demo">Relance démo (jamais ouvert)</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option><option value="chaude">Relance chaude (intéressés)</option><option value="espace">Espace prêt (comptes prêts)</option><option value="espace_rappel">Rappel espace prêt</option></select>
+                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="relance_demo">Relance démo (jamais ouvert)</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option><option value="chaude">Relance chaude (intéressés)</option><option value="espace">Espace prêt (comptes prêts)</option><option value="espace_rappel">Rappel espace prêt</option><option value="transmis">Bonne personne (indiquée par l'entreprise)</option><option value="recontact">Recontact (3 mois après « pas le bon moment »)</option></select>
                     <p class="help">Une relance part dans le fil du premier message, en « Re : », aux destinataires qui n'ont pas répondu. Délais et conditions dans Réglages.</p>
-                    <p class="help" id="tKindChaude" hidden>Relance chaude : un seul message, avant les autres relances, aux prospects BTP intéressés mais silencieux (au moins 3 ouvertures ou un clic, premier mail parti il y a 2 à 60 jours, rien envoyé depuis 2 jours, pas déjà client, pas de relance démo). Il remplace les relances 1 et 2 et termine la séquence. Mettez-y {lien_mois_offert} : le lien d'activation du mois de Premium offert, à l'adresse du prospect.</p></div>
+                    <p class="help" id="tKindChaude" hidden>Relance chaude : un seul message, avant les autres relances, aux prospects BTP intéressés mais silencieux (au moins 3 ouvertures ou un clic, premier mail parti il y a 2 à 60 jours, rien envoyé depuis 2 jours, pas déjà client, pas de relance démo). Il remplace les relances 1 et 2 et termine la séquence. Mettez-y {lien_mois_offert} : le lien d'activation du mois de Premium offert, à l'adresse du prospect.</p>
+                    <p class="help" id="tKindTransmis" hidden>Bonne personne : premier mail à la personne qu'une entreprise a indiquée depuis le lien « Indiquez-nous la bonne personne » en bas de nos mails. Il part en tête de file, avec son propre objet ; l'adresse qui a reçu le premier mail n'est plus relancée. Mettez-y {lien_mois_offert}.</p>
+                    <p class="help" id="tKindRecontact" hidden>Recontact : un seul message, dans le fil du premier mail, 3 mois après un clic sur « Pas le bon moment ? Recontactez-moi dans 3 mois ». Entre-temps, plus aucune relance ; après lui, plus rien. Mettez-y {lien_mois_offert}.</p></div>
                   <div class="fld"><label for="tSubject">Objet</label><input class="inp" id="tSubject" maxlength="200"></div>
                   <div class="fld full"><label for="tBody">Message</label><textarea class="inp" id="tBody" rows="12" maxlength="8000"></textarea>
                     <div class="vars" id="varChips"></div>
@@ -1065,6 +1075,7 @@
                 <label class="cb"><input type="checkbox" value="chaude">Relance chaude</label>
                 <label class="cb"><input type="checkbox" value="espace">Espace prêt</label>
                 <label class="cb"><input type="checkbox" value="rappel_espace">Rappel espace prêt</label>
+                <label class="cb"><input type="checkbox" value="recontact">Recontact (3 mois)</label>
                 <label class="cb"><input type="checkbox" value="negoce">Mail négoce</label>
               </div>
             </div>
@@ -2333,17 +2344,36 @@ async function loadDashExtra(force){
     $("pillRep").hidden = !d.repliesToRead; $("pillRep").textContent = d.repliesToRead;
     $("dashExtra").hidden = false;
   } catch(e){ /* le tableau de bord de base reste affiché */ }
+  loadParcours();
+}
+// Parcours après le clic (01/11/2026) : clic, page du site vue, page d'inscription vue,
+// lien de création demandé, compte créé, accueil terminé ; et les deux nouvelles sorties.
+async function loadParcours(){
+  try {
+    const p = (await api("parcours.stats", { days: Number($("pcDays").value || 0) })).parcours || {};
+    const rows = [["Contactés", p.contactes, "", "#d7d3fd"], ["Ont cliqué", p.clics, pct(p.clics, p.contactes), "#a99ffb"], ["Page du site vue", p.pages, pct(p.pages, p.clics), "#8b7ffa"],
+      ["Page d'inscription vue", p.inscriptions, pct(p.inscriptions, p.clics), "#6d5ef8"], ["Lien de création demandé", p.demandes, pct(p.demandes, p.clics), "#4a3fd0"],
+      ["Compte créé", p.comptes, pct(p.comptes, p.clics), "#17a06a"], ["Accueil terminé", p.accueil, pct(p.accueil, p.comptes), "#0f7a4f"]];
+    const top = Math.max(1, p.clics || 1);
+    $("pcFunnel").innerHTML = rows.map(([l, v, r, c], i) => '<div class="fr"><b>' + l + '</b><div class="bar"><i style="width:' + (i ? Math.max(1, Math.round((v || 0) / top * 100)) : 100) + "%;background:" + c + '"></i></div><span class="num"><b>' + fmt(v || 0) + "</b> " + (r ? '<span class="meta" style="display:inline">' + r + "</span>" : "") + "</span></div>").join("");
+    const since = p.mesure_depuis ? " (mesurées depuis le " + esc(dateFr(p.mesure_depuis)) + ")" : " (mesurées dès la mise en ligne de la mesure)";
+    $("pcNote").innerHTML = "Pages vues : signalées par la page de piloz.fr ouverte depuis un mail" + since + ". Les pourcentages sont rapportés aux prospects qui ont cliqué."
+      + "<br><b>Pas le bon moment :</b> " + fmt(p.pauses || 0) + " (recontact dans 3 mois, " + fmt(p.recontacts || 0) + " parti(s))"
+      + " · <b>Bonne personne indiquée :</b> " + fmt(p.bonnes_personnes || 0) + " (" + fmt(p.transmis || 0) + " mail(s) parti(s) à la personne indiquée)"
+      + " · <b>Annonces BODACC :</b> " + fmt(p.bodacc || 0) + " prospect(s) contacté(s).";
+    $("dashParcours").hidden = false;
+  } catch(e){ /* carte facultative */ }
 }
 
 /* ============================================================
    PERSONNALISATION — miroir de supabase/functions/_shared/prospection-core.ts
    ============================================================ */
-const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "conseil", "logiciels", "lien_mois_offert", "lien_espace"];
+const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "evenement", "conseil", "logiciels", "lien_mois_offert", "lien_espace"];
 // Lien d'exemple de l'espace préparé (aperçus et test) : le vrai lien est propre à chaque prospect.
 const ESPACE_SAMPLE_LINK = "https://app.piloz.fr/?invitation=exemple-de-lien";
 // Lien d'activation du mois offert (relance chaude), à l'adresse du prospect.
 const MOIS_OFFERT_URL = "https://piloz.fr/checkout.html?plan=premium&offre=mois-offert";
-const VAR_HELP = { lien_espace:"lien d'activation de l'espace Piloz préparé au nom du prospect (modèles Espace prêt et Rappel espace prêt seulement)", lien_mois_offert:"lien d'inscription au mois de Premium offert, adresse du prospect déjà remplie ; seul dans son paragraphe, il devient le bouton « Créer mon compte Piloz » (premier mail et Relance chaude seulement)", logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
+const VAR_HELP = { lien_espace:"lien d'activation de l'espace Piloz préparé au nom du prospect (modèles Espace prêt et Rappel espace prêt seulement)", lien_mois_offert:"lien d'inscription au mois de Premium offert, adresse du prospect déjà remplie ; seul dans son paragraphe, il devient le bouton « Créer mon compte Piloz » (premier mail, Relance chaude, Bonne personne et Recontact seulement)", evenement:"annonce BODACC : « la reprise de l'entreprise », vide sinon (un changement de dirigeant ne se cite pas) : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -2363,7 +2393,7 @@ function templateVars(d){
   const prenom = capitalName(d.prenom).split(" ")[0] || "";
   return { bonjour: prenom ? "Bonjour " + prenom : "Bonjour", prenom, nom: capitalName(d.nom), entreprise: niceCompany(d.entreprise),
     ville: capitalName(d.ville), metier: clean(d.metier, 120), departement: clean(d.departement, 4), effectif: clean(d.effectif, 40), conseil: clean(d.conseil, 400),
-    logiciels: softwareText(d.logiciels),
+    logiciels: softwareText(d.logiciels), evenement: clean(d.evenement, 120),
     lien_mois_offert: d.email ? MOIS_OFFERT_URL + "&email=" + encodeURIComponent(String(d.email).trim().toLowerCase()) : "",
     lien_espace: /^https:\/\/app\.piloz\.fr\/\?invitation=[A-Za-z0-9-]+$/.test(String(d.lien_espace || "")) ? d.lien_espace : "" };
 }
@@ -2392,8 +2422,10 @@ const moisOffertBlock = b => b.startsWith(MOIS_OFFERT_URL + "&email=") && !/\s/.
 const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => { const x = b.trim();
   return ESPACE_LINK_RE.test(x) ? linkButton(x, "Activer mon espace Piloz") : moisOffertBlock(x) ? linkButton(x, "Créer mon compte Piloz") : '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>"; }).join("");
 function youtubeId(url){ const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; }
-function buildEmail(tpl, s, data, kind){
+function buildEmail(tpl, s, data, kind, campaign){
   s = s || {};
+  // BTP : liens « pas le bon moment » et « bonne personne » au-dessus du pied de page (miroir de choiceLinks).
+  const choices = campaign !== "revendeur";
   // « Espace prêt » et son rappel : sans vidéo, signature de Quentin (miroir de prospection-jobs).
   const espace = kind === "espace" || kind === "espace_rappel";
   const v = templateVars(data);
@@ -2427,7 +2459,9 @@ function buildEmail(tpl, s, data, kind){
     lines.map(sigLine).join("<br>") + buttonHtml + "</td></tr></table>" : "";
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
   const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
-    '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
+    (choices ? '<p style="margin:26px 0 0;font-size:13px;line-height:1.6;color:#5b5d72">Pas le bon moment ? <a href="https://piloz.fr/plus-tard.html" style="color:#5b5d72">Recontactez-moi dans 3 mois</a>.<br>' +
+      'Ce n\'est pas vous qui gérez les chantiers ? <a href="https://piloz.fr/bonne-personne.html" style="color:#5b5d72">Indiquez-nous la bonne personne</a>.</p>' : "") +
+    '<p style="margin:' + (choices ? "16px" : "28px") + ' 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
     '<a href="https://piloz.fr/desinscription.html" style="color:#8a8ca0">Ne plus recevoir de message</a>.' + (identity ? "<br>" + hesc(identity) : "") + "</p></div>";
   return { subject: clean(renderTpl(tpl.subject, v), 200), html };
 }
@@ -2436,11 +2470,12 @@ function dataNotice(company, source){
   const c = hesc(company);
   if (source === "client") return "Vous recevez ce message car " + c + " a un espace Piloz.";
   if (source === "demo") return "Vous recevez ce message car vous avez demandé l'accès à la démo de Piloz sur piloz.fr.";
+  if (source === "transmis") return "Vous recevez ce message car " + c + " nous a indiqué votre adresse en réponse à un précédent message.";
   if (source === "web") return "Vous recevez ce message car " + c + " figure dans le répertoire public des entreprises (base SIRENE de l'INSEE) et publie ses coordonnées professionnelles sur son site internet.";
   return "Vous recevez ce message car " + c + " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE).";
 }
-function mailHtml(tpl, s, data, to, kind){
-  const mail = buildEmail(tpl, s, data, kind || (tpl && tpl.kind));
+function mailHtml(tpl, s, data, to, kind, campaign){
+  const mail = buildEmail(tpl, s, data, kind || (tpl && tpl.kind), campaign);
   // Boîtes dédiées : l'une d'elles envoie (la moins utilisée du jour).
   const box = s && ((s.boites && s.boites[0]) || s.sender_email);
   const from = box ? (s.sender_name || "Piloz") + " <" + box + ">" + (s.boites && s.boites.length > 1 ? " (ou " + s.boites.slice(1).join(", ") + ")" : "") : "adresse d'envoi à renseigner";
@@ -2642,6 +2677,7 @@ function renderState(){
   $("apReport").innerHTML = rep
     ? "<b>Dernier passage " + esc(ago(rep.at)) + " :</b> " + fmt(rep.scanned) + " entreprises analysées, " + fmt(rep.added) + " ajoutée(s) à la file" + (rep.known ? ", " + fmt(rep.known) + " déjà connue(s)" : "") + (rep.lowScore ? ", " + fmt(rep.lowScore) + " sous le score minimum" : "") + "." + (rep.exhausted ? " <b>Toutes les entreprises du ciblage ont été parcourues</b> : élargissez-le pour continuer." : "")
       + (rep.marches ? " <b>Marchés publics :</b> " + (rep.marches.off ? "indisponible (" + esc(rep.marches.off) + ")" : fmt(rep.marches.marches) + " marché(s) lu(s) sur " + fmt(rep.marches.total) + ", " + fmt(rep.marches.entreprises) + " entreprise(s) dans le ciblage, " + fmt(rep.marches.added) + " ajoutée(s).") : "")
+      + (rep.bodacc ? " <b>BODACC :</b> " + (rep.bodacc.off ? "indisponible (" + esc(rep.bodacc.off) + ")" : fmt(rep.bodacc.annonces) + " annonce(s) lue(s) (" + fmt(rep.bodacc.dirigeants) + " changement(s) de dirigeant, " + fmt(rep.bodacc.reprises) + " reprise(s)), " + fmt(rep.bodacc.entreprises) + " entreprise(s) dans le ciblage, " + fmt(rep.bodacc.added) + " ajoutée(s)" + (rep.bodacc.day ? ", lecture au " + esc(dateFr(rep.bodacc.day)) : "") + ".") : "")
       + (rep.web ? " <b>Sites web (non RGE) :</b> " + fmt(rep.web.examined) + " entreprise(s) examinée(s), " + fmt(rep.web.sites) + " site(s) vérifié(s), " + fmt(rep.web.emails) + " adresse(s) trouvée(s)" + (rep.web.searchBlocked ? ", moteur de recherche au quota" : "") + "." : "")
       + (state.scanned && state.scanned.total ? " <b>Depuis le début :</b> " + fmt(state.scanned.total) + " entreprises non RGE examinées, " + fmt(state.scanned.emails) + " adresses trouvées (" + Math.round(state.scanned.emails / state.scanned.total * 100) + " %)." : "")
     : "Aucun passage pour l'instant : le premier aura lieu dès que l'automate sera démarré.";
@@ -2773,7 +2809,7 @@ function readTarget(){
   const effs = [...document.querySelectorAll("input[name=eff]:checked")].flatMap(c => c.value.split(","));
   if (!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
   return {
-    target: { sect, metiers, effs, deps: parseDeps($("deps").value), tousRge: document.querySelector("input[name=src]:checked").value === "tous", marches: $("tMarches").checked, web: $("tWeb").checked },
+    target: { sect, metiers, effs, deps: parseDeps($("deps").value), tousRge: document.querySelector("input[name=src]:checked").value === "tous", marches: $("tMarches").checked, web: $("tWeb").checked, bodacc: $("tBodacc").checked },
     minScore: Number(document.querySelector("input[name=minscore]:checked").value),
     requireFirstName: $("tReqFirst").checked
   };
@@ -2790,6 +2826,7 @@ function fillTarget(){
   $("deps").value = (t.deps || []).join(", ");
   document.querySelectorAll("input[name=src]").forEach(r => { r.checked = r.value === (t.tousRge !== false ? "tous" : "actifs"); });
   $("tMarches").checked = t.marches !== false;
+  $("tBodacc").checked = t.bodacc !== false;
   $("tWeb").checked = t.web !== false;
   // Texte d'origine gardé à part : la mention du moteur de recherche est ajoutée une seule fois.
   const webNote = $("webNote");
@@ -3255,7 +3292,7 @@ const tplCampaignOf = t => t.campaign || "btp";
 // {marche} et {conseil} ne concernent que le BTP, {logiciels} que les revendeurs,
 // {lien_mois_offert} que le premier mail et la relance chaude.
 function renderVarChips(){
-  const vars = VARS.filter(v => (tplCampaign === "revendeur" ? v !== "marche" && v !== "conseil" : v !== "logiciels") && (v !== "lien_mois_offert" || $("tKind").value === "chaude" || $("tKind").value === "initial")
+  const vars = VARS.filter(v => (tplCampaign === "revendeur" ? v !== "marche" && v !== "conseil" && v !== "evenement" : v !== "logiciels") && (v !== "lien_mois_offert" || ["chaude", "initial", "transmis", "recontact"].includes($("tKind").value))
     && (v !== "lien_espace" || $("tKind").value === "espace" || $("tKind").value === "espace_rappel"));
   $("varChips").innerHTML = vars.map(v => '<button type="button" data-var="' + v + '" title="' + esc(VAR_HELP[v]) + '">{' + v + "}</button>").join("");
 }
@@ -3269,7 +3306,7 @@ function mountTplEditor(campaign){
   (campaign === "revendeur" ? $("rvTplHost") : $("tplHost")).appendChild($("tplWrap"));
   renderVarChips();
   // Les modèles « Après la démo », « Relance démo », « Client » et « Relance chaude » n'existent que pour le BTP.
-  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && (o.value === "demo" || o.value === "relance_demo" || o.value === "client" || o.value === "chaude" || o.value === "espace" || o.value === "espace_rappel"); });
+  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && ["demo", "relance_demo", "client", "chaude", "espace", "espace_rappel", "transmis", "recontact"].includes(o.value); });
   $("tplOtherCamp").innerHTML = campaign === "revendeur"
     ? 'Les modèles de la campagne BTP se gèrent dans l\'écran <a href="#" data-go="tpl">Messages</a>.'
     : 'Les modèles de la campagne revendeurs se gèrent dans l\'écran <a href="#" data-go="revendeurs">Revendeurs</a>.';
@@ -3324,11 +3361,13 @@ async function loadSamples(){
     renderSampleOptions();
   } catch(e){}
 }
-const KIND = { relance1: "relance 1", relance2: "relance 2", chaude: "relance chaude", demo: "après démo", relance_demo: "relance démo", client: "client", espace: "espace prêt", espace_rappel: "rappel espace prêt" };
-// Une relance part toujours en « Re : » sur l'objet du premier message : son objet propre ne sert pas.
+const KIND = { relance1: "relance 1", relance2: "relance 2", chaude: "relance chaude", demo: "après démo", relance_demo: "relance démo", client: "client", espace: "espace prêt", espace_rappel: "rappel espace prêt", transmis: "bonne personne", recontact: "recontact" };
+// Une relance (et le recontact) part toujours en « Re : » sur l'objet du premier message : son objet propre ne sert pas.
 function syncKind(){
-  const relance = /^(relance|chaude$)/.test($("tKind").value);
+  const relance = /^(relance|chaude$|recontact$)/.test($("tKind").value);
   $("tKindChaude").hidden = $("tKind").value !== "chaude";
+  $("tKindTransmis").hidden = $("tKind").value !== "transmis";
+  $("tKindRecontact").hidden = $("tKind").value !== "recontact";
   renderVarChips();
   $("tSubject").disabled = relance;
   if (relance) $("tSubject").value = "Re : (objet du premier message)";
@@ -3353,11 +3392,13 @@ function renderPreview(){
   const kind = $("tKind").value;
   const data = kind === "client" ? { ...sampleData(), source: "client", conseil: "Premier pas conseillé : créez votre premier chantier, puis ajoutez vos salariés ; ils reçoivent leur accès sur leur téléphone." }
     : kind === "demo" ? { ...sampleData(), source: "demo" }
-    // Relance chaude : lien du mois offert à l'adresse du prospect choisi.
-    : kind === "chaude" ? { ...sampleData(), email: m ? m.email : "j.dupont@dupont-batiment.fr" }
+    // Bonne personne : mention d'origine propre, lien du mois offert à son adresse.
+    : kind === "transmis" ? { ...sampleData(), source: "transmis", email: m ? m.email : "j.dupont@dupont-batiment.fr" }
+    // Premier mail, relance chaude, recontact : lien du mois offert à l'adresse du prospect choisi.
+    : kind === "chaude" || kind === "initial" || kind === "recontact" ? { ...sampleData(), email: m ? m.email : "j.dupont@dupont-batiment.fr" }
     // Espace prêt : lien d'exemple (le vrai lien est propre à chaque prospect).
     : kind === "espace" || kind === "espace_rappel" ? { ...sampleData(), lien_espace: ESPACE_SAMPLE_LINK } : sampleData();
-  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr", kind);
+  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr", kind, tplCampaign);
 }
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
 $("tKind").addEventListener("change", () => { $("tName").dataset.dirty = "1"; syncKind(); renderPreview(); });
@@ -3460,7 +3501,7 @@ $("bTplTest").addEventListener("click", async ev => {
    ENVOIS (journal)
    ============================================================ */
 const LOG = { status: "queued", page: 1, total: 0, items: [], sel: new Set() };
-const ORIGIN = { manuel: "Recherche", autopilote: "Pilote auto", negoce: "Négoce (comptoir)" };
+const ORIGIN = { manuel: "Recherche", autopilote: "Pilote auto", negoce: "Négoce (comptoir)", transmis: "Bonne personne", demo: "Démo" };
 const BADGE = { queued: "En file", sending: "Envoi…", sent: "Envoyé", failed: "Échec", skipped: "Ignoré" };
 function gapLabel(sec){ return sec < 120 ? sec + " seconde(s)" : Math.round(sec / 60) + " minute(s)"; }
 // Badges de suivi d'un message envoyé : ouverture, vidéo vue, lien cliqué.
@@ -3478,7 +3519,9 @@ function trackBadges(m){
 function signalBadge(m){
   const d = m.data || {};
   if (m.campaign === "revendeur") return ' <span class="badge rv" title="Campagne revendeurs' + (d.logiciels ? " · logiciels repérés : " + esc(d.logiciels) : "") + '">Revendeur</span>';
+  if (m.origin === "transmis") return ' <span class="badge clic" title="Adresse indiquée par l\'entreprise depuis le lien « Indiquez-nous la bonne personne »">Bonne personne</span>';
   if (d.marche) return ' <span class="badge clic" title="Marché public remporté' + (d.marche_date ? ' (notifié le ' + esc(dateFr(d.marche_date)) + ')' : '') + ' : ' + esc(d.marche) + '">Marché public' + (d.marche_date ? ' · ' + esc(dateFr(d.marche_date)) : '') + '</span>';
+  if (d.signal) return ' <span class="badge clic" title="Annonce BODACC parue le ' + esc(dateFr(d.signal_date)) + (d.signal === "reprise" ? " : reprise de l\'entreprise" : " : changement dans l\'administration (dirigeant)") + '">BODACC · ' + esc(dateFr(d.signal_date)) + '</span>';
   if (d.source === "web") return ' <span class="badge open" title="Entreprise non RGE : adresse lue sur ' + esc(String(d.site || "").replace(/^https?:\/\//, "")) + (d.how ? " (" + (/siren/.test(d.how) ? "SIREN vérifié" : "nom et ville vérifiés") + ")" : "") + '">Site web</span>';
   return "";
 }
@@ -3544,10 +3587,10 @@ function renderLog(){
   logSel();
 }
 // Seuls les premiers mails pas encore partis se retirent ou se relancent.
-const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2", relance3: "Relance démo", chaude: "Relance chaude", espace: "Espace prêt", rappel_espace: "Rappel espace prêt", negoce: "Mail négoce" };
+const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2", relance3: "Relance démo", chaude: "Relance chaude", espace: "Espace prêt", rappel_espace: "Rappel espace prêt", recontact: "Recontact (3 mois)", negoce: "Mail négoce" };
 // Rang 3 : relance des visiteurs de la démo ; rang 4 : relance chaude (prospect intéressé mais silencieux) ;
 // rang 5 : mail « Espace prêt » (comptes prêts) ; rang 6 : son rappel.
-function relanceLabel(stage){ return Number(stage) === 6 ? "Rappel espace prêt" : Number(stage) === 5 ? "Espace prêt" : Number(stage) === 4 ? "Relance chaude" : Number(stage) === 3 ? "Relance démo" : "Relance " + stage; }
+function relanceLabel(stage){ return Number(stage) === 7 ? "Recontact (3 mois)" : Number(stage) === 6 ? "Rappel espace prêt" : Number(stage) === 5 ? "Espace prêt" : Number(stage) === 4 ? "Relance chaude" : Number(stage) === 3 ? "Relance démo" : "Relance " + stage; }
 function logSelectable(m){ return (!m.type || m.type === "premier") && m.status !== "sent" && m.status !== "sending"; }
 function logSel(){
   $("bLogRemove").disabled = !LOG.sel.size; $("bLogRetry").disabled = !LOG.sel.size;
@@ -3749,7 +3792,7 @@ $("bLogExport").addEventListener("click", async ev => {
         niceCompany(m.company), m.email, m.siren || "", d.ville || "", d.departement || "", d.metier || "", d.effectif || "", m.sender || "",
         BADGE[m.status] || m.status, m.opened_at ? dateTimeFr(m.opened_at) : "",
         (m.site_clicked_at || m.video_clicked_at) ? "oui" : "", m.replied_at ? dateTimeFr(m.replied_at) : "", m.score == null ? "" : m.score,
-        d.marche ? "Marché public" : d.source === "web" ? "Site web" : m.origin === "demo" ? "Démo" : "Annuaire RGE",
+        m.origin === "transmis" ? "Bonne personne indiquée" : d.marche ? "Marché public" : d.signal ? (d.signal === "reprise" ? "BODACC (reprise)" : "BODACC (dirigeant)") : d.source === "web" ? "Site web" : m.origin === "demo" ? "Démo" : "Annuaire RGE",
         m.campaign === "revendeur" ? "Revendeurs" : "BTP", d.logiciels || ""];
     });
     const csv = "\ufeff" + [head, ...rows].map(r => r.map(csvCell).join(";")).join("\r\n");
@@ -3808,8 +3851,9 @@ async function openMessage(id, stage = 0){
     } else {
       // Aperçu avec un modèle actif de la campagne du message, premier contact de préférence.
       const mine = state ? state.templates.filter(t => t.active && tplCampaignOf(t) === (m.campaign || "btp")) : [];
-      const tpl = mine.find(t => !t.kind || t.kind === "initial") || mine[0];
-      body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(tpl, state.settings, d, m.email) + "</div>"
+      // Bonne personne indiquée par l'entreprise : son modèle propre.
+      const tpl = (m.origin === "transmis" && mine.find(t => t.kind === "transmis")) || mine.find(t => !t.kind || t.kind === "initial") || mine[0];
+      body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(tpl, state.settings, { ...d, email: m.email }, m.email, null, m.campaign) + "</div>"
         : '<p class="note">Aucun modèle actif pour l\'aperçu.</p>';
     }
     openModal(niceCompany(m.company) || m.email, relance ? relanceLabel(stage) + (relance.sent_at ? " envoyée le " + dateTimeFr(relance.sent_at) : " · " + (BADGE[relance.status] || relance.status))
