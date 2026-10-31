@@ -1186,8 +1186,9 @@
             <div class="card-b" id="bxTests"></div>
           </div>
           <div class="card">
-            <div class="card-h"><h2>Modèles de mail</h2><span class="sub">toutes boîtes, depuis le début</span></div>
-            <div class="tscroll"><table><thead><tr><th>Modèle</th><th style="width:90px">Envoyés</th><th style="width:90px">Ouverture</th><th style="width:70px">Clics</th><th style="width:90px">Réponses</th></tr></thead><tbody id="bxTpls"></tbody></table></div>
+            <div class="card-h"><h2>Modèles de mail</h2><span class="sub">toutes boîtes · comparez les modèles actifs sur la même période</span>
+              <select id="bxTplDays" style="margin-left:auto" onchange="loadBoxes()"><option value="7">7 derniers jours</option><option value="30">30 derniers jours</option><option value="0">Depuis le début</option></select></div>
+            <div class="tscroll"><table><thead><tr><th>Modèle</th><th style="width:90px">Envoyés</th><th style="width:90px">Ouverture</th><th style="width:70px">Clics</th><th style="width:90px">Réponses</th><th style="width:80px">Comptes</th></tr></thead><tbody id="bxTpls"></tbody></table></div>
           </div>
         </div>
       </section>
@@ -2147,7 +2148,7 @@ async function loadBoxes(){
   // Les boîtes s'affichent toujours (depuis les réglages), même si le calcul
   // des statistiques échoue : l'erreur est alors signalée.
   let st = null, pl = { tests: [] }, err = "";
-  try { st = await api("boxes.stats"); } catch(e){ if (e.code === "session") return; err = e.message; }
+  try { st = await api("boxes.stats", { days: Number(($("bxTplDays") || {}).value || 0) }); } catch(e){ if (e.code === "session") return; err = e.message; }
   try { pl = await api("placement.list"); } catch(e){ if (e.code === "session") return; }
   if (!st || !(st.boxes || []).length){
     const ded = (state && state.settings.boites) || [];
@@ -2210,8 +2211,8 @@ function renderBoxes(){
     : '<p class="note">Aucun test pour l\'instant. Le bouton « Test de placement » d\'une boîte envoie un vrai premier mail (modèle actif, suivi compris) à une trentaine d\'adresses témoins Gmail et Outlook, puis affiche où il est arrivé.</p>';
   // Modèles
   $("bxTpls").innerHTML = (BX.templates || []).filter(t => t.envoyes).map(t =>
-    "<tr><td><b>" + esc(t.name) + '</b><div class="meta">' + (t.active ? "actif" : "inactif") + (KIND[t.kind] ? " · " + esc(KIND[t.kind]) : "") + '</div></td><td class="num">' + fmt(t.envoyes) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : pct(t.ouverts, t.envoyes)) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : fmt(t.clics)) + '</td><td class="num">' + fmt(t.reponses) + " <span class=\"meta\">(" + (t.envoyes ? (Math.round(t.reponses / t.envoyes * 10000) / 10).toString().replace(".", ",") : "0") + " ‰)</span></td></tr>").join("")
-    || '<tr><td colspan="5" class="empty">Aucun envoi pour l\'instant.</td></tr>';
+    "<tr><td><b>" + esc(t.name) + '</b><div class="meta">' + (t.active ? "actif" : "inactif") + (KIND[t.kind] ? " · " + esc(KIND[t.kind]) : "") + '</div></td><td class="num">' + fmt(t.envoyes) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : pct(t.ouverts, t.envoyes)) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : fmt(t.clics)) + '</td><td class="num">' + fmt(t.reponses) + " <span class=\"meta\">(" + (t.envoyes ? (Math.round(t.reponses / t.envoyes * 10000) / 10).toString().replace(".", ",") : "0") + " ‰)</span></td><td class=\"num\">" + (/^relance/.test(t.kind) ? "—" : fmt(t.comptes || 0)) + "</td></tr>").join("")
+    || '<tr><td colspan="6" class="empty">Aucun envoi sur la période.</td></tr>';
   $("pillBoites").hidden = false; $("pillBoites").textContent = BX.boxes.length;
 }
 function showBoxDetail(address){
@@ -2342,7 +2343,7 @@ const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "no
 const ESPACE_SAMPLE_LINK = "https://app.piloz.fr/?invitation=exemple-de-lien";
 // Lien d'activation du mois offert (relance chaude), à l'adresse du prospect.
 const MOIS_OFFERT_URL = "https://piloz.fr/checkout.html?plan=premium&offre=mois-offert";
-const VAR_HELP = { lien_espace:"lien d'activation de l'espace Piloz préparé au nom du prospect (modèles Espace prêt et Rappel espace prêt seulement)", lien_mois_offert:"lien d'activation du mois de Premium offert, à l'adresse du prospect (modèle Relance chaude seulement)", logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
+const VAR_HELP = { lien_espace:"lien d'activation de l'espace Piloz préparé au nom du prospect (modèles Espace prêt et Rappel espace prêt seulement)", lien_mois_offert:"lien d'inscription au mois de Premium offert, adresse du prospect déjà remplie ; seul dans son paragraphe, il devient un bouton (premier mail et Relance chaude seulement)", logiciels:"logiciels de gestion repérés sur le site du revendeur (« Sage et EBP »), vide sinon : {logiciels|des logiciels de gestion}", conseil:"conseil de prise en main (mail Client)", bonjour:"« Bonjour Jean »", prenom:"prénom du dirigeant", nom:"nom du dirigeant", entreprise:"nom de l'entreprise", ville:"ville du siège", metier:"métier (plomberie, couverture…)", departement:"n° de département", effectif:"tranche d'effectif", marche:"objet du marché public de travaux que l'entreprise vient de remporter (source DECP), vide sinon : un modèle qui l'utilise n'est envoyé qu'à ces entreprises", video:"emplacement de la vidéo, seul sur sa ligne" };
 const UPPER_WORDS = new Set(["SARL","SAS","SASU","EURL","SA","SNC","SCI","SCOP","EI","EIRL","SC","GIE","SELARL","SCP","SCA","BTP","TP","VRD","CVC","ETS"]);
 const SMALL_WORDS = new Set(["de","du","des","la","le","les","et","en","d","l","a","au","aux","sur"]);
 const clean = (v, max) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 200);
@@ -2384,9 +2385,12 @@ const hesc = esc;
 const linkify = e => e.replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, u => '<a href="' + u + '" style="color:#4f46e5">' + u + "</a>");
 // Lien d'activation d'un espace préparé seul dans son paragraphe : bouton (miroir de espaceButton).
 const ESPACE_LINK_RE = /^https:\/\/app\.piloz\.fr\/\?invitation=[A-Za-z0-9-]+$/;
-const espaceButton = u => '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px;border-collapse:collapse"><tr><td style="border-radius:8px;background:#6d5ef8;padding:13px 26px">' +
-  '<a href="' + hesc(u) + '" style="font:bold 16px Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none">Activer mon espace Piloz</a></td></tr></table>';
-const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => ESPACE_LINK_RE.test(b.trim()) ? espaceButton(b.trim()) : '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>").join("");
+// Lien du mois offert seul dans son paragraphe (premier mail, relance chaude) : bouton aussi.
+const linkButton = (u, label) => '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px;border-collapse:collapse"><tr><td style="border-radius:8px;background:#6d5ef8;padding:13px 26px">' +
+  '<a href="' + hesc(u) + '" style="font:bold 16px Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none">' + label + '</a></td></tr></table>';
+const moisOffertBlock = b => b.startsWith(MOIS_OFFERT_URL + "&email=") && !/\s/.test(b);
+const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => { const x = b.trim();
+  return ESPACE_LINK_RE.test(x) ? linkButton(x, "Activer mon espace Piloz") : moisOffertBlock(x) ? linkButton(x, "Activer mon mois offert") : '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>"; }).join("");
 function youtubeId(url){ const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; }
 function buildEmail(tpl, s, data, kind){
   s = s || {};
@@ -3249,9 +3253,9 @@ const SAMPLE = { entreprise: "DUPONT BATIMENT", prenom: "Jean", nom: "Dupont", v
 const tplCampaignOf = t => t.campaign || "btp";
 
 // {marche} et {conseil} ne concernent que le BTP, {logiciels} que les revendeurs,
-// {lien_mois_offert} que la relance chaude.
+// {lien_mois_offert} que le premier mail et la relance chaude.
 function renderVarChips(){
-  const vars = VARS.filter(v => (tplCampaign === "revendeur" ? v !== "marche" && v !== "conseil" : v !== "logiciels") && (v !== "lien_mois_offert" || $("tKind").value === "chaude")
+  const vars = VARS.filter(v => (tplCampaign === "revendeur" ? v !== "marche" && v !== "conseil" : v !== "logiciels") && (v !== "lien_mois_offert" || $("tKind").value === "chaude" || $("tKind").value === "initial")
     && (v !== "lien_espace" || $("tKind").value === "espace" || $("tKind").value === "espace_rappel"));
   $("varChips").innerHTML = vars.map(v => '<button type="button" data-var="' + v + '" title="' + esc(VAR_HELP[v]) + '">{' + v + "}</button>").join("");
 }
