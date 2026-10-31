@@ -2133,10 +2133,11 @@ async function dnsTxt(name, type){
   return dnsCache[key];
 }
 async function domainChecks(domain){
-  const [txt, dmarc, mx, dk1, dka] = await Promise.all([dnsTxt(domain), dnsTxt("_dmarc." + domain), dnsTxt(domain, "MX"), dnsTxt("hostingermail1._domainkey." + domain), dnsTxt("hostingermail-a._domainkey." + domain)]);
+  // Clés DKIM : sélecteurs Hostinger, et « google » pour les domaines sur Google Workspace (piloz-btp.fr).
+  const [txt, dmarc, mx, dk1, dka, dkg] = await Promise.all([dnsTxt(domain), dnsTxt("_dmarc." + domain), dnsTxt(domain, "MX"), dnsTxt("hostingermail1._domainkey." + domain), dnsTxt("hostingermail-a._domainkey." + domain), dnsTxt("google._domainkey." + domain)]);
   const spf = (txt || []).some(t => /v=spf1/i.test(t));
   const dm = (dmarc || []).find(t => /v=DMARC1/i.test(t)) || "";
-  const dkim = [...(dk1 || []), ...(dka || [])].some(t => /p=[A-Za-z0-9+/]{20,}/.test(t));
+  const dkim = [...(dk1 || []), ...(dka || []), ...(dkg || [])].some(t => /p=[A-Za-z0-9+/]{20,}/.test(t));
   return [
     { k: "SPF", ok: spf }, { k: "DKIM", ok: dkim }, { k: "DMARC" + (dm ? " " + ((dm.match(/p=(\w+)/) || [])[1] || "") : ""), ok: !!dm }, { k: "MX", ok: (mx || []).length > 0 }
   ];
