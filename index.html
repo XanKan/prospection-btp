@@ -2381,19 +2381,31 @@ const LOGO_URL = "https://piloz.fr/assets/images/email/piloz-logo-112.png";
 const VIDEO_THUMBNAILS = { UycAnUQzzYg: "https://piloz.fr/assets/images/email/presentation-video.jpg" };
 const hesc = esc;
 const linkify = e => e.replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, u => '<a href="' + u + '" style="color:#4f46e5">' + u + "</a>");
-const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>").join("");
+// Lien d'activation d'un espace préparé seul dans son paragraphe : bouton (miroir de espaceButton).
+const ESPACE_LINK_RE = /^https:\/\/app\.piloz\.fr\/\?invitation=[A-Za-z0-9-]+$/;
+const espaceButton = u => '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px;border-collapse:collapse"><tr><td style="border-radius:8px;background:#6d5ef8;padding:13px 26px">' +
+  '<a href="' + hesc(u) + '" style="font:bold 16px Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none">Activer mon espace Piloz</a></td></tr></table>';
+const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => ESPACE_LINK_RE.test(b.trim()) ? espaceButton(b.trim()) : '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>").join("");
 function youtubeId(url){ const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; }
-function buildEmail(tpl, s, data){
+function buildEmail(tpl, s, data, kind){
   s = s || {};
+  // « Espace prêt » et son rappel : sans vidéo, signature de Quentin (miroir de prospection-jobs).
+  const espace = kind === "espace" || kind === "espace_rappel";
   const v = templateVars(data);
   const tidy = x => renderTpl(x, v).replace(/\r\n/g, "\n").replace(/[ \t]+\n/g, "\n").trim();
   const parts = String(tpl.body || "").replace(/\r\n/g, "\n").split(/^[ \t]*\{video\}[ \t]*$/m);
   const before = tidy(parts[0] || ""), after = tidy(parts.slice(1).join("\n"));
-  const url = s.video_url || "", id = youtubeId(url);
+  const url = espace ? "" : s.video_url || "", id = youtubeId(url);
   const thumb = id ? (VIDEO_THUMBNAILS[id] || "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg") : "";
   const video = url ? (thumb ? '<p style="margin:4px 0 6px"><a href="' + hesc(url) + '" style="text-decoration:none"><img src="' + hesc(thumb) + '" width="480" alt="Vidéo : découvrez Piloz en 1 minute" style="display:block;width:100%;max-width:480px;height:auto;border:0;border-radius:12px"></a></p>' : "") +
     '<p style="margin:0 0 16px;font-size:14px"><a href="' + hesc(url) + '" style="color:#4f46e5;font-weight:bold">▶ Découvrez Piloz en 1 minute</a></p>' : "";
-  const lines = String(s.signature || "").replace(/\r\n/g, "\n").split("\n").map(l => l.trim()).filter(Boolean);
+  // Ligne « [texte](https://…) » : un bouton sous la signature (prise de rendez-vous), comme côté serveur.
+  const SIG_BUTTON = /^\[([^\]]{1,80})\]\((https?:\/\/[^\s)]+)\)$/;
+  const allLines = String((espace && s.client_signature) || s.signature || "").replace(/\r\n/g, "\n").split("\n").map(l => l.trim()).filter(Boolean);
+  const sigButton = allLines.map(l => l.match(SIG_BUTTON)).find(Boolean);
+  const lines = allLines.filter(l => !SIG_BUTTON.test(l));
+  const buttonHtml = sigButton ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:10px 0 0;border-collapse:collapse"><tr><td style="border-radius:6px;background:#6d5ef8;padding:7px 14px">' +
+    '<a href="' + hesc(sigButton[2]) + '" style="font:bold 12px Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none">' + hesc(sigButton[1]) + "</a></td></tr></table>" : "";
   // Miroir de signatureHtml côté serveur (prospection-core) : 1re ligne en avant,
   // marque en capitales violettes, adresse « @ », site « W », accroche en italique.
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/, siteRe = /^(https?:\/\/)?[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i;
@@ -2407,7 +2419,7 @@ function buildEmail(tpl, s, data){
   const sig = lines.length ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;border-collapse:collapse"><tr>' +
     '<td style="padding:0 14px 0 0;vertical-align:middle"><img src="' + LOGO_URL + '" width="52" height="52" alt="Piloz" style="display:block;border:0;border-radius:12px"></td>' +
     '<td style="vertical-align:middle;font:13px/1.7 Arial,Helvetica,sans-serif;color:#2a2c3f;border-left:3px solid #6d5ef8;padding:3px 0 3px 14px">' +
-    lines.map(sigLine).join("<br>") + "</td></tr></table>" : "";
+    lines.map(sigLine).join("<br>") + buttonHtml + "</td></tr></table>" : "";
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
   const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
     '<p style="margin:28px 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
@@ -2422,8 +2434,8 @@ function dataNotice(company, source){
   if (source === "web") return "Vous recevez ce message car " + c + " figure dans le répertoire public des entreprises (base SIRENE de l'INSEE) et publie ses coordonnées professionnelles sur son site internet.";
   return "Vous recevez ce message car " + c + " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE).";
 }
-function mailHtml(tpl, s, data, to){
-  const mail = buildEmail(tpl, s, data);
+function mailHtml(tpl, s, data, to, kind){
+  const mail = buildEmail(tpl, s, data, kind || (tpl && tpl.kind));
   // Boîtes dédiées : l'une d'elles envoie (la moins utilisée du jour).
   const box = s && ((s.boites && s.boites[0]) || s.sender_email);
   const from = box ? (s.sender_name || "Piloz") + " <" + box + ">" + (s.boites && s.boites.length > 1 ? " (ou " + s.boites.slice(1).join(", ") + ")" : "") : "adresse d'envoi à renseigner";
@@ -3340,7 +3352,7 @@ function renderPreview(){
     : kind === "chaude" ? { ...sampleData(), email: m ? m.email : "j.dupont@dupont-batiment.fr" }
     // Espace prêt : lien d'exemple (le vrai lien est propre à chaque prospect).
     : kind === "espace" || kind === "espace_rappel" ? { ...sampleData(), lien_espace: ESPACE_SAMPLE_LINK } : sampleData();
-  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr");
+  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr", kind);
 }
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
 $("tKind").addEventListener("change", () => { $("tName").dataset.dirty = "1"; syncKind(); renderPreview(); });
@@ -3430,7 +3442,7 @@ $("bTplTest").addEventListener("click", async ev => {
   busy(btn, true, "Envoi du test…");
   $("tplMsg").textContent = "";
   try {
-    const { to } = await api("test.send", { template: { subject: $("tSubject").value, body: $("tBody").value }, sample: sampleData(), to: $("tTestTo").value.trim() || undefined, realistic: $("tTestReal").checked });
+    const { to } = await api("test.send", { kind: $("tKind").value, template: { subject: $("tSubject").value, body: $("tBody").value }, sample: sampleData(), to: $("tTestTo").value.trim() || undefined, realistic: $("tTestReal").checked });
     $("tplMsg").textContent = "Test envoyé à " + to + ". Vérifiez aussi le dossier indésirables.";
   } catch(e){
     const detail = e.data && e.data.outcome === "fatal" ? " La boîte Hostinger refuse la connexion : vérifiez l'adresse d'envoi et le mot de passe enregistré côté serveur." : "";
