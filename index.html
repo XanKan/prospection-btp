@@ -2607,6 +2607,8 @@ function renderState(){
     "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + esc(pausesText(s)) + " (heure de Paris), un message toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ".<br>" +
     (boites.length
       ? "Expéditeur : <b>" + esc(s.sender_name || "Piloz") + "</b>, depuis " + boites.map(b => "<b>" + esc(b.address) + "</b>").join(", ")
+        // Boîtes piloz.fr remises dans la rotation des premiers mails (boites_piloz_max, 31/10).
+        + (s.boites_piloz_max > 0 ? ", plus <b>" + [s.sender_email, state.smtp && state.smtp.second && state.smtp.second.configured ? s.sender_email_2 : ""].filter(Boolean).map(esc).join("</b> et <b>") + "</b> (" + fmt(s.boites_piloz_max) + " premiers mails par jour chacune)" : "")
       : "Expéditeur : <b>" + esc(s.sender_email ? (s.sender_name + " <" + s.sender_email + ">") : "à renseigner") + "</b>" +
         (state.smtp && state.smtp.second && state.smtp.second.configured ? " en rotation avec <b>" + esc(state.smtp.second.address) + "</b>" : ""));
 
