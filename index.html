@@ -1314,7 +1314,11 @@
                   <label class="swi" style="margin:4px 0 10px"><input type="checkbox" id="sWarm"><i></i> Augmenter le quota progressivement</label>
                   <div class="inline">départ <input class="inp" type="number" id="sWarmStart" min="1" max="3000"> + <input class="inp" type="number" id="sWarmStep" min="0" max="1000"> par jour d'envoi</div></div>
                 <div class="fld"><label>Créneau d'envoi (heure de Paris)</label>
-                  <div class="inline">de <input class="inp" type="time" id="sWinStart" style="width:120px"> à <input class="inp" type="time" id="sWinEnd" style="width:120px"></div></div>
+                  <div class="inline">de <input class="inp" type="time" id="sWinStart" style="width:120px"> à <input class="inp" type="time" id="sWinEnd" style="width:120px"></div>
+                  <div class="inline" style="margin-top:8px">pauses <input class="inp" type="text" id="sPauses" placeholder="11:00-13:00, 14:00-17:00" style="width:230px"></div>
+                  <p class="help">Aucun envoi pendant une pause (4 au plus, format 11:00-13:00).</p></div>
+                <div class="fld"><label for="sPiloz">contact@ et commercial@ (piloz.fr), premiers mails par jour chacune</label><input class="inp" type="number" id="sPiloz" min="0" max="1000" step="1">
+                  <p class="help">En plus des boîtes dédiées, sans montée progressive. 0 : ces boîtes n'envoient que les relances de leurs anciens prospects.</p></div>
                 <div class="fld"><label>Intervalle entre deux messages</label>
                   <div class="inline">entre <input class="inp" type="number" id="sGapMin" min="5" max="7200"> et <input class="inp" type="number" id="sGapMax" min="5" max="7200"> secondes</div>
                   <p class="help">Tiré au hasard à chaque envoi. Pour 1 000 messages/jour sur un créneau de 10 h, visez 20 à 45 secondes.</p></div>
@@ -2600,7 +2604,7 @@ function renderState(){
   $("cadence").innerHTML =
     "<b>" + fmt(state.capToday) + " messages aujourd'hui</b> au maximum" + (boites.length && state.capToday < s.daily_cap ? ", jusqu'à " + fmt(s.daily_cap) + " par jour une fois la montée progressive des boîtes terminée (+" + (s.boite_palier || 10) + " par boîte chaque semaine)" : s.warmup_enabled && state.capToday < s.daily_cap ? ", jusqu'à " + fmt(s.daily_cap) + " par jour une fois la montée en charge terminée (+" + s.warmup_step + " par jour d'envoi)" : "") + ".<br>" +
     (qp ? "Relances des anciens prospects depuis piloz.fr (ceux qui ont ouvert ou cliqué), dans le fil de leur premier message : <b>" + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + " aujourd'hui</b>, en plus, " + fmt(qp.dues) + " en attente.<br>" : "") +
-    "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris), un message toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ".<br>" +
+    "Envois " + esc(days2) + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + esc(pausesText(s)) + " (heure de Paris), un message toutes les " + gapLabel(s.min_gap_seconds) + " à " + gapLabel(s.max_gap_seconds) + ".<br>" +
     (boites.length
       ? "Expéditeur : <b>" + esc(s.sender_name || "Piloz") + "</b>, depuis " + boites.map(b => "<b>" + esc(b.address) + "</b>").join(", ")
       : "Expéditeur : <b>" + esc(s.sender_email ? (s.sender_name + " <" + s.sender_email + ">") : "à renseigner") + "</b>" +
@@ -3128,9 +3132,11 @@ async function loadDashRvRecent(force){
 }
 $("bDashRvLog").addEventListener("click", () => $("bRvLog").click());
 
+// Pauses du créneau d'envoi : « , sauf 11:00-13:00 et 14:00-17:00 ».
+function pausesText(s){ const p = (s.send_pauses || []).map(x => String(x).replace("-", " - ")); return p.length ? ", sauf " + (p.length > 1 ? p.slice(0, -1).join(", ") + " et " + p[p.length - 1] : p[0]) : ""; }
 // Créneau des revendeurs : les jours et horaires de l'automate, partagés avec le BTP.
 function rvWindow(s){
-  return s.send_days.map(d => DAY_NAMES[d]).join(", ") + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + " (heure de Paris)";
+  return s.send_days.map(d => DAY_NAMES[d]).join(", ") + ", de " + hm(s.window_start) + " à " + hm(s.window_end) + pausesText(s) + " (heure de Paris)";
 }
 function rvNextSend(c, cap){
   const s = state.settings;
@@ -3956,6 +3962,7 @@ function fillSettings(){
   $("sSig").value = s.signature || ""; $("sFooter").value = s.footer_identity || ""; $("sVideo").value = s.video_url || "";
   $("sCap").value = s.daily_cap; $("sWarm").checked = !!s.warmup_enabled; $("sWarmStart").value = s.warmup_start; $("sWarmStep").value = s.warmup_step;
   $("sWinStart").value = hm(s.window_start); $("sWinEnd").value = hm(s.window_end);
+  $("sPauses").value = (s.send_pauses || []).join(", "); $("sPiloz").value = s.boites_piloz_max ?? 0;
   $("sGapMin").value = s.min_gap_seconds; $("sGapMax").value = s.max_gap_seconds;
   $("sErr").value = s.max_consecutive_errors;
   $("sFuEnabled").checked = !!s.followup_enabled; $("sFu1").value = s.followup1_days || 7; $("sFu2").value = s.followup2_days || 21;
@@ -4022,6 +4029,7 @@ $("setForm").addEventListener("submit", async ev => {
     signature: $("sSig").value, footer_identity: $("sFooter").value, video_url: $("sVideo").value.trim(),
     daily_cap: $("sCap").value, warmup_enabled: $("sWarm").checked, warmup_start: $("sWarmStart").value, warmup_step: $("sWarmStep").value,
     window_start: $("sWinStart").value, window_end: $("sWinEnd").value, send_days: days,
+    send_pauses: $("sPauses").value, boites_piloz_max: $("sPiloz").value,
     min_gap_seconds: Math.round(Number($("sGapMin").value)), max_gap_seconds: Math.round(Number($("sGapMax").value)),
     max_consecutive_errors: $("sErr").value,
     followup_enabled: $("sFuEnabled").checked, followup1_days: $("sFu1").value, followup2_days: $("sFu2").value,
