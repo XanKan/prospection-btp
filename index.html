@@ -676,6 +676,15 @@
           <div class="card-b"><div class="funnel" id="pcFunnel"></div><p class="note" id="pcNote" style="margin-top:12px"></p></div>
         </div>
 
+        <div class="card" id="dashDeliv" hidden style="margin-bottom:16px">
+          <div class="card-h"><h2>Premier mail : complet ou léger</h2><span class="sub">même texte ; la version légère n'a que deux liens (inscription, désinscription)</span>
+            <select id="dvDays" style="margin-left:auto" onchange="loadDeliv()"><option value="7" selected>7 derniers jours</option><option value="30">30 derniers jours</option></select></div>
+          <div class="card-b">
+            <div class="tscroll"><table><thead><tr><th>Version</th><th style="width:84px">Envoyés</th><th style="width:84px">Ouverts</th><th style="width:84px">Cliqués</th><th style="width:84px">Réponses</th><th style="width:84px">Liens</th><th style="width:84px">Comptes</th><th style="width:96px">Désinscrits</th><th style="width:70px">Échecs</th></tr></thead><tbody id="dvFormat"></tbody></table></div>
+            <p class="note" id="dvNote" style="margin-top:12px"></p>
+          </div>
+        </div>
+
         <div class="grid2">
           <div class="card">
             <div class="card-h"><h2>Derniers envois</h2><div class="right"><button type="button" class="b b-out b-xs" data-go="log">Tout voir</button></div></div>
@@ -1002,16 +1011,17 @@
               <div class="card-b">
                 <div class="fields tpl-fields">
                   <div class="fld"><label for="tName">Nom interne</label><input class="inp" id="tName" maxlength="120" placeholder="ex. Premier contact — artisans"></div>
-                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="relance_demo">Relance démo (jamais ouvert)</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option><option value="chaude">Relance chaude (intéressés)</option><option value="espace">Espace prêt (comptes prêts)</option><option value="espace_rappel">Rappel espace prêt</option><option value="transmis">Bonne personne (indiquée par l'entreprise)</option><option value="recontact">Recontact (3 mois après « pas le bon moment »)</option><option value="rappel_inscription">Rappel d'inscription (lendemain)</option></select>
+                  <div class="fld"><label for="tKind">Type</label><select class="inp" id="tKind"><option value="initial">Premier contact</option><option value="demo">Après la démo</option><option value="relance_demo">Relance démo (jamais ouvert)</option><option value="client">Client (prise en main)</option><option value="relance1">Relance 1</option><option value="relance2">Relance 2 (dernière)</option><option value="chaude">Relance chaude (intéressés)</option><option value="espace">Espace prêt (comptes prêts)</option><option value="espace_rappel">Rappel espace prêt</option><option value="transmis">Bonne personne (indiquée par l'entreprise)</option><option value="absence">Contact indiqué par un message d'absence</option><option value="recontact">Recontact (3 mois après « pas le bon moment »)</option><option value="rappel_inscription">Rappel d'inscription (lendemain)</option></select>
                     <p class="help">Une relance part dans le fil du premier message, en « Re : », aux destinataires qui n'ont pas répondu. Délais et conditions dans Réglages.</p>
                     <p class="help" id="tKindChaude" hidden>Relance chaude : un seul message, avant les autres relances, aux prospects BTP intéressés mais silencieux (au moins 3 ouvertures ou un clic, premier mail parti il y a 2 à 60 jours, rien envoyé depuis 2 jours, pas déjà client, pas de relance démo). Il remplace les relances 1 et 2 et termine la séquence. Mettez-y {lien_mois_offert} : le lien d'activation du mois de Premium offert, à l'adresse du prospect.</p>
                     <p class="help" id="tKindTransmis" hidden>Bonne personne : premier mail à la personne qu'une entreprise a indiquée depuis le lien « Indiquez-nous la bonne personne » en bas de nos mails. Il part en tête de file, avec son propre objet ; l'adresse qui a reçu le premier mail n'est plus relancée. Mettez-y {lien_mois_offert}.</p>
+                    <p class="help" id="tKindAbsence" hidden>Contact d'absence : premier mail à l'adresse qu'un message d'absence automatique nous a donnée à la place du prospect (« pour toute urgence, contactez… »). Il part en tête de file, sans prénom (« Bonjour, ») : dites ce qui s'est passé, sans prétendre que quelqu'un l'a recommandé. Le prospect absent n'est pas relancé avant son retour. Mettez-y {lien_mois_offert}.</p>
                     <p class="help" id="tKindRecontact" hidden>Recontact : un seul message, dans le fil du premier mail, 3 mois après un clic sur « Pas le bon moment ? Recontactez-moi dans 3 mois ». Entre-temps, plus aucune relance ; après lui, plus rien. Mettez-y {lien_mois_offert}.</p>
                     <p class="help" id="tKindRappelInscription" hidden>Rappel d'inscription : un seul message, dans le fil du premier mail, le lendemain d'une visite de la page d'inscription sans demande de lien (ni réponse, ni compte, ni pause). Ne parlez pas de la visite. Mettez-y {lien_mois_offert} et {reponse_oui}.</p></div>
                   <div class="fld"><label for="tSubject">Objet</label><input class="inp" id="tSubject" maxlength="200"></div>
                   <div class="fld full"><label for="tBody">Message</label><textarea class="inp" id="tBody" rows="12" maxlength="8000"></textarea>
                     <div class="vars" id="varChips"></div>
-                    <p class="help note" style="margin-top:8px">Cliquez une variable pour l'insérer. Écrivez <code class="k">{prenom|Madame, Monsieur}</code> pour prévoir un texte quand l'information manque. La signature, la mention de la source des données et le lien de désinscription sont ajoutés automatiquement.</p>
+                    <p class="help note" style="margin-top:8px">Cliquez une variable pour l'insérer. Écrivez <code class="k">{prenom|Madame, Monsieur}</code> pour prévoir un texte quand l'information manque, et <code class="k">[[tournure 1|tournure 2]]</code> pour que chaque mail tire une tournure au hasard (des centaines de textes identiques ressemblent à un envoi de masse ; l'aperçu montre la première, chaque test en tire une). La signature, la mention de la source des données et le lien de désinscription sont ajoutés automatiquement.</p>
                   </div>
                 </div>
               </div>
@@ -1020,6 +1030,7 @@
                 <button type="button" class="b b-out" id="bTplTest">Envoyer un test</button>
                 <input class="inp" type="email" id="tTestTo" placeholder="à moi (ou une autre adresse)" style="width:260px" title="Laissez vide pour recevoir le test sur votre adresse. Collez ici l'adresse fournie par mail-tester.com, ou un Gmail / Outlook à vous, pour un test de délivrabilité.">
                 <label class="swi" title="Sans la mention [Test] dans l'objet et avec le suivi (pixel et liens), exactement comme un vrai envoi : indispensable pour un test de délivrabilité."><input type="checkbox" id="tTestReal"><i></i> Comme un vrai envoi</label>
+                <label class="swi" id="tLegerFld" title="Version légère du premier mail : deux liens seulement (inscription, désinscription). Pour l'aperçu et le test."><input type="checkbox" id="tTestLeger"><i></i> Version légère</label>
                 <button type="button" class="b b-out" id="bTplArch" hidden>Archiver</button>
                 <button type="button" class="b b-danger" id="bTplDel">Supprimer</button>
                 <span class="note" id="tplMsg"></span>
@@ -1029,7 +1040,7 @@
               <div class="card-h"><h2>Aperçu</h2>
                 <div class="right"><select class="inp" id="tplSample" style="min-width:240px"></select></div></div>
               <div class="card-b"><div class="mail" id="tplPreview"></div>
-                <p class="note" style="margin-top:12px">Chaque message part avec la vidéo de présentation, la signature et le logo, ainsi qu'un suivi discret : ouverture (image invisible) et clics, pour savoir qui s'intéresse à Piloz et ne relancer que ceux-là.</p></div>
+                <p class="note" style="margin-top:12px">Chaque message part avec la signature et le logo (la version légère du premier mail : signature en texte, sans logo), ainsi qu'un suivi discret : ouverture (image invisible) et clics, pour savoir qui s'intéresse à Piloz et ne relancer que ceux-là.</p></div>
             </div>
           </div>
         </div>
@@ -1360,6 +1371,12 @@
                 <div class="fld"><label>Intervalle entre deux messages</label>
                   <div class="inline">entre <input class="inp" type="number" id="sGapMin" min="5" max="7200"> et <input class="inp" type="number" id="sGapMax" min="5" max="7200"> secondes</div>
                   <p class="help">Tiré au hasard à chaque envoi. Pour 1 000 messages/jour sur un créneau de 10 h, visez 20 à 45 secondes.</p></div>
+                <div class="fld"><label for="sLeger">Version légère du premier mail</label>
+                  <div class="inline"><input class="inp" type="number" id="sLeger" min="0" max="100" step="5" style="width:90px"> % des premiers mails BTP</div>
+                  <p class="help">Même texte, mais seulement deux liens : l'inscription et la désinscription (ni bouton, ni logo, ni guide, ni « pas le bon moment »). Le tableau de bord compare les deux versions. 0 : tout en version complète.</p></div>
+                <div class="fld full"><label>Mails par heure et par fournisseur de messagerie</label>
+                  <div class="chips" id="sProv"></div>
+                  <p class="help">Sur l'heure glissante, tous types de mails confondus. Au-delà, les destinataires de ce fournisseur attendent et les autres passent : Orange en particulier n'aime pas les rafales. 0 : sans limite. Les adresses d'entreprise (« autres ») ne sont jamais limitées.</p></div>
                 <div class="fld full"><label>Jours d'envoi</label>
                   <div class="chips" id="dayChips"></div></div>
                 <div class="fld"><label for="sErr">En cas d'erreurs répétées</label>
@@ -1651,8 +1668,9 @@ async function renderSeq(){
   const piloz = [s.sender_email, s.sender_email_2].filter(Boolean).join(" et ");
   const perHour = Math.round(3600 / ((Number(s.min_gap_seconds || 12) + Number(s.max_gap_seconds || 25)) / 2));
   $("seqWhen").innerHTML =
+    '<p class="note" id="seqHour"></p>' +
     '<p class="note"><b>Jours :</b> ' + esc(daysFr(s.send_days)) + " · <b>Créneaux :</b> " + esc(slotsFr(s)) + " (heure de Paris)" + (s.paused ? ' · <b style="color:var(--danger,#c23b33)">automate en pause</b>' : "") + "</p>" +
-    '<p class="note"><b>Rythme :</b> un mail toutes les ' + fmt(s.min_gap_seconds) + " à " + fmt(s.max_gap_seconds) + " secondes, soit environ " + fmt(perHour) + " par heure de créneau, toutes boîtes confondues.</p>" +
+    '<p class="note"><b>Rythme :</b> un mail toutes les ' + fmt(s.min_gap_seconds) + " à " + fmt(s.max_gap_seconds) + " secondes, soit environ " + fmt(perHour) + " par heure de créneau au plus, toutes boîtes confondues (en pratique moins : le temps d'envoi de chaque mail s'ajoute à l'intervalle).</p>" +
     "<p class=\"note\"><b>Aujourd'hui :</b> premiers mails BTP " + (qn ? fmt(qn.envoyes) + " sur " + fmt(qn.plafond) : "—") +
     " (boîtes dédiées selon leur rodage, plus jusqu'à " + fmt(s.boites_piloz_max) + " chacune pour " + esc(piloz) + ") · relances depuis " + esc(piloz) + " : " +
     (qp ? fmt(qp.envoyes) + " sur " + fmt(qp.plafond) + (qp.dues ? ", " + fmt(qp.dues) + " en attente" : "") : "—") + ".</p>";
@@ -1660,22 +1678,27 @@ async function renderSeq(){
     ["1", "Espace prêt, puis son rappel", "Prospects pour qui un espace Piloz a été préparé", "à l'heure programmée ; au plus 60 « Espace prêt » par jour, rappels en plus", "boîte du premier mail", ["espace", "espace_rappel"]],
     ["2", "Après la démo", "Visiteurs qui ont demandé l'accès à la démo", "1 heure après la demande", "rotation", ["demo"]],
     ["3", "Bonne personne", "Personne indiquée par une entreprise (« Indiquez-nous la bonne personne »)", "au créneau suivant", "rotation", ["transmis"]],
+    ["3", "Contact d'absence", "Adresse donnée par le message d'absence d'un prospect (« pour toute urgence, contactez… »), une par prospect", "au créneau suivant", "rotation", ["absence"]],
     ["4", "Premier mail « signal »", "Entreprises qui viennent de gagner un marché public, ou dont une annonce BODACC vient de paraître (reprise, changement de dirigeant)", "au créneau suivant, l'annonce la plus récente d'abord ; un modèle qui cite {marche} ou {evenement} leur est réservé", "rotation", ["initial"]],
     ["5", "Relance chaude", "Prospects intéressés mais silencieux : 3 ouvertures ou un clic, premier mail il y a 2 à 60 jours", "rien envoyé depuis 2 jours ; remplace les relances 1 et 2 et termine la séquence", "boîte du premier mail", ["chaude"]],
     ["6", "Rappel d'inscription", "Prospects qui ont vu la page d'inscription sans demander leur lien", "le lendemain (20 heures à 7 jours après la visite), une seule fois", "boîte du premier mail", ["rappel_inscription"]],
     ["7", "Relances 1 et 2", "Prospects qui ont ouvert ou cliqué" + (s.followup_opened_only === false ? " (ou non)" : "") + ", sans réponse", "relance 1 à J+" + fmt(s.followup1_days) + ", relance 2 à J+" + fmt(s.followup2_days) + ", les plus anciennes d'abord", "boîte du premier mail", ["relance1", "relance2"]],
     ["7", "Relance démo", "Visiteurs de la démo qui n'ont pas ouvert leur mail, sans compte", "J+3", "boîte du premier mail", ["relance_demo"]],
     ["7", "Recontact", "Prospects qui ont cliqué « Pas le bon moment ? Recontactez-moi dans 3 mois »", "3 mois plus tard, à 8 h, une seule fois", "boîte du premier mail", ["recontact"]],
-    ["8", "Premier mail", "Nouveaux prospects BTP du ciblage, pris dans la réserve", "meilleur score d'abord", "rotation", ["initial"], true],
+    ["8", "Premier mail", "Nouveaux prospects BTP du ciblage, pris dans la réserve", "meilleur score d'abord ; " + fmt(s.format_leger_part || 0) + " % en version légère (deux liens)", "rotation", ["initial"], true],
   ];
   $("seqBody").innerHTML = rows.map(([n, quoi, qui, quand, boite, kinds, general]) => '<tr><td class="num"><b>' + n + "</b></td><td><b>" + esc(quoi) + '</b><div class="meta">' + seqTpl(kinds, "btp", general) + "</div></td><td>" + esc(qui) + "</td><td>" + esc(quand) + "</td><td>" + esc(boite) + "</td></tr>").join("");
   $("seqQuotas").innerHTML = "<b>Limites :</b> les premiers mails (rangs 2, 3, 4 et 8) s'arrêtent au plafond du jour ; les relances BTP des boîtes dédiées n'en prennent pas plus de la moitié, sauf si la réserve est vide ; " +
     "les relances et les « Espace prêt » partis de " + esc(piloz) + " ont leur propre plafond (" + fmt(s.relances_piloz_max) + " par jour). Rien ne part à une adresse désinscrite, à un prospect qui a répondu ni à un client reconnu. " +
-    "<b>Rotation :</b> la boîte qui a le plus de marge sur son plafond du jour ; les relances repartent toujours de la boîte du premier mail, dans le même fil.";
+    "<b>Rotation :</b> la boîte qui a le plus de marge sur son plafond du jour ; les relances repartent toujours de la boîte du premier mail, dans le même fil. " +
+    "<b>Par fournisseur :</b> " + provLimitsFr(s) + " sur l'heure glissante ; au-delà, ces destinataires attendent et les autres passent. " +
+    "<b>Absence :</b> un prospect dont le message d'absence court encore ne reçoit rien avant son retour (une semaine sans date indiquée).";
+  loadSeqHour();
   $("seqPath").innerHTML =
     '<p class="note"><b>J0</b> : premier mail, avec le bouton « Créer mon compte Piloz », « Répondez « oui » », et en bas « Recontactez-moi dans 3 mois » et « Indiquez-nous la bonne personne ».</p>' +
     "<p class=\"note\"><b>S'il a ouvert ou cliqué</b> : relance 1 à J+" + fmt(s.followup1_days) + ", relance 2 à J+" + fmt(s.followup2_days) + ". <b>S'il est très intéressé</b> (3 ouvertures ou un clic) : la relance chaude à la place, puis plus rien.</p>" +
     "<p class=\"note\"><b>S'il a vu la page d'inscription sans aller au bout</b> : le rappel d'inscription le lendemain.</p>" +
+    "<p class=\"note\"><b>S'il répond par un message d'absence</b> : rien avant son retour ; l'adresse indiquée à sa place reçoit son propre premier mail.</p>" +
     "<p class=\"note\"><b>À tout moment</b> : une réponse arrête tout, et « oui » ou « ok » reçoit aussitôt son lien de création ; « stop » ou le lien de désinscription l'exclut pour toujours ; « Pas le bon moment » : plus rien, puis un seul mail 3 mois plus tard ; « Bonne personne » : la personne indiquée reçoit son propre mail, l'adresse d'origine n'est plus relancée.</p>";
   const negBoxes = (s.negoces_auto_boites || []).join(", ");
   $("seqOther").innerHTML =
@@ -2383,6 +2406,7 @@ function renderReplies(){
     '<select class="inp" style="width:auto" data-rkind="' + esc(r.id) + '">' + Object.entries(REPK).map(([k, l]) => '<option value="' + k + '"' + (k === r.kind ? " selected" : "") + ">" + l + "</option>").join("") + "</select></div>" +
     (r.subject ? '<div class="note">Objet : « ' + esc(r.subject) + " »</div>" : "") +
     '<div class="msg">' + esc(r.snippet || "(texte vide)") + "</div>" +
+    (r.kind === "absence" && m.data && m.data.absent_jusqu_au ? '<p class="note"><b>Absence prise en compte :</b> aucun suivi avant le ' + esc(dateFr(m.data.absent_jusqu_au)) + "." + "</p>" : "") +
     (m.subject ? '<div class="note">En réponse à : « ' + esc(m.subject) + " »" + (m.sent_at ? ", envoyé le " + esc(dateTimeFr(m.sent_at)) : "") + "</div>" : "") +
     '<label class="note">Votre réponse (part depuis ' + esc(r.box) + ', dans le même fil)<textarea class="inp" rows="5" id="repText" placeholder="Bonjour,&#10;&#10;Merci pour votre retour…"></textarea></label>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="b b-main b-sm" data-rsend="' + esc(r.id) + '">Répondre</button>' +
@@ -2441,6 +2465,46 @@ async function loadDashExtra(force){
     $("dashExtra").hidden = false;
   } catch(e){ /* le tableau de bord de base reste affiché */ }
   loadParcours();
+  loadDeliv();
+}
+// Fournisseurs de messagerie limités par heure (miroir de public.prospection_fournisseur).
+const PROVIDERS = [["orange", "Orange / Wanadoo"], ["gmail", "Gmail"], ["microsoft", "Hotmail / Outlook"], ["free", "Free"], ["sfr", "SFR / Neuf"], ["yahoo", "Yahoo"], ["laposte", "La Poste"], ["bouygues", "Bouygues (bbox)"], ["apple", "iCloud"]];
+function provLimitsFr(s){
+  const lim = (s && s.fournisseurs_max_heure) || {};
+  const set = PROVIDERS.filter(([k]) => Number(lim[k]) > 0).map(([k, l]) => fmt(lim[k]) + " vers " + l);
+  return set.length ? "au plus " + set.join(" · ") + " par heure" : "aucune limite par fournisseur";
+}
+async function loadProvStats(){
+  try {
+    const d = await api("delivrabilite.stats", { days: 7 });
+    for (const f of d.fournisseurs || []){
+      const el = document.querySelector('[data-prov-st="' + f.fournisseur + '"]');
+      if (el) el.textContent = fmt(f.derniere_heure) + " dans l'heure · " + fmt(f.en_file) + " en file";
+    }
+  } catch(e){ /* facultatif */ }
+}
+async function loadSeqHour(){
+  try {
+    const d = await api("delivrabilite.stats", { days: 7 }), list = d.fournisseurs || [];
+    const total = list.reduce((n, f) => n + Number(f.derniere_heure || 0), 0);
+    const busy = list.filter(f => f.plafond > 0 && f.derniere_heure >= f.plafond).map(f => (PROVIDERS.find(p => p[0] === f.fournisseur) || [0, f.fournisseur])[1]);
+    $("seqHour").innerHTML = "<b>Dernière heure :</b> " + fmt(total) + " mail(s) parti(s)" + (busy.length ? " · au plafond de l'heure : " + esc(busy.join(", ")) + " (leurs destinataires attendent)" : "") + ".";
+  } catch(e){ /* facultatif */ }
+}
+// Version légère contre complète du premier mail (test du 01/11/2026) et motifs de désinscription.
+async function loadDeliv(){
+  try {
+    const d = await api("delivrabilite.stats", { days: Number($("dvDays").value || 7) });
+    const rows = d.format || [], label = { complet: "Complète (bouton, logo, guide, liens de choix)", leger: "Légère (deux liens)" };
+    $("dvFormat").innerHTML = rows.length ? rows.map(r => '<tr><td><b>' + esc(label[r.format] || r.format) + '</b></td><td class="num">' + fmt(r.envoyes) + '</td><td class="num">' + fmt(r.ouverts) + ' <span class="meta" style="display:inline">' + pct(r.ouverts, r.envoyes) + '</span></td><td class="num">' + fmt(r.clics) + ' <span class="meta" style="display:inline">' + pct(r.clics, r.envoyes) + '</span></td><td class="num">' + fmt(r.reponses) +
+      '</td><td class="num">' + fmt(r.demandes) + '</td><td class="num">' + fmt(r.comptes) + '</td><td class="num">' + fmt(r.desinscrits) + '</td><td class="num">' + fmt(r.echecs) + "</td></tr>").join("")
+      : '<tr><td colspan="9" class="empty">Aucun premier mail noté sur la période : la comparaison commence avec les envois suivants.</td></tr>';
+    const u = d.desinscriptions || {};
+    $("dvNote").innerHTML = "Robots exclus des ouvertures et des clics. « Liens » : liens de création demandés après le mail. Le test porte sur " + fmt((state && state.settings && state.settings.format_leger_part) ?? 0) + " % de versions légères (Réglages)." +
+      "<br><b>Désinscriptions</b> sur la période : " + fmt(u.total || 0) + ", dont " + fmt(u.avec_motif || 0) + " avec une raison donnée sur la page de désinscription" +
+      (u.avec_motif ? " : trop de mails " + fmt(u.trop_de_mails || 0) + " · déjà un logiciel " + fmt(u.deja_equipe || 0) + " · entreprise trop petite " + fmt(u.trop_petite || 0) + " · pas intéressé " + fmt(u.pas_interesse || 0) : "") + ".";
+    $("dashDeliv").hidden = false;
+  } catch(e){ /* carte facultative */ }
 }
 // Parcours après le clic (01/11/2026) : clic, page du site vue, page d'inscription vue,
 // lien de création demandé, compte créé, accueil terminé ; et les deux nouvelles sorties.
@@ -2467,7 +2531,13 @@ async function loadParcours(){
    ============================================================ */
 // {reponse_oui} : repère remplacé au rendu (lien de réponse en HTML), comme côté serveur.
 const REPONSE_OUI = "⟦reponse_oui⟧";
-const OFFER_KINDS = ["initial", "chaude", "transmis", "recontact", "rappel_inscription"];
+const OFFER_KINDS = ["initial", "chaude", "transmis", "recontact", "rappel_inscription", "absence"];
+// Variantes [[…|…]] (miroir de applyVariants) : l'aperçu montre la première tournure.
+const VARIANTS_RE = /\[\[([^[\]]*\|[^[\]]*)\]\]/g;
+const firstVariants = t => String(t || "").replace(VARIANTS_RE, (m, inner) => inner.split("|")[0]);
+const badVariants = t => /\[\[|\]\]/.test(String(t || "").replace(VARIANTS_RE, ""));
+// Version légère : paragraphes sans autre adresse web que le lien d'inscription ou d'espace.
+const lightBlocks = t => t.split(/\n{2,}/).filter(b => (b.match(/https?:\/\/\S+/g) || []).every(u => moisOffertBlock(u) || ESPACE_LINK_RE.test(u))).join("\n\n");
 const VARS = ["prenom", "entreprise", "ville", "metier", "video", "bonjour", "nom", "departement", "effectif", "marche", "evenement", "conseil", "logiciels", "lien_mois_offert", "reponse_oui", "lien_espace"];
 // Lien d'exemple de l'espace préparé (aperçus et test) : le vrai lien est propre à chaque prospect.
 const ESPACE_SAMPLE_LINK = "https://app.piloz.fr/?invitation=exemple-de-lien";
@@ -2519,19 +2589,22 @@ const ESPACE_LINK_RE = /^https:\/\/app\.piloz\.fr\/\?invitation=[A-Za-z0-9-]+$/;
 const linkButton = (u, label) => '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px;border-collapse:collapse"><tr><td style="border-radius:8px;background:#6d5ef8;padding:13px 26px">' +
   '<a href="' + hesc(u) + '" style="font:bold 16px Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none">' + label + '</a></td></tr></table>';
 const moisOffertBlock = b => b.startsWith(MOIS_OFFERT_URL + "&email=") && !/\s/.test(b);
-const textToHtml = t => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => { const x = b.trim();
+const textToHtml = (t, leger) => String(t || "").replace(/\r\n/g, "\n").trim().split(/\n{2,}/).map(b => { const x = b.trim();
+  if (leger && (ESPACE_LINK_RE.test(x) || moisOffertBlock(x))) return '<p style="margin:0 0 14px"><a href="' + hesc(x) + '" style="color:#4f46e5">' + (ESPACE_LINK_RE.test(x) ? "Activer mon espace Piloz" : "Créer mon compte Piloz") + "</a></p>";
   return ESPACE_LINK_RE.test(x) ? linkButton(x, "Activer mon espace Piloz") : moisOffertBlock(x) ? linkButton(x, "Créer mon compte Piloz") : '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>"; }).join("");
 function youtubeId(url){ const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; }
-function buildEmail(tpl, s, data, kind, campaign){
+function buildEmail(tpl, s, data, kind, campaign, leger){
   s = s || {};
-  // BTP : liens « pas le bon moment » et « bonne personne » au-dessus du pied de page (miroir de choiceLinks).
-  const choices = campaign !== "revendeur";
+  // BTP : liens « pas le bon moment » et « bonne personne » au-dessus du pied de page (miroir de choiceLinks) ;
+  // jamais dans la version légère du premier mail.
+  const choices = campaign !== "revendeur" && !leger;
   // « Espace prêt » et son rappel : sans vidéo, signature de Quentin (miroir de prospection-jobs).
   const espace = kind === "espace" || kind === "espace_rappel";
   const v = templateVars(data);
   const tidy = x => renderTpl(x, v).replace(/\r\n/g, "\n").replace(/[ \t]+\n/g, "\n").trim();
-  const parts = String(tpl.body || "").replace(/\r\n/g, "\n").split(/^[ \t]*\{video\}[ \t]*$/m);
-  const before = tidy(parts[0] || ""), after = tidy(parts.slice(1).join("\n"));
+  const parts = firstVariants(tpl.body).replace(/\r\n/g, "\n").split(/^[ \t]*\{video\}[ \t]*$/m);
+  const lighten = x => leger ? lightBlocks(x) : x;
+  const before = lighten(tidy(parts[0] || "")), after = lighten(tidy(parts.slice(1).join("\n")));
   const url = espace ? "" : s.video_url || "", id = youtubeId(url);
   const thumb = id ? (VIDEO_THUMBNAILS[id] || "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg") : "";
   const video = url ? (thumb ? '<p style="margin:4px 0 6px"><a href="' + hesc(url) + '" style="text-decoration:none"><img src="' + hesc(thumb) + '" width="480" alt="Vidéo : découvrez Piloz en 1 minute" style="display:block;width:100%;max-width:480px;height:auto;border:0;border-radius:12px"></a></p>' : "") +
@@ -2553,12 +2626,13 @@ function buildEmail(tpl, s, data, kind, campaign){
     if (i === 1) return '<span style="font-weight:700;font-size:11px;color:#6d5ef8;letter-spacing:.18em;text-transform:uppercase">' + hesc(l) + "</span>";
     return '<i style="color:#6d5ef8">' + linkify(hesc(l)) + "</i>";
   };
-  const sig = lines.length ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;border-collapse:collapse"><tr>' +
+  const sig = leger ? (lines.length ? '<p style="margin:22px 0 0;font-size:13px;line-height:1.7;color:#2a2c3f">' + lines.map(l => hesc(l)).join("<br>") + "</p>" : "")
+    : lines.length ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;border-collapse:collapse"><tr>' +
     '<td style="padding:0 14px 0 0;vertical-align:middle"><img src="' + LOGO_URL + '" width="52" height="52" alt="Piloz" style="display:block;border:0;border-radius:12px"></td>' +
     '<td style="vertical-align:middle;font:13px/1.7 Arial,Helvetica,sans-serif;color:#2a2c3f;border-left:3px solid #6d5ef8;padding:3px 0 3px 14px">' +
     lines.map(sigLine).join("<br>") + buttonHtml + "</td></tr></table>" : "";
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
-  const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before) + video + (after ? textToHtml(after) : "") + sig +
+  const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before, leger) + video + (after ? textToHtml(after, leger) : "") + sig +
     (choices ? '<p style="margin:26px 0 0;font-size:13px;line-height:1.6;color:#5b5d72">Pas le bon moment ? <a href="https://piloz.fr/plus-tard.html" style="color:#5b5d72">Recontactez-moi dans 3 mois</a>.<br>' +
       'Ce n\'est pas vous qui gérez les chantiers ? <a href="https://piloz.fr/bonne-personne.html" style="color:#5b5d72">Indiquez-nous la bonne personne</a>.</p>' : "") +
     '<p style="margin:' + (choices ? "16px" : "28px") + ' 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
@@ -2566,7 +2640,7 @@ function buildEmail(tpl, s, data, kind, campaign){
   // {reponse_oui} : lien de réponse écrite d'avance vers la première boîte d'envoi (la vraie est choisie à l'envoi).
   const subject = clean(renderTpl(tpl.subject, v).split(REPONSE_OUI).join("répondez « oui »"), 200);
   const box = (s.boites && s.boites[0]) || s.sender_email || "contact@piloz.fr";
-  const oui = '<a href="mailto:' + hesc(box) + '?subject=' + encodeURIComponent("Re: " + subject) + '&amp;body=' + encodeURIComponent("Oui, je veux essayer Piloz.") + '" style="color:#4f46e5;font-weight:bold">Répondez « oui »</a>';
+  const oui = leger ? "Répondez « oui » à ce message" : '<a href="mailto:' + hesc(box) + '?subject=' + encodeURIComponent("Re: " + subject) + '&amp;body=' + encodeURIComponent("Oui, je veux essayer Piloz.") + '" style="color:#4f46e5;font-weight:bold">Répondez « oui »</a>';
   return { subject, html: html.split(REPONSE_OUI).join(oui) };
 }
 // Mention d'origine (miroir de dataNotice côté serveur).
@@ -2575,11 +2649,12 @@ function dataNotice(company, source){
   if (source === "client") return "Vous recevez ce message car " + c + " a un espace Piloz.";
   if (source === "demo") return "Vous recevez ce message car vous avez demandé l'accès à la démo de Piloz sur piloz.fr.";
   if (source === "transmis") return "Vous recevez ce message car " + c + " nous a indiqué votre adresse en réponse à un précédent message.";
+  if (source === "absence") return "Vous recevez ce message car le message d'absence d'un contact de " + c + " nous a indiqué votre adresse.";
   if (source === "web") return "Vous recevez ce message car " + c + " figure dans le répertoire public des entreprises (base SIRENE de l'INSEE) et publie ses coordonnées professionnelles sur son site internet.";
   return "Vous recevez ce message car " + c + " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE).";
 }
-function mailHtml(tpl, s, data, to, kind, campaign){
-  const mail = buildEmail(tpl, s, data, kind || (tpl && tpl.kind), campaign);
+function mailHtml(tpl, s, data, to, kind, campaign, leger){
+  const mail = buildEmail(tpl, s, data, kind || (tpl && tpl.kind), campaign, leger);
   // Boîtes dédiées : l'une d'elles envoie (la moins utilisée du jour).
   const box = s && ((s.boites && s.boites[0]) || s.sender_email);
   const from = box ? (s.sender_name || "Piloz") + " <" + box + ">" + (s.boites && s.boites.length > 1 ? " (ou " + s.boites.slice(1).join(", ") + ")" : "") : "adresse d'envoi à renseigner";
@@ -3410,7 +3485,7 @@ function mountTplEditor(campaign){
   (campaign === "revendeur" ? $("rvTplHost") : $("tplHost")).appendChild($("tplWrap"));
   renderVarChips();
   // Les modèles « Après la démo », « Relance démo », « Client » et « Relance chaude » n'existent que pour le BTP.
-  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && ["demo", "relance_demo", "client", "chaude", "espace", "espace_rappel", "transmis", "recontact", "rappel_inscription"].includes(o.value); });
+  [...$("tKind").options].forEach(o => { o.hidden = o.disabled = campaign === "revendeur" && ["demo", "relance_demo", "client", "chaude", "espace", "espace_rappel", "transmis", "recontact", "rappel_inscription", "absence"].includes(o.value); });
   $("tplOtherCamp").innerHTML = campaign === "revendeur"
     ? 'Les modèles de la campagne BTP se gèrent dans l\'écran <a href="#" data-go="tpl">Messages</a>.'
     : 'Les modèles de la campagne revendeurs se gèrent dans l\'écran <a href="#" data-go="revendeurs">Revendeurs</a>.';
@@ -3465,12 +3540,15 @@ async function loadSamples(){
     renderSampleOptions();
   } catch(e){}
 }
-const KIND = { relance1: "relance 1", relance2: "relance 2", chaude: "relance chaude", demo: "après démo", relance_demo: "relance démo", client: "client", espace: "espace prêt", espace_rappel: "rappel espace prêt", transmis: "bonne personne", recontact: "recontact", rappel_inscription: "rappel d'inscription" };
+const KIND = { relance1: "relance 1", relance2: "relance 2", chaude: "relance chaude", demo: "après démo", relance_demo: "relance démo", client: "client", espace: "espace prêt", espace_rappel: "rappel espace prêt", transmis: "bonne personne", recontact: "recontact", rappel_inscription: "rappel d'inscription", absence: "contact d'absence" };
 // Une relance (et le recontact) part toujours en « Re : » sur l'objet du premier message : son objet propre ne sert pas.
 function syncKind(){
   const relance = /^(relance|chaude$|recontact$|rappel_inscription$)/.test($("tKind").value);
   $("tKindChaude").hidden = $("tKind").value !== "chaude";
   $("tKindTransmis").hidden = $("tKind").value !== "transmis";
+  $("tKindAbsence").hidden = $("tKind").value !== "absence";
+  // Version légère : premier mail BTP seulement.
+  $("tLegerFld").hidden = !($("tKind").value === "initial" && tplCampaign !== "revendeur");
   $("tKindRecontact").hidden = $("tKind").value !== "recontact";
   $("tKindRappelInscription").hidden = $("tKind").value !== "rappel_inscription";
   renderVarChips();
@@ -3499,12 +3577,16 @@ function renderPreview(){
     : kind === "demo" ? { ...sampleData(), source: "demo" }
     // Bonne personne : mention d'origine propre, lien du mois offert à son adresse.
     : kind === "transmis" ? { ...sampleData(), source: "transmis", email: m ? m.email : "j.dupont@dupont-batiment.fr" }
+    // Contact d'absence : sans prénom, mention d'origine propre.
+    : kind === "absence" ? { ...sampleData(), prenom: "", nom: "", source: "absence", email: m ? m.email : "chantiers@dupont-batiment.fr" }
     // Premier mail, relance chaude, recontact : lien du mois offert à l'adresse du prospect choisi.
     : kind === "chaude" || kind === "initial" || kind === "recontact" || kind === "rappel_inscription" ? { ...sampleData(), email: m ? m.email : "j.dupont@dupont-batiment.fr" }
     // Espace prêt : lien d'exemple (le vrai lien est propre à chaque prospect).
     : kind === "espace" || kind === "espace_rappel" ? { ...sampleData(), lien_espace: ESPACE_SAMPLE_LINK } : sampleData();
-  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr", kind, tplCampaign);
+  const leger = kind === "initial" && tplCampaign !== "revendeur" && $("tTestLeger").checked;
+  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr", kind, tplCampaign, leger);
 }
+$("tTestLeger").addEventListener("change", renderPreview);
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
 $("tKind").addEventListener("change", () => { $("tName").dataset.dirty = "1"; syncKind(); renderPreview(); });
 $("tplSample").addEventListener("change", renderPreview);
@@ -3563,6 +3645,8 @@ $("bTplNew").addEventListener("click", () => {
 });
 $("bTplSave").addEventListener("click", async ev => {
   const btn = ev.currentTarget;
+  // Variantes mal écrites : signalées avant l'envoi au serveur (qui les refuse aussi).
+  if (badVariants($("tBody").value)){ $("tplMsg").textContent = "Variantes mal écrites : écrivez [[tournure 1|tournure 2]], avec au moins deux tournures séparées par « | »."; return; }
   busy(btn, true, "Enregistrement…");
   try {
     const { template } = await api("templates.save", { id: tplId || undefined, name: $("tName").value, subject: $("tSubject").value, body: $("tBody").value, active: $("tActive").checked, kind: $("tKind").value, campaign: tplCampaign });
@@ -3593,7 +3677,8 @@ $("bTplTest").addEventListener("click", async ev => {
   busy(btn, true, "Envoi du test…");
   $("tplMsg").textContent = "";
   try {
-    const { to } = await api("test.send", { kind: $("tKind").value, template: { subject: $("tSubject").value, body: $("tBody").value }, sample: sampleData(), to: $("tTestTo").value.trim() || undefined, realistic: $("tTestReal").checked });
+    const { to } = await api("test.send", { kind: $("tKind").value, template: { subject: $("tSubject").value, body: $("tBody").value }, sample: sampleData(), to: $("tTestTo").value.trim() || undefined, realistic: $("tTestReal").checked,
+      leger: $("tKind").value === "initial" && !$("tLegerFld").hidden && $("tTestLeger").checked });
     $("tplMsg").textContent = "Test envoyé à " + to + ". Vérifiez aussi le dossier indésirables.";
   } catch(e){
     const detail = e.data && e.data.outcome === "fatal" ? " La boîte Hostinger refuse la connexion : vérifiez l'adresse d'envoi et le mot de passe enregistré côté serveur." : "";
@@ -3625,6 +3710,7 @@ function signalBadge(m){
   const d = m.data || {};
   if (m.campaign === "revendeur") return ' <span class="badge rv" title="Campagne revendeurs' + (d.logiciels ? " · logiciels repérés : " + esc(d.logiciels) : "") + '">Revendeur</span>';
   if (m.origin === "transmis") return ' <span class="badge clic" title="Adresse indiquée par l\'entreprise depuis le lien « Indiquez-nous la bonne personne »">Bonne personne</span>';
+  if (m.origin === "absence") return ' <span class="badge clic" title="Adresse donnée par le message d\'absence d\'un prospect">Contact d\'absence</span>';
   if (d.marche) return ' <span class="badge clic" title="Marché public remporté' + (d.marche_date ? ' (notifié le ' + esc(dateFr(d.marche_date)) + ')' : '') + ' : ' + esc(d.marche) + '">Marché public' + (d.marche_date ? ' · ' + esc(dateFr(d.marche_date)) : '') + '</span>';
   if (d.signal) return ' <span class="badge clic" title="Annonce BODACC parue le ' + esc(dateFr(d.signal_date)) + (d.signal === "reprise" ? " : reprise de l\'entreprise" : " : changement dans l\'administration (dirigeant)") + '">BODACC · ' + esc(dateFr(d.signal_date)) + '</span>';
   if (d.source === "web") return ' <span class="badge open" title="Entreprise non RGE : adresse lue sur ' + esc(String(d.site || "").replace(/^https?:\/\//, "")) + (d.how ? " (" + (/siren/.test(d.how) ? "SIREN vérifié" : "nom et ville vérifiés") + ")" : "") + '">Site web</span>';
@@ -3897,7 +3983,7 @@ $("bLogExport").addEventListener("click", async ev => {
         niceCompany(m.company), m.email, m.siren || "", d.ville || "", d.departement || "", d.metier || "", d.effectif || "", m.sender || "",
         BADGE[m.status] || m.status, m.opened_at ? dateTimeFr(m.opened_at) : "",
         (m.site_clicked_at || m.video_clicked_at) ? "oui" : "", m.replied_at ? dateTimeFr(m.replied_at) : "", m.score == null ? "" : m.score,
-        m.origin === "transmis" ? "Bonne personne indiquée" : d.marche ? "Marché public" : d.signal ? (d.signal === "reprise" ? "BODACC (reprise)" : "BODACC (dirigeant)") : d.source === "web" ? "Site web" : m.origin === "demo" ? "Démo" : "Annuaire RGE",
+        m.origin === "transmis" ? "Bonne personne indiquée" : m.origin === "absence" ? "Message d'absence" : d.marche ? "Marché public" : d.signal ? (d.signal === "reprise" ? "BODACC (reprise)" : "BODACC (dirigeant)") : d.source === "web" ? "Site web" : m.origin === "demo" ? "Démo" : "Annuaire RGE",
         m.campaign === "revendeur" ? "Revendeurs" : "BTP", d.logiciels || ""];
     });
     const csv = "\ufeff" + [head, ...rows].map(r => r.map(csvCell).join(";")).join("\r\n");
@@ -3957,7 +4043,7 @@ async function openMessage(id, stage = 0){
       // Aperçu avec un modèle actif de la campagne du message, premier contact de préférence.
       const mine = state ? state.templates.filter(t => t.active && tplCampaignOf(t) === (m.campaign || "btp")) : [];
       // Bonne personne indiquée par l'entreprise : son modèle propre.
-      const tpl = (m.origin === "transmis" && mine.find(t => t.kind === "transmis")) || mine.find(t => !t.kind || t.kind === "initial") || mine[0];
+      const tpl = (m.origin === "transmis" && mine.find(t => t.kind === "transmis")) || (m.origin === "absence" && mine.find(t => t.kind === "absence")) || mine.find(t => !t.kind || t.kind === "initial") || mine[0];
       body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(tpl, state.settings, { ...d, email: m.email }, m.email, null, m.campaign) + "</div>"
         : '<p class="note">Aucun modèle actif pour l\'aperçu.</p>';
     }
@@ -4132,6 +4218,10 @@ function fillSettings(){
   $("sWinStart").value = hm(s.window_start); $("sWinEnd").value = hm(s.window_end);
   $("sPauses").value = (s.send_pauses || []).join(", "); $("sPiloz").value = s.boites_piloz_max ?? 0;
   $("sGapMin").value = s.min_gap_seconds; $("sGapMax").value = s.max_gap_seconds;
+  $("sLeger").value = s.format_leger_part ?? 50;
+  const lim = s.fournisseurs_max_heure || {};
+  $("sProv").innerHTML = PROVIDERS.map(([k, l]) => '<label class="inline" style="gap:6px"><span style="min-width:110px">' + esc(l) + '</span><input class="inp" type="number" data-prov="' + k + '" min="0" max="500" step="1" style="width:76px" value="' + esc(String(lim[k] ?? 0)) + '"><span class="meta" data-prov-st="' + k + '"></span></label>').join("");
+  loadProvStats();
   $("sErr").value = s.max_consecutive_errors;
   $("sFuEnabled").checked = !!s.followup_enabled; $("sFu1").value = s.followup1_days || 7; $("sFu2").value = s.followup2_days || 21;
   $("sFuOpened").checked = s.followup_opened_only !== false;
@@ -4201,7 +4291,9 @@ $("setForm").addEventListener("submit", async ev => {
     min_gap_seconds: Math.round(Number($("sGapMin").value)), max_gap_seconds: Math.round(Number($("sGapMax").value)),
     max_consecutive_errors: $("sErr").value,
     followup_enabled: $("sFuEnabled").checked, followup1_days: $("sFu1").value, followup2_days: $("sFu2").value,
-    followup_opened_only: $("sFuOpened").checked, relances_piloz_max: $("sFuOld").value
+    followup_opened_only: $("sFuOpened").checked, relances_piloz_max: $("sFuOld").value,
+    format_leger_part: $("sLeger").value,
+    fournisseurs_max_heure: Object.fromEntries([...document.querySelectorAll("#sProv [data-prov]")].map(i => [i.getAttribute("data-prov"), Number(i.value || 0)]))
   };
   // Date vide : la date actuelle est conservée (jamais « tout l'historique »).
   if ($("sFuSince").value) payload.followup_since = $("sFuSince").value;
@@ -4236,13 +4328,13 @@ function openHelp(topic){
     '<p class="note">Tout se passe sur le serveur Piloz, ordinateur éteint. L\'automate cherche lui-même des entreprises du BTP correspondant à votre <b>ciblage</b> et en garde une réserve d\'avance. Dans les créneaux réglés, il prend le prochain envoi dans un ordre de priorité fixe (écran <a href="#" data-go="seq">Qui reçoit quoi</a>), personnalise un de vos modèles et l\'envoie depuis l\'une des boîtes d\'envoi. Vous ne réglez que les paramètres.</p>' +
     '<p class="note">Chaque entreprise ne reçoit <b>qu\'un seul premier mail</b>, jamais deux, même si elle réapparaît dans une recherche ; ses relances partent dans le même fil, depuis la même boîte. Les réponses sont lues toutes les 10 minutes et classées dans <b>Réponses</b> : toute réponse arrête les relances, « stop » désinscrit l\'adresse aussitôt, et « oui » ou « ok » reçoit tout de suite son lien de création de compte.</p>' +
     '<p class="sect-t" style="margin-top:20px">La cadence et la réputation des boîtes</p>' +
-    '<p class="note">Les premiers mails partent des boîtes dédiées à la prospection (domaines distincts de piloz.fr), qui montent progressivement en volume, et de contact@ et commercial@ piloz.fr dans la limite réglée. Pour que Gmail et Outlook continuent de les accepter, l\'automate espace les messages au hasard et ne travaille qu\'aux heures réglées. En cas d\'incident passager ou de quota atteint, il patiente puis reprend seul ; il ne <b>se met en pause</b> que si une boîte refuse les envois, et vous prévient alors par e-mail.</p>' +
+    '<p class="note">Les premiers mails partent des boîtes dédiées à la prospection (domaines distincts de piloz.fr), qui montent progressivement en volume, et de contact@ et commercial@ piloz.fr dans la limite réglée. Pour que Gmail et Outlook continuent de les accepter, l\'automate espace les messages au hasard, ne travaille qu\'aux heures réglées, limite le nombre de mails par heure vers chaque grand fournisseur (Orange, Gmail…) et fait varier les tournures de chaque mail (<code class="k">[[…|…]]</code> dans les modèles). Une part des premiers mails part en <b>version légère</b> (deux liens) pour mesurer ce qui arrive le mieux en boîte de réception. En cas d\'incident passager ou de quota atteint, il patiente puis reprend seul ; il ne <b>se met en pause</b> que si une boîte refuse les envois, et vous prévient alors par e-mail.</p>' +
     '<p class="note">Chaque message contient un suivi discret : ouverture, clics, et page de piloz.fr ouverte depuis un lien (sans cookie). Il indique qui s\'intéresse à Piloz : seuls ceux qui ont ouvert ou cliqué sont relancés, et la carte « Après le clic » du tableau de bord montre où le parcours s\'arrête.</p>' +
     '<p class="sect-t" style="margin-top:20px">Les données</p>' +
     '<p class="note"><b>API Recherche d\'entreprises</b> (SIRENE, RNE) pour les entreprises, leurs dirigeants et leur taille ; <b>ADEME RGE</b> (Licence Ouverte) pour les e-mails publiés par les entreprises qualifiées RGE ; <b>le site internet de l\'entreprise</b> pour les autres : domaine deviné depuis le nom, site vérifié par le SIREN (mentions légales) ou le nom et la ville, adresse lue sur la page d\'accueil, la page contact ou les mentions légales. <b>Signaux</b> : les marchés publics de travaux gagnés (données essentielles de la commande publique) et les annonces légales du <b>BODACC</b> (reprises, changements de dirigeant), qui passent en tête de file. La mention d\'origine des données en bas de chaque message s\'adapte à la source. Le score Piloz classe des profils à partir de signaux publics ; il ne mesure pas une intention d\'achat.</p>' +
     '<p class="sect-t" style="margin-top:20px">Cadre légal (prospection B2B)</p>' +
     '<p class="note">En France, un e-mail de prospection vers une adresse professionnelle est autorisé sans consentement préalable s\'il concerne l\'activité de la personne. En contrepartie, chaque message doit identifier l\'expéditeur, indiquer l\'origine des données et proposer une <b>désinscription simple</b>. L\'automate ajoute tout cela automatiquement, gère la désinscription en un clic (lien et en-tête reconnu par Gmail/Outlook) et n\'écrit plus jamais à une adresse désinscrite.</p>' +
-    '<p class="note">Chaque mail BTP propose aussi « <b>Recontactez-moi dans 3 mois</b> » (plus rien, puis un seul mail trois mois plus tard) et « <b>Indiquez-nous la bonne personne</b> » (un mail à la personne indiquée, qui précise que son entreprise nous a donné son adresse). Une réponse « stop » est traitée automatiquement ; vous pouvez aussi exclure une adresse à la main dans <b>Exclusions</b>.</p>');
+    '<p class="note">Chaque mail BTP propose aussi « <b>Recontactez-moi dans 3 mois</b> » (plus rien, puis un seul mail trois mois plus tard) et « <b>Indiquez-nous la bonne personne</b> » (un mail à la personne indiquée, qui précise que son entreprise nous a donné son adresse). Un <b>message d\'absence</b> met le prospect en pause jusqu\'à son retour, et l\'adresse qu\'il indique à sa place reçoit son propre mail. Après une désinscription, la page demande, sans obligation, <b>pourquoi</b> (carte du tableau de bord). Une réponse « stop » est traitée automatiquement ; vous pouvez aussi exclure une adresse à la main dans <b>Exclusions</b>.</p>');
 }
 $("bHelp").addEventListener("click", () => openHelp());
 
