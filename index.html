@@ -569,6 +569,7 @@
       <button class="nav-b on" data-view="auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg><span class="t">Tableau de bord</span></button>
       <button class="nav-b" data-view="boites"><span class="t">Boîtes d'envoi</span><span class="pill num" id="pillBoites" hidden>0</span></button>
       <button class="nav-b" data-view="log"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg><span class="t">Envois</span><span class="pill num" id="pillQueue">0</span></button>
+      <button class="nav-b" data-view="seq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="t">Qui reçoit quoi</span></button>
       <button class="nav-b" data-view="rep"><span class="t">Réponses</span><span class="pill num hot" id="pillRep" hidden>0</span></button>
       <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
       <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
@@ -1267,6 +1268,29 @@
         </div>
       </section>
 
+      <!-- ==================== QUI REÇOIT QUOI, QUAND ==================== -->
+      <section class="view" id="v-seq">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-h"><h2>Quand les mails partent</h2><span class="sub">réglages en service</span><div class="right"><button type="button" class="b b-out b-xs" data-go="settings">Réglages</button></div></div>
+          <div class="card-b" id="seqWhen"></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-h"><h2>Ordre de priorité</h2><span class="sub">à chaque créneau, l'automate prend le premier envoi disponible de cette liste</span></div>
+          <div class="tscroll"><table><thead><tr><th style="width:52px">Rang</th><th>Mail et modèles actifs</th><th>À qui</th><th>Quand</th><th style="width:150px">Boîte</th></tr></thead><tbody id="seqBody"></tbody></table></div>
+          <div class="card-b" style="padding-top:10px"><p class="note" id="seqQuotas"></p></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h"><h2>Le parcours d'un prospect</h2></div>
+            <div class="card-b" id="seqPath"></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2>En dehors de cette file</h2></div>
+            <div class="card-b" id="seqOther"></div>
+          </div>
+        </div>
+      </section>
+
       <!-- ==================== RÉGLAGES ==================== -->
       <section class="view" id="v-settings">
         <form id="setForm" style="max-width:1080px">
@@ -1561,6 +1585,7 @@ const VIEWS = {
   revendeurs: { t:"Revendeurs", s:"Campagne de recrutement des revendeurs de logiciels de gestion : ciblage, messages et prospects en file." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
   log:      { t:"Envois",     s:"File d'attente et historique de tout ce que l'automate a envoyé." },
+  seq:      { t:"Qui reçoit quoi, quand", s:"Tous les mails automatiques : à qui, à quelle heure, dans quel ordre et dans quelles limites, d'après les réglages en service." },
   supp:     { t:"Exclusions", s:"Adresses qui ne recevront plus jamais de message." },
   clients:  { t:"Nouveaux clients", s:"Les comptes Piloz et le mail qui les aide à prendre le logiciel en main." },
   settings: { t:"Réglages",   s:"Expéditeur, cadence d'envoi et pilote automatique." }
@@ -1584,6 +1609,7 @@ function showView(v){
   if (v === "tpl") mountTplEditor("btp");
   if (v === "revendeurs"){ mountTplEditor("revendeur"); renderRevendeurs(); RV.page = 1; loadRvQueue(); }
   if (v === "settings") fillSettings();
+  if (v === "seq") renderSeq();
   if (v === "auto"){ loadState().catch(() => {}); loadDashExtra(true); loadDashRvRecent(true); }
 }
 document.querySelectorAll(".nav-b").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
@@ -1591,6 +1617,74 @@ document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]");
   if (g){ ev.preventDefault(); showView(g.getAttribute("data-go")); }
 });
+
+/* ============================================================
+   QUI REÇOIT QUOI, QUAND — d'après les réglages en service (miroir de prospection_claim_next)
+   ============================================================ */
+const JOURS = ["", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+const minutesOf = t => { const [h, m] = String(t || "0:0").split(":").map(Number); return h * 60 + (m || 0); };
+const minFr = m => Math.floor(m / 60) + " h" + (m % 60 ? " " + String(m % 60).padStart(2, "0") : "");
+function daysFr(list){
+  const d = (list || []).map(Number).filter(x => x >= 1 && x <= 7).sort((a, b) => a - b);
+  if (!d.length) return "aucun jour";
+  return d.length > 2 && d.every((x, i) => !i || x === d[i - 1] + 1) ? "du " + JOURS[d[0]] + " au " + JOURS[d[d.length - 1]] : d.map(x => JOURS[x]).join(", ");
+}
+// Créneaux : la plage d'envoi moins les pauses (« 7 h – 11 h, 13 h – 14 h, 17 h – 19 h »).
+function slotsFr(s){
+  let slots = [[minutesOf(s.window_start), minutesOf(s.window_end)]];
+  for (const p of s.send_pauses || []){
+    const [a, b] = String(p).split("-").map(minutesOf);
+    slots = slots.flatMap(([x, y]) => b <= x || a >= y ? [[x, y]] : [[x, Math.max(x, a)], [Math.min(y, b), y]].filter(([u, v]) => v > u));
+  }
+  return slots.map(([a, b]) => minFr(a) + " – " + minFr(b)).join(", ");
+}
+// Modèles actifs d'un rang : leur nom, ou une alerte s'il n'y en a aucun (rien ne part).
+// general : sans les modèles réservés à un signal ({marche}, {evenement}).
+function seqTpl(kinds, campaign = "btp", general = false){
+  const list = ((state && state.templates) || []).filter(t => t.active && !t.archived_at && kinds.includes(t.kind || "initial") && tplCampaignOf(t) === campaign
+    && !(general && /\{(marche|evenement)\b/i.test(String(t.subject || "") + " " + String(t.body || ""))));
+  return list.length ? list.map(t => esc(t.name)).join(" · ") : '<span style="color:var(--danger,#c23b33)">aucun modèle actif : rien ne part</span>';
+}
+async function renderSeq(){
+  if (!state){ try { await loadState(); } catch(e){ return; } }
+  const s = state.settings || {}, q = state.quotas || {}, qn = q.nouvelles, qp = q.piloz;
+  const piloz = [s.sender_email, s.sender_email_2].filter(Boolean).join(" et ");
+  const perHour = Math.round(3600 / ((Number(s.min_gap_seconds || 12) + Number(s.max_gap_seconds || 25)) / 2));
+  $("seqWhen").innerHTML =
+    '<p class="note"><b>Jours :</b> ' + esc(daysFr(s.send_days)) + " · <b>Créneaux :</b> " + esc(slotsFr(s)) + " (heure de Paris)" + (s.paused ? ' · <b style="color:var(--danger,#c23b33)">automate en pause</b>' : "") + "</p>" +
+    '<p class="note"><b>Rythme :</b> un mail toutes les ' + fmt(s.min_gap_seconds) + " à " + fmt(s.max_gap_seconds) + " secondes, soit environ " + fmt(perHour) + " par heure de créneau, toutes boîtes confondues.</p>" +
+    "<p class=\"note\"><b>Aujourd'hui :</b> premiers mails BTP " + (qn ? fmt(qn.envoyes) + " sur " + fmt(qn.plafond) : "—") +
+    " (boîtes dédiées selon leur rodage, plus jusqu'à " + fmt(s.boites_piloz_max) + " chacune pour " + esc(piloz) + ") · relances depuis " + esc(piloz) + " : " +
+    (qp ? fmt(qp.envoyes) + " sur " + fmt(qp.plafond) + (qp.dues ? ", " + fmt(qp.dues) + " en attente" : "") : "—") + ".</p>";
+  const rows = [
+    ["1", "Espace prêt, puis son rappel", "Prospects pour qui un espace Piloz a été préparé", "à l'heure programmée ; au plus 60 « Espace prêt » par jour, rappels en plus", "boîte du premier mail", ["espace", "espace_rappel"]],
+    ["2", "Après la démo", "Visiteurs qui ont demandé l'accès à la démo", "1 heure après la demande", "rotation", ["demo"]],
+    ["3", "Bonne personne", "Personne indiquée par une entreprise (« Indiquez-nous la bonne personne »)", "au créneau suivant", "rotation", ["transmis"]],
+    ["4", "Premier mail « signal »", "Entreprises qui viennent de gagner un marché public, ou dont une annonce BODACC vient de paraître (reprise, changement de dirigeant)", "au créneau suivant, l'annonce la plus récente d'abord ; un modèle qui cite {marche} ou {evenement} leur est réservé", "rotation", ["initial"]],
+    ["5", "Relance chaude", "Prospects intéressés mais silencieux : 3 ouvertures ou un clic, premier mail il y a 2 à 60 jours", "rien envoyé depuis 2 jours ; remplace les relances 1 et 2 et termine la séquence", "boîte du premier mail", ["chaude"]],
+    ["6", "Rappel d'inscription", "Prospects qui ont vu la page d'inscription sans demander leur lien", "le lendemain (20 heures à 7 jours après la visite), une seule fois", "boîte du premier mail", ["rappel_inscription"]],
+    ["7", "Relances 1 et 2", "Prospects qui ont ouvert ou cliqué" + (s.followup_opened_only === false ? " (ou non)" : "") + ", sans réponse", "relance 1 à J+" + fmt(s.followup1_days) + ", relance 2 à J+" + fmt(s.followup2_days) + ", les plus anciennes d'abord", "boîte du premier mail", ["relance1", "relance2"]],
+    ["7", "Relance démo", "Visiteurs de la démo qui n'ont pas ouvert leur mail, sans compte", "J+3", "boîte du premier mail", ["relance_demo"]],
+    ["7", "Recontact", "Prospects qui ont cliqué « Pas le bon moment ? Recontactez-moi dans 3 mois »", "3 mois plus tard, à 8 h, une seule fois", "boîte du premier mail", ["recontact"]],
+    ["8", "Premier mail", "Nouveaux prospects BTP du ciblage, pris dans la réserve", "meilleur score d'abord", "rotation", ["initial"], true],
+  ];
+  $("seqBody").innerHTML = rows.map(([n, quoi, qui, quand, boite, kinds, general]) => '<tr><td class="num"><b>' + n + "</b></td><td><b>" + esc(quoi) + '</b><div class="meta">' + seqTpl(kinds, "btp", general) + "</div></td><td>" + esc(qui) + "</td><td>" + esc(quand) + "</td><td>" + esc(boite) + "</td></tr>").join("");
+  $("seqQuotas").innerHTML = "<b>Limites :</b> les premiers mails (rangs 2, 3, 4 et 8) s'arrêtent au plafond du jour ; les relances BTP des boîtes dédiées n'en prennent pas plus de la moitié, sauf si la réserve est vide ; " +
+    "les relances et les « Espace prêt » partis de " + esc(piloz) + " ont leur propre plafond (" + fmt(s.relances_piloz_max) + " par jour). Rien ne part à une adresse désinscrite, à un prospect qui a répondu ni à un client reconnu. " +
+    "<b>Rotation :</b> la boîte qui a le plus de marge sur son plafond du jour ; les relances repartent toujours de la boîte du premier mail, dans le même fil.";
+  $("seqPath").innerHTML =
+    '<p class="note"><b>J0</b> : premier mail, avec le bouton « Créer mon compte Piloz », « Répondez « oui » », et en bas « Recontactez-moi dans 3 mois » et « Indiquez-nous la bonne personne ».</p>' +
+    "<p class=\"note\"><b>S'il a ouvert ou cliqué</b> : relance 1 à J+" + fmt(s.followup1_days) + ", relance 2 à J+" + fmt(s.followup2_days) + ". <b>S'il est très intéressé</b> (3 ouvertures ou un clic) : la relance chaude à la place, puis plus rien.</p>" +
+    "<p class=\"note\"><b>S'il a vu la page d'inscription sans aller au bout</b> : le rappel d'inscription le lendemain.</p>" +
+    "<p class=\"note\"><b>À tout moment</b> : une réponse arrête tout, et « oui » ou « ok » reçoit aussitôt son lien de création ; « stop » ou le lien de désinscription l'exclut pour toujours ; « Pas le bon moment » : plus rien, puis un seul mail 3 mois plus tard ; « Bonne personne » : la personne indiquée reçoit son propre mail, l'adresse d'origine n'est plus relancée.</p>";
+  const negBoxes = (s.negoces_auto_boites || []).join(", ");
+  $("seqOther").innerHTML =
+    '<p class="note"><b>Revendeurs</b> : ' + (s.reseller_paused ? "campagne en pause." : "jusqu'à " + fmt(s.reseller_daily_max) + " mails par jour (premiers mails et relances), dans les mêmes créneaux, hors plafond BTP. Modèles : " + seqTpl(["initial", "relance1", "relance2"], "revendeur") + ".") + "</p>" +
+    '<p class="note"><b>Négoces</b> : ' + (s.negoces_auto_actif ? "jusqu'à " + fmt(s.negoces_auto_par_jour) + " par jour, " + esc(daysFr(s.negoces_auto_jours)) + " de " + esc(hmFr(s.negoces_auto_debut)) + " à " + esc(hmFr(s.negoces_auto_fin)) + ", depuis " + esc(negBoxes) + " (" + fmt(s.negoces_plafond_boite) + " par boîte au plus)." : "envoi automatique coupé.") + "</p>" +
+    '<p class="note"><b>Réponses</b> : lues toutes les 10 minutes. « Oui » ou « ok » : le lien de création (mois offert) part aussitôt depuis noreply@piloz.fr. « Stop » : désinscription immédiate. Le reste attend dans <a href="#" data-go="rep">Réponses</a>.</p>' +
+    "<p class=\"note\"><b>Piloz (noreply@piloz.fr), à toute heure</b> : le lien de création à chaque demande d'inscription (valable 24 heures) ; la fin d'essai, 3 jours avant puis à la fin. Les mails aux clients selon l'usage et leur récapitulatif du lundi sont coupés depuis le 27/10.</p>" +
+    '<p class="note"><b>Pour vous (' + esc(s.reply_to || s.sender_email || "contact@piloz.fr") + ")</b> : le récapitulatif de la prospection le lundi à 6 h 30, « Nouveau compte Piloz » à chaque création d'espace, et une alerte si l'automate se met en pause.</p>";
+}
 
 /* ============================================================
    NÉGOCES — partenaires de l'offre comptoir (flyers au comptoir)
@@ -4139,16 +4233,16 @@ function openHelp(topic){
   }
   openModal("Comment fonctionne l'automate", "Sources, cadence, cadre légal",
     '<p class="sect-t">Le principe</p>' +
-    '<p class="note">Tout se passe sur le serveur Piloz, ordinateur éteint. L\'automate cherche lui-même des entreprises du BTP correspondant à votre <b>ciblage</b> (données publiques SIRENE et ADEME) et en garde une réserve d\'avance. Toutes les quelques minutes, dans le créneau réglé, il prend la suivante, personnalise un de vos modèles et l\'envoie depuis votre boîte Hostinger. Vous ne réglez que les paramètres.</p>' +
-    '<p class="note">Chaque entreprise ne reçoit <b>qu\'un seul message</b>, jamais deux, même si elle réapparaît dans une recherche. Les réponses arrivent directement dans votre boîte mail.</p>' +
-    '<p class="sect-t" style="margin-top:20px">La cadence et la réputation de piloz.fr</p>' +
-    '<p class="note">Les messages partent de boîtes dédiées à la prospection, sur un domaine distinct de piloz.fr : la réputation du domaine principal, qui envoie les messages du logiciel à vos clients, reste intacte. Pour que Gmail et Outlook continuent de les accepter, l\'automate monte progressivement en volume, espace les messages au hasard et ne travaille qu\'aux heures de bureau. En cas d\'incident passager ou de quota Hostinger atteint, il patiente puis reprend seul ; il ne <b>se met en pause</b> que si la boîte refuse les envois, et vous prévient alors par e-mail.</p>' +
-    '<p class="note">Chaque message contient la vidéo de présentation et un suivi discret (ouverture, clics) : il indique qui s\'intéresse à Piloz, et seuls ceux qui ont ouvert ou cliqué sont relancés.</p>' +
+    '<p class="note">Tout se passe sur le serveur Piloz, ordinateur éteint. L\'automate cherche lui-même des entreprises du BTP correspondant à votre <b>ciblage</b> et en garde une réserve d\'avance. Dans les créneaux réglés, il prend le prochain envoi dans un ordre de priorité fixe (écran <a href="#" data-go="seq">Qui reçoit quoi</a>), personnalise un de vos modèles et l\'envoie depuis l\'une des boîtes d\'envoi. Vous ne réglez que les paramètres.</p>' +
+    '<p class="note">Chaque entreprise ne reçoit <b>qu\'un seul premier mail</b>, jamais deux, même si elle réapparaît dans une recherche ; ses relances partent dans le même fil, depuis la même boîte. Les réponses sont lues toutes les 10 minutes et classées dans <b>Réponses</b> : toute réponse arrête les relances, « stop » désinscrit l\'adresse aussitôt, et « oui » ou « ok » reçoit tout de suite son lien de création de compte.</p>' +
+    '<p class="sect-t" style="margin-top:20px">La cadence et la réputation des boîtes</p>' +
+    '<p class="note">Les premiers mails partent des boîtes dédiées à la prospection (domaines distincts de piloz.fr), qui montent progressivement en volume, et de contact@ et commercial@ piloz.fr dans la limite réglée. Pour que Gmail et Outlook continuent de les accepter, l\'automate espace les messages au hasard et ne travaille qu\'aux heures réglées. En cas d\'incident passager ou de quota atteint, il patiente puis reprend seul ; il ne <b>se met en pause</b> que si une boîte refuse les envois, et vous prévient alors par e-mail.</p>' +
+    '<p class="note">Chaque message contient un suivi discret : ouverture, clics, et page de piloz.fr ouverte depuis un lien (sans cookie). Il indique qui s\'intéresse à Piloz : seuls ceux qui ont ouvert ou cliqué sont relancés, et la carte « Après le clic » du tableau de bord montre où le parcours s\'arrête.</p>' +
     '<p class="sect-t" style="margin-top:20px">Les données</p>' +
-    '<p class="note"><b>API Recherche d\'entreprises</b> (SIRENE, RNE) pour les entreprises, leurs dirigeants et leur taille ; <b>ADEME RGE</b> (Licence Ouverte) pour les e-mails publiés par les entreprises qualifiées RGE ; <b>le site internet de l\'entreprise</b> pour les autres : domaine deviné depuis le nom, site vérifié par le SIREN (mentions légales) ou le nom et la ville, adresse lue sur la page d\'accueil, la page contact ou les mentions légales. La mention d\'origine des données en bas de chaque message s\'adapte à la source. Le score Piloz classe des profils à partir de signaux publics ; il ne mesure pas une intention d\'achat.</p>' +
+    '<p class="note"><b>API Recherche d\'entreprises</b> (SIRENE, RNE) pour les entreprises, leurs dirigeants et leur taille ; <b>ADEME RGE</b> (Licence Ouverte) pour les e-mails publiés par les entreprises qualifiées RGE ; <b>le site internet de l\'entreprise</b> pour les autres : domaine deviné depuis le nom, site vérifié par le SIREN (mentions légales) ou le nom et la ville, adresse lue sur la page d\'accueil, la page contact ou les mentions légales. <b>Signaux</b> : les marchés publics de travaux gagnés (données essentielles de la commande publique) et les annonces légales du <b>BODACC</b> (reprises, changements de dirigeant), qui passent en tête de file. La mention d\'origine des données en bas de chaque message s\'adapte à la source. Le score Piloz classe des profils à partir de signaux publics ; il ne mesure pas une intention d\'achat.</p>' +
     '<p class="sect-t" style="margin-top:20px">Cadre légal (prospection B2B)</p>' +
     '<p class="note">En France, un e-mail de prospection vers une adresse professionnelle est autorisé sans consentement préalable s\'il concerne l\'activité de la personne. En contrepartie, chaque message doit identifier l\'expéditeur, indiquer l\'origine des données et proposer une <b>désinscription simple</b>. L\'automate ajoute tout cela automatiquement, gère la désinscription en un clic (lien et en-tête reconnu par Gmail/Outlook) et n\'écrit plus jamais à une adresse désinscrite.</p>' +
-    '<p class="note">Si quelqu\'un vous répond « stop », ajoutez son adresse dans <b>Exclusions</b>.</p>');
+    '<p class="note">Chaque mail BTP propose aussi « <b>Recontactez-moi dans 3 mois</b> » (plus rien, puis un seul mail trois mois plus tard) et « <b>Indiquez-nous la bonne personne</b> » (un mail à la personne indiquée, qui précise que son entreprise nous a donné son adresse). Une réponse « stop » est traitée automatiquement ; vous pouvez aussi exclure une adresse à la main dans <b>Exclusions</b>.</p>');
 }
 $("bHelp").addEventListener("click", () => openHelp());
 
