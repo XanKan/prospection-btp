@@ -1205,6 +1205,10 @@
             <div class="tscroll"><table><thead><tr><th>Modèle</th><th style="width:90px">Envoyés</th><th style="width:90px">Ouverture</th><th style="width:70px">Clics</th><th style="width:90px">Réponses</th><th style="width:80px">Comptes</th></tr></thead><tbody id="bxTpls"></tbody></table></div>
           </div>
         </div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-h"><h2>Authentification des mails (rapports DMARC)</h2><span class="sub">ce que Gmail, Outlook, Yahoo, La Poste… disent des mails reçus à notre nom · 30 derniers jours</span></div>
+          <div class="card-b" id="bxDmarc"><p class="note">Chargement…</p></div>
+        </div>
       </section>
 
       <!-- ==================== RÉPONSES ==================== -->
@@ -2264,6 +2268,7 @@ async function loadBoxes(){
   }
   BX = { ...st, tests: pl.tests || [] };
   renderBoxes();
+  loadDmarc();
   if (err) toast("Statistiques des boîtes indisponibles : " + err, 6000);
 }
 function renderBoxes(){
@@ -2321,6 +2326,55 @@ function renderBoxes(){
     "<tr><td><b>" + esc(t.name) + '</b><div class="meta">' + (t.active ? "actif" : "inactif") + (KIND[t.kind] ? " · " + esc(KIND[t.kind]) : "") + '</div></td><td class="num">' + fmt(t.envoyes) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : pct(t.ouverts, t.envoyes)) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : fmt(t.clics)) + '</td><td class="num">' + fmt(t.reponses) + " <span class=\"meta\">(" + (t.envoyes ? (Math.round(t.reponses / t.envoyes * 10000) / 10).toString().replace(".", ",") : "0") + " ‰)</span></td><td class=\"num\">" + (/^relance/.test(t.kind) ? "—" : fmt(t.comptes || 0)) + "</td></tr>").join("")
     || '<tr><td colspan="6" class="empty">Aucun envoi sur la période.</td></tr>';
   $("pillBoites").hidden = false; $("pillBoites").textContent = BX.boxes.length;
+}
+// Rapports DMARC agrégés (prospection-dmarc, 202611011800) : lus deux fois par jour sur contact@.
+async function loadDmarc(){
+  const el = $("bxDmarc");
+  if (!el) return;
+  let d = null;
+  try { d = (await api("dmarc.stats", { days: 30 })).dmarc; }
+  catch(e){ if (e.code === "session") return; el.innerHTML = '<p class="note">Rapports DMARC indisponibles : ' + esc(e.message) + "</p>"; return; }
+  renderDmarc(d || {});
+}
+const DMARC_POLICY = { none: "aucune (surveillance)", quarantine: "spam", reject: "refus" };
+function dmarcChip(ok, messages, transferts){
+  const total = (messages || 0) - (transferts || 0);
+  if (total <= 0) return '<span class="chip dim">—</span>';
+  const r = ok / total;
+  return '<span class="chip ' + (r >= .98 ? "ok" : r >= .9 ? "v" : "bad") + '">' + pct(ok, total) + "</span>";
+}
+function renderDmarc(d){
+  const el = $("bxDmarc");
+  if (!el) return;
+  const help = '<p class="note">Chaque jour, les messageries envoient à contact@piloz.fr un rapport sur les mails reçus à notre nom (DMARC). ' +
+    "<b>DKIM OK</b> : la signature numérique du mail est intacte et vient bien de notre domaine. <b>SPF OK</b> : le mail est parti d'un serveur autorisé à écrire pour notre domaine. " +
+    "Il suffit que l'un des deux soit bon pour que le mail soit authentifié (<b>DMARC OK</b>). " +
+    "Le taux DMARC OK est calculé sans les <b>transferts</b> : mails que le destinataire a fait suivre depuis sa propre messagerie, qui les signe à son nom.</p>" +
+    '<p class="note">À surveiller : un taux DMARC OK qui baisse nettement, ou des mails mis en spam ou refusés faute d’authentification. ' +
+    "Les autres échecs viennent en général d'un transfert qui a abîmé la signature ; quelques-uns sont normaux. " +
+    "Ces rapports disent si nos mails sont authentifiés, pas s'ils arrivent en boîte de réception : un mail authentifié peut quand même finir en spam à cause de la réputation de la boîte.</p>";
+  const read = '<p class="note" style="margin-top:10px">' + (d.derniere_lecture ? "Dernière lecture de contact@ : " + esc(ago(d.derniere_lecture)) : "La boîte n'a pas encore été lue.") +
+    (d.dernier_rapport ? " · dernier rapport reçu " + esc(ago(d.dernier_rapport)) : "") + "</p>";
+  if (!d.rapports){
+    el.innerHTML = '<p class="note"><b>Aucun rapport reçu pour l’instant.</b> Les messageries envoient leurs rapports une fois par jour ; ils sont lus à 6 h 20 et à 14 h 20.</p>' + help + read;
+    return;
+  }
+  const domaines = d.domaines || [], fournisseurs = d.fournisseurs || [], echecs = d.echecs || [];
+  const blocked = x => (x.quarantaine || 0) + (x.rejet || 0);
+  const tDom = '<div class="tscroll"><table><thead><tr><th>Domaine d’envoi</th><th style="width:80px">Mails</th><th style="width:100px">DMARC OK</th><th style="width:90px">DKIM OK</th><th style="width:90px">SPF OK</th><th style="width:90px">Transferts</th><th style="width:110px">Spam ou refus</th><th>Politique publiée</th></tr></thead><tbody>' +
+    domaines.map(x => "<tr><td><b>" + esc(x.domaine) + '</b><div class="meta">' + fmt(x.rapports) + " rapport(s) · dernier le " + esc(dateFr(x.dernier_rapport)) + '</div></td><td class="num">' + fmt(x.messages) + "</td><td>" + dmarcChip(x.dmarc_ok || 0, x.messages, x.transferts) +
+      '</td><td class="num">' + pct(x.dkim_ok || 0, x.messages) + '</td><td class="num">' + pct(x.spf_ok || 0, x.messages) + '</td><td class="num">' + fmt(x.transferts || 0) + '</td><td class="num">' + (blocked(x) ? '<b style="color:var(--danger)">' + fmt(blocked(x)) + "</b>" : "0") +
+      '</td><td class="note">' + esc(DMARC_POLICY[x.politique] || x.politique || "—") + "</td></tr>").join("") + "</tbody></table></div>";
+  const tFou = '<div class="tscroll" style="margin-top:14px"><table><thead><tr><th>Messagerie qui a reçu</th><th>Domaine</th><th style="width:80px">Mails</th><th style="width:100px">DMARC OK</th><th style="width:90px">Transferts</th><th style="width:110px">Spam ou refus</th></tr></thead><tbody>' +
+    fournisseurs.map(x => "<tr><td><b>" + esc(x.fournisseur) + '</b></td><td class="note">' + esc(x.domaine) + '</td><td class="num">' + fmt(x.messages) + "</td><td>" + dmarcChip(x.dmarc_ok || 0, x.messages, x.transferts) +
+      '</td><td class="num">' + fmt(x.transferts || 0) + '</td><td class="num">' + (x.bloques ? '<b style="color:var(--danger)">' + fmt(x.bloques) + "</b>" : "0") + "</td></tr>").join("") + "</tbody></table></div>";
+  const tEch = echecs.length
+    ? '<h3 style="margin:16px 0 4px;font-size:.95rem">Sources en échec</h3><p class="note">Serveurs qui ont envoyé des mails à notre nom sans authentification valable. « Transfert » : le destinataire a fait suivre le mail depuis sa messagerie, rien à corriger chez nous. Sinon, si une de nos boîtes apparaît ici avec beaucoup de mails, il faut vérifier sa configuration.</p>' +
+      '<div class="tscroll"><table><thead><tr><th>Adresse IP</th><th>Domaine</th><th style="width:80px">Mails</th><th>Messageries</th><th>Signatures vues</th></tr></thead><tbody>' +
+      echecs.map(x => '<tr><td class="nw"><b>' + esc(x.source_ip || "—") + "</b>" + (x.transfert ? ' <span class="chip g">transfert</span>' : "") + '</td><td class="note">' + esc(x.domaine) + '</td><td class="num">' + fmt(x.messages) + '</td><td class="note">' + esc(x.fournisseurs || "") +
+        '</td><td class="meta">' + esc([x.dkim_detail && "DKIM " + x.dkim_detail, x.spf_detail && "SPF " + x.spf_detail].filter(Boolean).join(" · ") || "—") + "</td></tr>").join("") + "</tbody></table></div>"
+    : '<p class="note" style="margin-top:12px">Aucune source en échec sur la période.</p>';
+  el.innerHTML = tDom + tFou + tEch + '<div style="margin-top:14px">' + help + "</div>" + read;
 }
 function showBoxDetail(address){
   const b = BX && BX.boxes.find(x => x.address === address);
