@@ -680,7 +680,7 @@
           <div class="card-h"><h2>Premier mail : complet ou léger</h2><span class="sub">même texte ; la version légère n'a que deux liens (inscription, désinscription)</span>
             <select id="dvDays" style="margin-left:auto" onchange="loadDeliv()"><option value="7" selected>7 derniers jours</option><option value="30">30 derniers jours</option></select></div>
           <div class="card-b">
-            <div class="tscroll"><table><thead><tr><th>Version</th><th style="width:84px">Envoyés</th><th style="width:84px">Ouverts</th><th style="width:84px">Cliqués</th><th style="width:84px">Réponses</th><th style="width:84px">Liens</th><th style="width:84px">Comptes</th><th style="width:96px">Désinscrits</th><th style="width:70px">Échecs</th></tr></thead><tbody id="dvFormat"></tbody></table></div>
+            <div class="tscroll"><table><thead><tr><th>Version</th><th style="width:84px">Envoyés</th><th style="width:84px" title="Taux hors Gmail : Gmail charge les images à la réception : ses ouvertures ne sont pas mesurables">Ouverts</th><th style="width:84px">Cliqués</th><th style="width:84px">Réponses</th><th style="width:84px">Liens</th><th style="width:84px">Comptes</th><th style="width:96px">Désinscrits</th><th style="width:70px">Échecs</th></tr></thead><tbody id="dvFormat"></tbody></table></div>
             <p class="note" id="dvNote" style="margin-top:12px"></p>
           </div>
         </div>
@@ -1213,7 +1213,7 @@
           <div class="card">
             <div class="card-h"><h2>Modèles de mail</h2><span class="sub">toutes boîtes · comparez les modèles actifs sur la même période</span>
               <select id="bxTplDays" style="margin-left:auto" onchange="loadBoxes()"><option value="7">7 derniers jours</option><option value="30">30 derniers jours</option><option value="0">Depuis le début</option></select></div>
-            <div class="tscroll"><table><thead><tr><th>Modèle</th><th style="width:90px">Envoyés</th><th style="width:90px">Ouverture</th><th style="width:70px">Clics</th><th style="width:90px">Réponses</th><th style="width:80px">Comptes</th></tr></thead><tbody id="bxTpls"></tbody></table></div>
+            <div class="tscroll"><table><thead><tr><th>Modèle</th><th style="width:90px">Envoyés</th><th style="width:90px" title="Gmail charge les images à la réception : ses ouvertures ne sont pas mesurables">Ouverture hors Gmail</th><th style="width:70px">Clics</th><th style="width:90px">Réponses</th><th style="width:80px">Comptes</th></tr></thead><tbody id="bxTpls"></tbody></table></div>
           </div>
         </div>
         <div class="card" style="margin-top:16px">
@@ -1378,6 +1378,8 @@
                 <div class="fld"><label for="sLeger">Version légère du premier mail</label>
                   <div class="inline"><input class="inp" type="number" id="sLeger" min="0" max="100" step="5" style="width:90px"> % des premiers mails BTP</div>
                   <p class="help">Même texte, mais seulement deux liens : l'inscription et la désinscription (ni bouton, ni logo, ni guide, ni « pas le bon moment »). Le tableau de bord compare les deux versions. 0 : tout en version complète.</p></div>
+                <div class="fld"><label class="swi"><input type="checkbox" id="sAlertes"><i></i> Alertes en direct par mail</label>
+                  <p class="help">Un mail à l'adresse de réponse dès qu'un prospect voit la page d'inscription, ouvre son espace prêt sans l'activer, ou demande son lien sans créer son compte (30 minutes après). Vérifié toutes les 10 minutes de 7 h à 21 h ; chaque événement n'est signalé qu'une fois.</p></div>
                 <div class="fld full"><label>Mails par heure et par fournisseur de messagerie</label>
                   <div class="chips" id="sProv"></div>
                   <p class="help">Sur l'heure glissante, tous types de mails confondus. Au-delà, les destinataires de ce fournisseur attendent et les autres passent : Orange en particulier n'aime pas les rafales. 0 : sans limite. Les adresses d'entreprise (« autres ») ne sont jamais limitées.</p></div>
@@ -1686,7 +1688,7 @@ async function renderSeq(){
     ["4", "Premier mail « signal »", "Entreprises qui viennent de gagner un marché public, ou dont une annonce BODACC vient de paraître (reprise, changement de dirigeant)", "au créneau suivant, l'annonce la plus récente d'abord ; un modèle qui cite {marche} ou {evenement} leur est réservé", "rotation", ["initial"]],
     ["5", "Relance chaude", "Prospects intéressés mais silencieux : 3 ouvertures ou un clic, premier mail il y a 2 à 60 jours", "rien envoyé depuis 2 jours ; remplace les relances 1 et 2 et termine la séquence", "boîte du premier mail", ["chaude"]],
     ["6", "Rappel d'inscription", "Prospects qui ont vu la page d'inscription sans demander leur lien", "le lendemain (20 heures à 7 jours après la visite), une seule fois", "boîte du premier mail", ["rappel_inscription"]],
-    ["7", "Relances 1 et 2", "Prospects qui ont ouvert ou cliqué" + (s.followup_opened_only === false ? " (ou non)" : "") + ", sans réponse", "relance 1 à J+" + fmt(s.followup1_days) + ", relance 2 à J+" + fmt(s.followup2_days) + ", les plus anciennes d'abord", "boîte du premier mail", ["relance1", "relance2"]],
+    ["7", "Relances 1 et 2", "Prospects qui ont ouvert ou cliqué" + (s.followup_opened_only === false ? " (ou non)" : "") + ", sans réponse", "relance 1 à J+" + fmt(s.followup1_days) + ", relance 2 à J+" + fmt(s.followup2_days) + ", l'ouverture ou le clic le plus récent d'abord", "boîte du premier mail", ["relance1", "relance2"]],
     ["7", "Relance démo", "Visiteurs de la démo qui n'ont pas ouvert leur mail, sans compte", "J+3", "boîte du premier mail", ["relance_demo"]],
     ["7", "Recontact", "Prospects qui ont cliqué « Pas le bon moment ? Recontactez-moi dans 3 mois »", "3 mois plus tard, à 8 h, une seule fois", "boîte du premier mail", ["recontact"]],
     ["8", "Premier mail", "Nouveaux prospects BTP du ciblage, pris dans la réserve", "meilleur score d'abord ; " + fmt(s.format_leger_part || 0) + " % en version légère (deux liens)", "rotation", ["initial"], true],
@@ -2334,7 +2336,7 @@ function renderBoxes(){
         : '<div><div style="display:flex;justify-content:space-between" class="note"><span>Aujourd\'hui</span><b class="num" style="color:var(--ink)">' + fmt(b.aujourdhui) + " envoi(s)</b></div>" + (qp ? '<div class="meter" style="margin-top:6px"><i style="width:' + Math.min(100, qp.plafond ? Math.round(qp.envoyes / qp.plafond * 100) : 0) + '%"></i></div><div class="note" style="margin-top:4px">Relances piloz.fr (partagées entre les 2 boîtes) : <b>' + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + "</b></div>" : "") + "</div>") +
       '<div style="display:flex;gap:6px;flex-wrap:wrap">' + ramp + "</div>" +
       '<div class="spark" aria-hidden="true">' + spark.map(v => '<i style="height:' + Math.max(2, Math.round(v / mx * 30)) + 'px;opacity:' + (v ? 1 : .2) + '"></i>').join("") + "</div>" +
-      "<dl>" + [["Premiers mails", fmt(b.premiers)], ["Relances", fmt(b.relances)], ["Ouverture", pct(b.ouverts, b.premiers)], ["Clics", fmt(b.clics)], ["Réponses", fmt(b.reponses)], ["Rebonds", pct(b.echecs, b.premiers + b.relances)]]
+      "<dl>" + [["Premiers mails", fmt(b.premiers)], ["Relances", fmt(b.relances)], ["Ouverture hors Gmail", pct(b.ouverts_mesures ?? b.ouverts, b.premiers_mesures ?? b.premiers)], ["Clics", fmt(b.clics)], ["Réponses", fmt(b.reponses)], ["Rebonds", pct(b.echecs, b.premiers + b.relances)]]
         .map(([k, v]) => "<div><dt>" + k + '</dt><dd class="num">' + v + "</dd></div>").join("") + "</dl>" +
       '<div class="note" style="border-top:1px solid var(--line-2);padding-top:10px;display:flex;flex-direction:column;gap:3px"><span>Mot de passe : <b>' + (sec.password ? "posé ✓" : "manquant") + "</b> · lecture des réponses : <b>" + (sec.token ? "active ✓" : "inactive") + "</b></span><span>Dernier envoi : " + (b.dernier_envoi ? esc(dateTimeFr(b.dernier_envoi)) : "—") + "</span><span>Dernière erreur : " + err + "</span><span>" + testLine(lastTest(b.address)) + "</span></div>" +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="b b-main b-sm" data-bx-detail="' + esc(b.address) + '">Voir la fiche</button><button type="button" class="b b-out b-sm" data-bx-test="' + esc(b.address) + '">Test de placement</button><button type="button" class="b b-out b-sm" data-bx-log="' + esc(b.address) + '">Ses envois</button></div></div>';
@@ -2346,7 +2348,7 @@ function renderBoxes(){
     : '<p class="note">Aucun test pour l\'instant. Le bouton « Test de placement » d\'une boîte envoie un vrai premier mail (modèle actif, suivi compris) à une trentaine d\'adresses témoins Gmail et Outlook, puis affiche où il est arrivé.</p>';
   // Modèles
   $("bxTpls").innerHTML = (BX.templates || []).filter(t => t.envoyes).map(t =>
-    "<tr><td><b>" + esc(t.name) + '</b><div class="meta">' + (t.active ? "actif" : "inactif") + (KIND[t.kind] ? " · " + esc(KIND[t.kind]) : "") + '</div></td><td class="num">' + fmt(t.envoyes) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : pct(t.ouverts, t.envoyes)) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : fmt(t.clics)) + '</td><td class="num">' + fmt(t.reponses) + " <span class=\"meta\">(" + (t.envoyes ? (Math.round(t.reponses / t.envoyes * 10000) / 10).toString().replace(".", ",") : "0") + " ‰)</span></td><td class=\"num\">" + (/^relance/.test(t.kind) ? "—" : fmt(t.comptes || 0)) + "</td></tr>").join("")
+    "<tr><td><b>" + esc(t.name) + '</b><div class="meta">' + (t.active ? "actif" : "inactif") + (KIND[t.kind] ? " · " + esc(KIND[t.kind]) : "") + '</div></td><td class="num">' + fmt(t.envoyes) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : pct(t.ouverts_mesures ?? t.ouverts, t.envoyes_mesures ?? t.envoyes)) + '</td><td class="num">' + (/^relance/.test(t.kind) ? "—" : fmt(t.clics)) + '</td><td class="num">' + fmt(t.reponses) + " <span class=\"meta\">(" + (t.envoyes ? (Math.round(t.reponses / t.envoyes * 10000) / 10).toString().replace(".", ",") : "0") + " ‰)</span></td><td class=\"num\">" + (/^relance/.test(t.kind) ? "—" : fmt(t.comptes || 0)) + "</td></tr>").join("")
     || '<tr><td colspan="6" class="empty">Aucun envoi sur la période.</td></tr>';
   $("pillBoites").hidden = false; $("pillBoites").textContent = BX.boxes.length;
 }
@@ -2404,7 +2406,7 @@ function showBoxDetail(address){
   if (!b) return;
   $("bxDetail").hidden = false;
   $("bxDetailT").textContent = b.address;
-  $("bxDetailS").textContent = boxRole(b) + " · " + fmt(b.premiers) + " premiers mails, " + fmt(b.relances) + " relances, " + pct(b.ouverts, b.premiers) + " d'ouverture";
+  $("bxDetailS").textContent = boxRole(b) + " · " + fmt(b.premiers) + " premiers mails, " + fmt(b.relances) + " relances, " + pct(b.ouverts_mesures ?? b.ouverts, b.premiers_mesures ?? b.premiers) + " d'ouverture hors Gmail";
   const days = b.jours || [], mx = Math.max(1, ...days.map(j => j.envoyes + j.relances));
   $("bxBars").innerHTML = days.map(j => {
     const tot = j.envoyes + j.relances;
@@ -2550,11 +2552,11 @@ async function loadDeliv(){
   try {
     const d = await api("delivrabilite.stats", { days: Number($("dvDays").value || 7) });
     const rows = d.format || [], label = { complet: "Complète (bouton, logo, guide, liens de choix)", leger: "Légère (deux liens)" };
-    $("dvFormat").innerHTML = rows.length ? rows.map(r => '<tr><td><b>' + esc(label[r.format] || r.format) + '</b></td><td class="num">' + fmt(r.envoyes) + '</td><td class="num">' + fmt(r.ouverts) + ' <span class="meta" style="display:inline">' + pct(r.ouverts, r.envoyes) + '</span></td><td class="num">' + fmt(r.clics) + ' <span class="meta" style="display:inline">' + pct(r.clics, r.envoyes) + '</span></td><td class="num">' + fmt(r.reponses) +
+    $("dvFormat").innerHTML = rows.length ? rows.map(r => '<tr><td><b>' + esc(label[r.format] || r.format) + '</b></td><td class="num">' + fmt(r.envoyes) + '</td><td class="num">' + fmt(r.ouverts) + ' <span class="meta" style="display:inline">' + pct(r.ouverts_mesures ?? r.ouverts, r.envoyes_mesures ?? r.envoyes) + '</span></td><td class="num">' + fmt(r.clics) + ' <span class="meta" style="display:inline">' + pct(r.clics, r.envoyes) + '</span></td><td class="num">' + fmt(r.reponses) +
       '</td><td class="num">' + fmt(r.demandes) + '</td><td class="num">' + fmt(r.comptes) + '</td><td class="num">' + fmt(r.desinscrits) + '</td><td class="num">' + fmt(r.echecs) + "</td></tr>").join("")
       : '<tr><td colspan="9" class="empty">Aucun premier mail noté sur la période : la comparaison commence avec les envois suivants.</td></tr>';
     const u = d.desinscriptions || {};
-    $("dvNote").innerHTML = "Robots exclus des ouvertures et des clics. « Liens » : liens de création demandés après le mail. Le test porte sur " + fmt((state && state.settings && state.settings.format_leger_part) ?? 0) + " % de versions légères (Réglages)." +
+    $("dvNote").innerHTML = "Robots exclus des ouvertures et des clics. Taux d'ouverture calculé hors Gmail : Gmail charge les images à la réception, ses ouvertures ne sont pas mesurables (ses clics, si).« Liens » : liens de création demandés après le mail. Le test porte sur " + fmt((state && state.settings && state.settings.format_leger_part) ?? 0) + " % de versions légères (Réglages)." +
       "<br><b>Désinscriptions</b> sur la période : " + fmt(u.total || 0) + ", dont " + fmt(u.avec_motif || 0) + " avec une raison donnée sur la page de désinscription" +
       (u.avec_motif ? " : trop de mails " + fmt(u.trop_de_mails || 0) + " · déjà un logiciel " + fmt(u.deja_equipe || 0) + " · entreprise trop petite " + fmt(u.trop_petite || 0) + " · pas intéressé " + fmt(u.pas_interesse || 0) : "") + ".";
     $("dashDeliv").hidden = false;
@@ -4275,6 +4277,7 @@ function fillSettings(){
   $("sPauses").value = (s.send_pauses || []).join(", "); $("sPiloz").value = s.boites_piloz_max ?? 0;
   $("sGapMin").value = s.min_gap_seconds; $("sGapMax").value = s.max_gap_seconds;
   $("sLeger").value = s.format_leger_part ?? 50;
+  $("sAlertes").checked = s.alertes_actives !== false;
   const lim = s.fournisseurs_max_heure || {};
   $("sProv").innerHTML = PROVIDERS.map(([k, l]) => '<label class="inline" style="gap:6px"><span style="min-width:110px">' + esc(l) + '</span><input class="inp" type="number" data-prov="' + k + '" min="0" max="500" step="1" style="width:76px" value="' + esc(String(lim[k] ?? 0)) + '"><span class="meta" data-prov-st="' + k + '"></span></label>').join("");
   loadProvStats();
@@ -4348,7 +4351,7 @@ $("setForm").addEventListener("submit", async ev => {
     max_consecutive_errors: $("sErr").value,
     followup_enabled: $("sFuEnabled").checked, followup1_days: $("sFu1").value, followup2_days: $("sFu2").value,
     followup_opened_only: $("sFuOpened").checked, relances_piloz_max: $("sFuOld").value,
-    format_leger_part: $("sLeger").value,
+    format_leger_part: $("sLeger").value, alertes_actives: $("sAlertes").checked,
     fournisseurs_max_heure: Object.fromEntries([...document.querySelectorAll("#sProv [data-prov]")].map(i => [i.getAttribute("data-prov"), Number(i.value || 0)]))
   };
   // Date vide : la date actuelle est conservée (jamais « tout l'historique »).
