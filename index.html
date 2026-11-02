@@ -4161,6 +4161,8 @@ $("bLogRetry").addEventListener("click", async ev => {
    ============================================================ */
 const SUPP = { page: 1, total: 0 };
 const REASON = { desinscription: "Désinscription", rebond: "Adresse refusée", manuel: "Ajout manuel", deja_contacte: "Déjà contacté (Brevo)" };
+// Raison facultative donnée sur la page de désinscription (« Pourquoi ? », 01/11/2026).
+const MOTIF = { trop_de_mails: "Je reçois trop de mails", deja_equipe: "Nous avons déjà un logiciel", trop_petite: "Mon entreprise est trop petite", pas_interesse: "Cela ne m'intéresse pas" };
 let suppT = null;
 function localHistory(){
   try { const h = JSON.parse(localStorage.getItem("cp_historique") || "[]"); return Array.isArray(h) ? h.filter(x => x && x.email) : []; } catch(e){ return []; }
@@ -4197,7 +4199,7 @@ async function loadSupp(){
     $("sPage").textContent = "Page " + SUPP.page + " / " + pages + " · " + fmt(data.total) + " adresse(s)";
     $("sPrev").disabled = SUPP.page <= 1; $("sNext").disabled = SUPP.page >= pages;
     $("sBody").innerHTML = data.items.length ? data.items.map(s =>
-      "<tr><td><b>" + esc(s.email) + "</b></td><td>" + esc(REASON[s.reason] || s.reason) + '</td><td class="nw">' + esc(dateFr(s.created_at)) +
+      "<tr><td><b>" + esc(s.email) + "</b></td><td>" + esc(REASON[s.reason] || s.reason) + (s.motif ? '<div class="meta">« ' + esc(MOTIF[s.motif] || s.motif) + " »</div>" : "") + '</td><td class="nw">' + esc(dateFr(s.created_at)) +
       '</td><td><button type="button" class="b b-out b-xs" data-unsupp="' + esc(s.email) + '">Retirer</button></td></tr>').join("")
       : '<tr><td colspan="4" class="empty"><b>Aucune exclusion</b>Les désinscriptions et adresses refusées apparaîtront ici automatiquement.</td></tr>';
   } catch(e){ if (e.code !== "session") toast(e.message, 5000); }
