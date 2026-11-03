@@ -1695,7 +1695,7 @@ async function renderSeq(){
   ];
   $("seqBody").innerHTML = rows.map(([n, quoi, qui, quand, boite, kinds, general]) => '<tr><td class="num"><b>' + n + "</b></td><td><b>" + esc(quoi) + '</b><div class="meta">' + seqTpl(kinds, "btp", general) + "</div></td><td>" + esc(qui) + "</td><td>" + esc(quand) + "</td><td>" + esc(boite) + "</td></tr>").join("");
   $("seqQuotas").innerHTML = "<b>Limites :</b> les premiers mails (rangs 2, 3, 4 et 8) s'arrêtent au plafond du jour ; les relances BTP des boîtes dédiées n'en prennent pas plus de la moitié, sauf si la réserve est vide ; " +
-    "les relances et les « Espace prêt » partis de " + esc(piloz) + " ont leur propre plafond (" + fmt(s.relances_piloz_max) + " par jour). Rien ne part à une adresse désinscrite, à un prospect qui a répondu ni à un client reconnu. " +
+    "les relances et les « Espace prêt » partis de " + esc(piloz) + " ont leur propre plafond (" + fmt(s.relances_piloz_max) + " par jour) ; tant que des premiers mails attendent, ces relances alternent avec eux (30 d'avance le matin, puis une relance pour un premier mail). Rien ne part à une adresse désinscrite, à un prospect qui a répondu ni à un client reconnu. " +
     "<b>Rotation :</b> la boîte qui a le plus de marge sur son plafond du jour ; les relances repartent toujours de la boîte du premier mail, dans le même fil. " +
     "<b>Par fournisseur :</b> " + provLimitsFr(s) + " sur l'heure glissante ; au-delà, ces destinataires attendent et les autres passent. " +
     "<b>Absence :</b> un prospect dont le message d'absence court encore ne reçoit rien avant son retour (une semaine sans date indiquée).";
