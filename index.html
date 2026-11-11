@@ -75,11 +75,11 @@
   .side-foot b{color:var(--ink);font-weight:700;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .side-foot button{color:var(--violet-dark);font-weight:700;font-size:.78rem;text-decoration:underline}
   main{min-width:0;display:flex;flex-direction:column}
-  .top{background:transparent;padding:26px 28px 4px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;max-width:1360px;margin:0 auto;width:100%}
+  .top{background:transparent;padding:26px 28px 4px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;max-width:1640px;margin:0 auto;width:100%}
   .top h1{font-family:Manrope,sans-serif;font-size:1.75rem;font-weight:800;letter-spacing:-.02em;line-height:1.15}
   .top p{font-size:.84rem;color:var(--muted)}
   .top-act{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .content{padding:18px 28px 60px;flex:1;max-width:1360px;margin:0 auto;width:100%}
+  .content{padding:18px 28px 60px;flex:1;max-width:1640px;margin:0 auto;width:100%}
   .view{display:none}
   .view.on{display:block}
 
@@ -182,6 +182,7 @@
   .fset-h .sub{font-size:.8rem;color:var(--muted)}
   .fset-h .spacer{margin-left:auto}
   .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chips-sep{flex-basis:100%;margin-top:8px;font-size:.78rem;font-weight:700;color:var(--muted)}
   .chip{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;border:1px solid var(--line);border-radius:99px;padding:5px 13px;background:var(--panel);font-size:.85rem;font-weight:600;transition:background .12s,border-color .12s,color .12s;position:relative}
   .chip:hover{border-color:#cfd0e4}
   .chip input{position:absolute;opacity:0;width:0;height:0}
@@ -847,7 +848,7 @@
             <label class="swi"><input type="checkbox" id="tMarches"><i></i> Chercher aussi les entreprises qui viennent de remporter un marché public de travaux (données essentielles de la commande publique, 60 derniers jours)</label>
             <p class="note" style="margin-top:10px">Source ouverte, sans clé ni inscription : environ 1 000 entreprises par mois en France, avec leur SIRET. Les marchés paraissent en open data une à plusieurs semaines après leur notification : à chaque passage, les derniers parus sont pris en premier, puis l'arriéré page par page, même quand la file est pleine. Chaque titulaire passe par le même entonnoir (tranche d'effectif du ciblage, adresse RGE, prénom, score), gagne 15 points et reçoit le modèle « Chantier public » grâce à la variable <code class="k">{marche}</code>.</p>
             <label class="swi" style="margin-top:14px"><input type="checkbox" id="tBodacc" checked><i></i> Chercher aussi les entreprises qui viennent de changer de dirigeant ou d'être reprises (annonces légales du BODACC, 14 derniers jours puis chaque jour)</label>
-            <p class="note" style="margin-top:10px">Source ouverte, sans clé ni inscription. Un changement de direction ou une reprise, c'est le moment où l'on revoit son organisation. Environ 5 entreprises du bâtiment de 6 à 49 salariés par jour de parution, qui passent par le même entonnoir (code NAF et tranche d'effectif du ciblage, adresse RGE ou site internet, prénom, score), gagnent 10 points et partent en tête de file. Une reprise reçoit le modèle « Reprise d'entreprise » grâce à <code class="k">{evenement}</code> ; un changement de dirigeant n'est jamais cité dans le mail, car l'annonce ne dit pas ce qui a changé.</p>
+            <p class="note" style="margin-top:10px">Source ouverte, sans clé ni inscription. Un changement de direction ou une reprise, c'est le moment où l'on revoit son organisation. Environ 5 entreprises de la cible par jour de parution, qui passent par le même entonnoir (code NAF et tranche d'effectif du ciblage, adresse RGE ou site internet, prénom, score), gagnent 10 points et partent en tête de file. Une reprise reçoit le modèle « Reprise d'entreprise » grâce à <code class="k">{evenement}</code> ; un changement de dirigeant n'est jamais cité dans le mail, car l'annonce ne dit pas ce qui a changé.</p>
           </div>
           <div class="fset">
             <div class="fset-h"><h3>Secteur</h3><span class="sub">codes NAF de la construction</span></div>
@@ -3008,14 +3009,22 @@ const METIERS = [
   { c:"43.33Z", n:"Revêtement sols et murs" }, { c:"43.34Z", n:"Peinture et vitrerie", top:1 },
   { c:"43.39Z", n:"Travaux de finition" }, { c:"43.91A", n:"Charpente", top:1 }, { c:"43.91B", n:"Couverture", top:1 },
   { c:"43.99A", n:"Étanchéité" }, { c:"43.99B", n:"Structures métalliques" },
-  { c:"43.99C", n:"Maçonnerie / gros œuvre", top:1 }, { c:"43.99D", n:"Autres travaux spécialisés" }
+  { c:"43.99C", n:"Maçonnerie / gros œuvre", top:1 }, { c:"43.99D", n:"Autres travaux spécialisés" },
+  { c:"43.99E", n:"Location d'engins avec opérateur" },
+  // Métiers voisins du BTP (11/11/2026) : chantiers, devis et équipes ; paysagistes et nettoyage ont leur propre mail.
+  { c:"81.30Z", n:"Paysagistes", top:1, voisin:1 }, { c:"16.23Z", n:"Menuiserie et charpente (fabrication)", voisin:1 },
+  { c:"25.11Z", n:"Structures métalliques (fabrication)", voisin:1 }, { c:"25.12Z", n:"Menuiseries métalliques (fabrication)", voisin:1 },
+  { c:"81.21Z", n:"Nettoyage de bâtiments", voisin:1 }, { c:"81.22Z", n:"Nettoyage industriel", voisin:1 },
+  { c:"81.29A", n:"Désinfection, désinsectisation", voisin:1 }, { c:"81.29B", n:"Autres nettoyages", voisin:1 },
+  { c:"81.10Z", n:"Multiservices", voisin:1 }
 ];
 const NAF_NAME = {};
 for (const m of METIERS) for (const code of m.c.split(",")) NAF_NAME[code] = m.n;
 const SECT_NAME = { "41":"construction de bâtiments", "42":"génie civil", "43":"travaux spécialisés" };
 const DEFAULT_EFFS = ["03", "11", "12", "21", "22"];
 
-$("metChips").innerHTML = METIERS.map(m =>
+$("metChips").innerHTML = METIERS.map((m, i) =>
+  (m.voisin && !(METIERS[i - 1] || {}).voisin ? '<span class="chips-sep">Métiers voisins du BTP (paysagistes et nettoyage reçoivent leur propre mail)</span>' : "") +
   '<label class="chip"><input type="checkbox" name="metier" value="' + m.c + '"' + (m.top ? ' data-top="1"' : "") + "> " + esc(m.n) + "</label>"
 ).join("");
 
@@ -3057,7 +3066,11 @@ function srcNote(){
 
 function readTarget(){
   const sect = [...document.querySelectorAll("input[name=secteur]:checked")].map(c => c.value);
-  const metiers = [...document.querySelectorAll("input[name=metier]:checked")].flatMap(c => c.value.split(","));
+  const checked = [...document.querySelectorAll("input[name=metier]:checked")].flatMap(c => c.value.split(","));
+  // Codes du ciblage enregistré absents de cet écran : gardés tels quels (jamais effacés en silence).
+  const known = new Set([...document.querySelectorAll("input[name=metier]")].flatMap(c => c.value.split(",")));
+  const kept = ((state && state.settings && state.settings.autopilot_target && state.settings.autopilot_target.metiers) || []).filter(c => !known.has(c));
+  const metiers = [...new Set([...checked, ...kept])];
   if (!sect.length && !metiers.length) throw new Error("Sélectionnez au moins un secteur ou un métier précis.");
   const effs = [...document.querySelectorAll("input[name=eff]:checked")].flatMap(c => c.value.split(","));
   if (!effs.length) throw new Error("Sélectionnez au moins une tranche d'effectif.");
