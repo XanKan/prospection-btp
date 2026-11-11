@@ -121,7 +121,10 @@
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
   .grid2>.card{margin-top:0}
   .grid2.wide-right{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
-  @media(max-width:980px){.grid2,.grid2.wide-right{grid-template-columns:1fr}}
+  .grid2>*{min-width:0}
+  /* Tableau de bord (11/11/2026) : graphique à gauche, recherche automatique à droite. */
+  .grid2.dash{grid-template-columns:minmax(0,2fr) minmax(280px,1fr)}
+  @media(max-width:980px){.grid2,.grid2.wide-right,.grid2.dash{grid-template-columns:1fr}}
 
   .hero{display:flex;gap:22px;align-items:center;flex-wrap:wrap;padding:22px 24px}
   .hero-dot{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;flex:none;background:var(--line-2);color:var(--muted)}
@@ -157,12 +160,12 @@
   .meter{height:6px;border-radius:99px;background:var(--line-2);overflow:hidden;margin-top:8px}
   .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--violet-2));border-radius:99px;transition:width .3s}
 
-  .days{display:flex;align-items:flex-end;gap:6px;height:152px;padding:10px 0 4px}
-  .days div{flex:1 0 34px;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:34px}
+  .days{display:flex;align-items:flex-end;gap:4px;height:152px;padding:10px 0 4px;overflow:hidden}
+  .days div{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
   .days i{display:block;width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:var(--violet);min-height:2px}
   .days i.zero{background:var(--line)}
-  .days span{font-size:.66rem;color:var(--muted);font-weight:700}
-  .days b{font-size:.7rem;font-weight:800}
+  .days span{font-size:.6rem;color:var(--muted);font-weight:700;white-space:nowrap}
+  .days b{font-size:.62rem;font-weight:800;white-space:nowrap}
 
   .list{list-style:none}
   .list li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2);font-size:.87rem;min-width:0}
@@ -640,9 +643,9 @@
           </div>
         </div>
 
-        <div class="grid2">
+        <div class="grid2 dash">
           <div class="card">
-            <div class="card-h"><h2>Envois des 14 derniers jours</h2></div>
+            <div class="card-h"><h2>Envois par jour</h2></div>
             <div class="card-b"><div class="days" id="chDays"></div></div>
           </div>
           <div class="card">
@@ -1531,7 +1534,7 @@ async function enter(){
     if (current === "auto"){ loadDashExtra(true); loadDashRvRecent(true); }
   } catch(e){
     if (e.code === "mfa_required") return showLogin("Activez d'abord la double authentification sur admin.piloz.fr, puis reconnectez-vous.");
-    if (e.code === "forbidden"){ await sb.auth.signOut(); return showLogin(e.message); }
+    if (e.code === "forbidden"){ await sb.auth.signOut({ scope: "local" }); return showLogin(e.message); }
     if (e.code === "session") return;
     $("login").hidden = true; $("app").hidden = false;
     toast(e.message || "Impossible de charger l'automate.");
@@ -1579,10 +1582,10 @@ $("mfaForm").addEventListener("submit", async ev => {
     $("lCode").select();
   }
 });
-$("mBack").addEventListener("click", async () => { await sb.auth.signOut(); showLogin(); });
-$("bLogout").addEventListener("click", async () => { await sb.auth.signOut(); state = null; showLogin("Vous êtes déconnecté."); });
+$("mBack").addEventListener("click", async () => { await sb.auth.signOut({ scope: "local" }); showLogin(); });
+$("bLogout").addEventListener("click", async () => { await sb.auth.signOut({ scope: "local" }); state = null; showLogin("Vous êtes déconnecté."); });
 
-async function api(action, payload){
+async function api(action, payload, retried){
   const { data: { session } } = await sb.auth.getSession();
   if (!session){ showLogin("Session expirée, reconnectez-vous."); throw Object.assign(new Error("Session expirée"), { code: "session" }); }
   let resp;
@@ -1594,7 +1597,16 @@ async function api(action, payload){
     });
   } catch(e){ throw new Error("Connexion au serveur impossible. Vérifiez votre réseau."); }
   const data = await resp.json().catch(() => ({}));
-  if (resp.status === 401){ showLogin("Session expirée, reconnectez-vous."); throw Object.assign(new Error("Session expirée"), { code: "session" }); }
+  if (resp.status === 401){
+    // Jeton expiré pendant que l'onglet dormait, ou refus passager du serveur (mise à jour en cours) :
+    // la session enregistrée sur ce PC est renouvelée et l'appel refait une fois, sans redemander
+    // le mot de passe. L'écran de connexion ne revient que si le renouvellement échoue (11/11/2026).
+    if (!retried){
+      const { data: renewed, error: renewError } = await sb.auth.refreshSession();
+      if (!renewError && renewed && renewed.session) return api(action, payload, true);
+    }
+    showLogin("Session expirée, reconnectez-vous."); throw Object.assign(new Error("Session expirée"), { code: "session" });
+  }
   if (resp.status === 404) throw new Error("Le service d'automate n'est pas encore déployé sur le serveur.");
   if (!resp.ok) throw Object.assign(new Error(data.error || ("Erreur " + resp.status)), { code: data.code, data });
   return data;
@@ -2879,13 +2891,13 @@ function renderState(){
       if (key >= todayKey || days.length > 400) break;
     }
   }
-  const max = Math.max(1, ...days.map(d => d.n));
+  const shown = days.slice(-30);
+  const max = Math.max(1, ...shown.map(d => d.n));
   const chTotal = days.reduce((a, d) => a + d.n, 0);
-  $("chDays").style.overflowX = "auto";
-  $("chDays").innerHTML = days.map(d => '<div title="' + esc(d.key) + " : " + d.p + " premier(s) contact(s)" + (d.r ? ", " + d.r + " relance(s)" : "") + '"><b>' + (d.n || "") + '</b><i class="' + (d.n ? "" : "zero") + '" style="height:' + Math.max(2, Math.round(d.n / max * 86)) + 'px"></i><span>' + esc(d.lab) + "</span></div>").join("") ||
+  $("chDays").innerHTML = shown.map((d, i) => '<div title="' + esc(d.key) + " : " + d.p + " premier(s) contact(s)" + (d.r ? ", " + d.r + " relance(s)" : "") + '"><b>' + (d.n || "") + '</b><i class="' + (d.n ? "" : "zero") + '" style="height:' + Math.max(2, Math.round(d.n / max * 86)) + 'px"></i><span' + ((shown.length - 1 - i) % 3 ? ' style="visibility:hidden"' : "") + ">" + esc(d.lab) + "</span></div>").join("") ||
     '<p class="note">Aucun envoi pour l\'instant.</p>';
   const chTitle = $("chDays").closest(".card") && $("chDays").closest(".card").querySelector(".card-h h2");
-  if (chTitle) chTitle.textContent = "Envois par jour · " + fmt(chTotal) + " au total" + (days.length ? " depuis le " + days[0].lab : "");
+  if (chTitle) chTitle.textContent = "Envois par jour · " + (days.length > shown.length ? "30 derniers jours · " : "") + fmt(chTotal) + " au total" + (days.length ? " depuis le " + days[0].lab : "");
 
   // Derniers envois
   $("recent").innerHTML = state.recent.length
