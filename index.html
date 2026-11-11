@@ -1360,7 +1360,7 @@
             <div class="card-h"><h2>Cadence</h2><span class="sub">régulier, aux heures de bureau, avec une montée progressive : c'est ce qui préserve la réputation de piloz.fr</span></div>
             <div class="card-b">
               <div class="fields">
-                <div class="fld"><label for="sCap">Quota maximum par jour</label><input class="inp" type="number" id="sCap" min="1" max="3000">
+                <div class="fld"><label for="sCap">Quota maximum par jour</label><input class="inp" type="number" id="sCap" min="1" max="8000">
                   <p class="note" id="rampNote" hidden style="margin:6px 0 4px"></p>
                   <p class="help" id="sCapHelp">Hostinger accepte jusqu'à 3 000 e-mails par jour. Plafond une fois la montée en charge terminée.</p></div>
                 <div class="fld" id="sWarmFld"><label>Montée en charge</label>
@@ -1372,6 +1372,10 @@
                   <p class="help">Aucun envoi pendant une pause (4 au plus, format 11:00-13:00).</p></div>
                 <div class="fld"><label for="sPiloz">contact@ et commercial@ (piloz.fr), premiers mails par jour chacune</label><input class="inp" type="number" id="sPiloz" min="0" max="1000" step="1">
                   <p class="help">En plus des boîtes dédiées, sans montée progressive. 0 : ces boîtes n'envoient que les relances de leurs anciens prospects.</p></div>
+                <div class="fld"><label for="sResend">Resend, premiers mails par jour</label><input class="inp" type="number" id="sResend" min="0" max="10000" step="50">
+                  <p class="help">En plus des boîtes, depuis l'adresse Resend (réponses vers contact@piloz.fr). 0 : Resend hors rotation. Montée conseillée : 500, 1 000, 2 000, puis 3 500 par jour si les rebonds restent bas.</p></div>
+                <div class="fld"><label for="sFileCible">Réserve de prospects visée par la recherche</label><input class="inp" type="number" id="sFileCible" min="0" max="200000" step="1000">
+                  <p class="help">La recherche tourne en continu tant que la file est en dessous, puis reprend un nouveau tour de France quand tout est parcouru.</p></div>
                 <div class="fld"><label>Intervalle entre deux messages</label>
                   <div class="inline">entre <input class="inp" type="number" id="sGapMin" min="5" max="7200"> et <input class="inp" type="number" id="sGapMax" min="5" max="7200"> secondes</div>
                   <p class="help">Tiré au hasard à chaque envoi. Pour 1 000 messages/jour sur un créneau de 10 h, visez 20 à 45 secondes.</p></div>
@@ -2279,7 +2283,7 @@ async function domainChecks(domain){
     { k: "SPF", ok: spf }, { k: "DKIM", ok: dkim }, { k: "DMARC" + (dm ? " " + ((dm.match(/p=(\w+)/) || [])[1] || "") : ""), ok: !!dm }, { k: "MX", ok: (mx || []).length > 0 }
   ];
 }
-function boxRole(b){ return b.kind === "dediee" ? "Premiers mails" : "Relances seulement"; }
+function boxRole(b){ return b.kind === "dediee" ? "Premiers mails" : b.kind === "resend" ? "Resend · premiers mails" : "Relances seulement"; }
 async function loadBoxes(){
   // Les boîtes s'affichent toujours (depuis les réglages), même si le calcul
   // des statistiques échoue : l'erreur est alors signalée.
@@ -2309,7 +2313,7 @@ function renderBoxes(){
   // Domaines
   const domains = [...new Set(BX.boxes.map(b => b.address.split("@")[1]))];
   $("bxDomains").innerHTML = domains.map(d => {
-    const list = BX.boxes.filter(b => b.address.endsWith("@" + d)), ded = list.some(b => b.kind === "dediee");
+    const list = BX.boxes.filter(b => b.address.endsWith("@" + d)), ded = list.some(b => b.kind === "dediee" || b.kind === "resend");
     const tests = BX.tests.filter(t => t.box.endsWith("@" + d));
     return '<div class="card bx"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><h3>' + esc(d) + "</h3>" +
       (ded ? '<span class="chip v">Premiers mails · montée progressive</span>' : '<span class="chip g">Au repos · relances seulement</span>') + "</div>" +
@@ -2323,22 +2327,24 @@ function renderBoxes(){
   }));
   // Boîtes
   $("bxGrid").innerHTML = BX.boxes.map((b, i) => {
-    const sec = b.kind === "dediee" ? (boites.find(x => x.address === b.address) || {}) : { password: b.address === s.sender_email ? state.smtp.configured : !!(state.smtp.second && state.smtp.second.configured), token: true };
-    const cap = b.kind === "dediee" ? (qn && sec.password ? boxDayCap(s, b.address, parisDay(0)) : 0) : (qp ? qp.plafond : 0);
+    // Resend (11/11/2026) : clé API posée côté serveur, plafond resend_max, réponses vers resend_reply_to.
+    const rs = (state.smtp && state.smtp.resend) || {}, isR = b.kind === "resend";
+    const sec = isR ? { password: !!rs.configured, token: true } : b.kind === "dediee" ? (boites.find(x => x.address === b.address) || {}) : { password: b.address === s.sender_email ? state.smtp.configured : !!(state.smtp.second && state.smtp.second.configured), token: true };
+    const cap = isR ? Number(s.resend_max || 0) : b.kind === "dediee" ? (qn && sec.password ? boxDayCap(s, b.address, parisDay(0)) : 0) : (qp ? qp.plafond : 0);
     const week = b.kind === "dediee" ? boxWeek(b.address) : 0;
-    const ramp = b.kind === "dediee" ? Array.from({ length: steps }, (_, k) => '<span class="chip ' + (k + 1 <= week ? "on" : "dim") + '">S' + (k + 1) + " · " + (s.boite_palier || 10) * (k + 1) + "/j</span>").join("") : '<span class="chip g">Relances des anciens prospects</span>';
+    const ramp = isR ? '<span class="chip v">Plafond Resend : ' + fmt(s.resend_max || 0) + "/j</span>" + '<span class="chip g">Réponses → ' + esc(rs.reply_to || b.address) + "</span>" : b.kind === "dediee" ? Array.from({ length: steps }, (_, k) => '<span class="chip ' + (k + 1 <= week ? "on" : "dim") + '">S' + (k + 1) + " · " + (s.boite_palier || 10) * (k + 1) + "/j</span>").join("") : '<span class="chip g">Relances des anciens prospects</span>';
     const spark = (b.jours || []).map(j => j.envoyes + j.relances), mx = Math.max(1, ...spark);
     const err = b.derniere_erreur && b.derniere_erreur.texte ? esc(String(b.derniere_erreur.texte).slice(0, 120)) + " (" + esc(dateFr(b.derniere_erreur.le)) + ")" : "aucune";
     return '<div class="card bx"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div style="min-width:0"><h3><span class="dot" style="background:' + BOX_DOTS[i % BOX_DOTS.length] + ';margin-right:7px"></span>' + esc(b.address) + '</h3><div class="note">' + (b.premier_envoi ? "depuis le " + esc(dateFr(b.premier_envoi)) : "pas encore d'envoi") + "</div></div>" +
-      '<span class="chip ' + (b.kind === "dediee" ? "v" : "g") + '">' + esc(boxRole(b)) + "</span></div>" +
-      (b.kind === "dediee"
+      '<span class="chip ' + (b.kind === "dediee" || isR ? "v" : "g") + '">' + esc(boxRole(b)) + "</span></div>" +
+      (b.kind === "dediee" || isR
         ? '<div><div style="display:flex;justify-content:space-between" class="note"><span>Aujourd\'hui</span><b class="num" style="color:var(--ink)">' + fmt(b.aujourdhui) + (cap ? " / " + fmt(cap) : "") + '</b></div><div class="meter" style="margin-top:6px"><i style="width:' + Math.min(100, cap ? Math.round(b.aujourdhui / cap * 100) : 0) + '%"></i></div></div>'
         : '<div><div style="display:flex;justify-content:space-between" class="note"><span>Aujourd\'hui</span><b class="num" style="color:var(--ink)">' + fmt(b.aujourdhui) + " envoi(s)</b></div>" + (qp ? '<div class="meter" style="margin-top:6px"><i style="width:' + Math.min(100, qp.plafond ? Math.round(qp.envoyes / qp.plafond * 100) : 0) + '%"></i></div><div class="note" style="margin-top:4px">Relances piloz.fr (partagées entre les 2 boîtes) : <b>' + fmt(qp.envoyes) + " / " + fmt(qp.plafond) + "</b></div>" : "") + "</div>") +
       '<div style="display:flex;gap:6px;flex-wrap:wrap">' + ramp + "</div>" +
       '<div class="spark" aria-hidden="true">' + spark.map(v => '<i style="height:' + Math.max(2, Math.round(v / mx * 30)) + 'px;opacity:' + (v ? 1 : .2) + '"></i>').join("") + "</div>" +
       "<dl>" + [["Premiers mails", fmt(b.premiers)], ["Relances", fmt(b.relances)], ["Ouverture hors Gmail", pct(b.ouverts_mesures ?? b.ouverts, b.premiers_mesures ?? b.premiers)], ["Clics", fmt(b.clics)], ["Réponses", fmt(b.reponses)], ["Rebonds", pct(b.echecs, b.premiers + b.relances)]]
         .map(([k, v]) => "<div><dt>" + k + '</dt><dd class="num">' + v + "</dd></div>").join("") + "</dl>" +
-      '<div class="note" style="border-top:1px solid var(--line-2);padding-top:10px;display:flex;flex-direction:column;gap:3px"><span>Mot de passe : <b>' + (sec.password ? "posé ✓" : "manquant") + "</b> · lecture des réponses : <b>" + (sec.token ? "active ✓" : "inactive") + "</b></span><span>Dernier envoi : " + (b.dernier_envoi ? esc(dateTimeFr(b.dernier_envoi)) : "—") + "</span><span>Dernière erreur : " + err + "</span><span>" + testLine(lastTest(b.address)) + "</span></div>" +
+      '<div class="note" style="border-top:1px solid var(--line-2);padding-top:10px;display:flex;flex-direction:column;gap:3px"><span>' + (isR ? "Clé API Resend : <b>" + (sec.password ? "posée ✓" : "manquante") + "</b> · réponses vers <b>" + esc(rs.reply_to || b.address) + "</b>" : "Mot de passe : <b>" + (sec.password ? "posé ✓" : "manquant") + "</b> · lecture des réponses : <b>" + (sec.token ? "active ✓" : "inactive") + "</b>") + "</span><span>Dernier envoi : " + (b.dernier_envoi ? esc(dateTimeFr(b.dernier_envoi)) : "—") + "</span><span>Dernière erreur : " + err + "</span><span>" + testLine(lastTest(b.address)) + "</span></div>" +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="b b-main b-sm" data-bx-detail="' + esc(b.address) + '">Voir la fiche</button><button type="button" class="b b-out b-sm" data-bx-test="' + esc(b.address) + '">Test de placement</button><button type="button" class="b b-out b-sm" data-bx-log="' + esc(b.address) + '">Ses envois</button></div></div>';
   }).join("");
   // Tests de placement
@@ -3925,7 +3931,7 @@ $("lScore").addEventListener("input", () => { $("lScoreV").textContent = $("lSco
 const BOX_DOTS = ["#6d5ef8", "#8b7cfb", "#c4bcfd", "#64748b", "#94a3b8"];
 function knownBoxes(){
   if (!state) return [];
-  return [...((state.smtp && state.smtp.boites) || []).map(b => b.address), state.settings.sender_email, state.settings.sender_email_2].filter(Boolean);
+  return [...((state.smtp && state.smtp.boites) || []).map(b => b.address), state.settings.sender_email, state.settings.sender_email_2, state.smtp && state.smtp.resend && state.smtp.resend.address].filter(Boolean);
 }
 // Les boîtes d'envoi connues (réglages) alimentent le filtre, une case par boîte.
 function fillSenderFilter(){
@@ -4274,7 +4280,7 @@ function fillSettings(){
   $("sSig").value = s.signature || ""; $("sFooter").value = s.footer_identity || ""; $("sVideo").value = s.video_url || "";
   $("sCap").value = s.daily_cap; $("sWarm").checked = !!s.warmup_enabled; $("sWarmStart").value = s.warmup_start; $("sWarmStep").value = s.warmup_step;
   $("sWinStart").value = hm(s.window_start); $("sWinEnd").value = hm(s.window_end);
-  $("sPauses").value = (s.send_pauses || []).join(", "); $("sPiloz").value = s.boites_piloz_max ?? 0;
+  $("sPauses").value = (s.send_pauses || []).join(", "); $("sPiloz").value = s.boites_piloz_max ?? 0; $("sResend").value = s.resend_max ?? 0; $("sFileCible").value = s.file_cible ?? 30000;
   $("sGapMin").value = s.min_gap_seconds; $("sGapMax").value = s.max_gap_seconds;
   $("sLeger").value = s.format_leger_part ?? 50;
   $("sAlertes").checked = s.alertes_actives !== false;
@@ -4346,7 +4352,7 @@ $("setForm").addEventListener("submit", async ev => {
     signature: $("sSig").value, footer_identity: $("sFooter").value, video_url: $("sVideo").value.trim(),
     daily_cap: $("sCap").value, warmup_enabled: $("sWarm").checked, warmup_start: $("sWarmStart").value, warmup_step: $("sWarmStep").value,
     window_start: $("sWinStart").value, window_end: $("sWinEnd").value, send_days: days,
-    send_pauses: $("sPauses").value, boites_piloz_max: $("sPiloz").value,
+    send_pauses: $("sPauses").value, boites_piloz_max: $("sPiloz").value, resend_max: $("sResend").value, file_cible: $("sFileCible").value,
     min_gap_seconds: Math.round(Number($("sGapMin").value)), max_gap_seconds: Math.round(Number($("sGapMax").value)),
     max_consecutive_errors: $("sErr").value,
     followup_enabled: $("sFuEnabled").checked, followup1_days: $("sFu1").value, followup2_days: $("sFu2").value,
