@@ -1134,7 +1134,7 @@
             </div>
             <section id="espacePanel" class="espace-panel" hidden>
               <h3>Comptes prêts : un espace Piloz préparé et un mail personnel</h3>
-              <p class="note">Pour chaque prospect coché : un espace Piloz Premium (14 jours offerts) est créé à son nom, <b>sans aucun e-mail automatique</b>. Le mail ci-dessous part ensuite à l'heure choisie, de la boîte qui lui a déjà écrit, avec son lien et la désinscription. L'espace ne s'active que s'il choisit son mot de passe ; sinon il est supprimé au bout de 30 jours. Les relances BTP s'arrêtent pour ces prospects.</p>
+              <p class="note">Pour chaque prospect coché : un espace Piloz Premium (7 jours offerts) est créé à son nom, <b>sans aucun e-mail automatique</b>. Le mail ci-dessous part ensuite à l'heure choisie, de la boîte qui lui a déjà écrit, avec son lien et la désinscription. L'espace ne s'active que s'il choisit son mot de passe ; sinon il est supprimé au bout de 30 jours. Les relances BTP s'arrêtent pour ces prospects.</p>
               <p class="note" id="espSummary"></p>
               <div class="espace-grid">
                 <div>
@@ -1739,7 +1739,7 @@ async function renderSeq(){
   $("seqOther").innerHTML =
     '<p class="note"><b>Revendeurs</b> : ' + (s.reseller_paused ? "campagne en pause." : "jusqu'à " + fmt(s.reseller_daily_max) + " mails par jour (premiers mails et relances), dans les mêmes créneaux, hors plafond BTP. Modèles : " + seqTpl(["initial", "relance1", "relance2"], "revendeur") + ".") + "</p>" +
     '<p class="note"><b>Négoces</b> : ' + (s.negoces_auto_actif ? "jusqu'à " + fmt(s.negoces_auto_par_jour) + " par jour, " + esc(daysFr(s.negoces_auto_jours)) + " de " + esc(hmFr(s.negoces_auto_debut)) + " à " + esc(hmFr(s.negoces_auto_fin)) + ", depuis " + esc(negBoxes) + " (" + fmt(s.negoces_plafond_boite) + " par boîte au plus)." : "envoi automatique coupé.") + "</p>" +
-    '<p class="note"><b>Réponses</b> : lues toutes les 10 minutes. « Oui », « ok » ou une question : une alerte part aussitôt, vous créez le compte vous-même depuis Piloz Admin (« Offrir 14 jours d’essai »). « Stop » : désinscription immédiate. Le reste attend dans <a href="#" data-go="rep">Réponses</a>.</p>' +
+    '<p class="note"><b>Réponses</b> : lues toutes les 10 minutes. « Oui », « ok » ou une question : une alerte part aussitôt, vous créez le compte vous-même depuis Piloz Admin (« Offrir 7 jours d’essai »). « Stop » : désinscription immédiate. Le reste attend dans <a href="#" data-go="rep">Réponses</a>.</p>' +
     "<p class=\"note\"><b>Piloz (noreply@piloz.fr), à toute heure</b> : le lien de création à chaque demande d'inscription (valable 24 heures) ; la fin d'essai, 3 jours avant puis à la fin. Les mails aux clients selon l'usage et leur récapitulatif du lundi sont coupés depuis le 27/10.</p>" +
     '<p class="note"><b>Pour vous (' + esc(s.reply_to || s.sender_email || "contact@piloz.fr") + ")</b> : le récapitulatif de la prospection le lundi à 6 h 30, « Nouveau compte Piloz » à chaque création d'espace, et une alerte si l'automate se met en pause.</p>";
 }
@@ -1783,7 +1783,7 @@ function renderNegoces(){
   $("nkIns").textContent = fmt(ranking.reduce((s, r) => s + r.inscrits, 0)); $("nkSub").textContent = fmt(ranking.reduce((s, r) => s + r.abonnes, 0));
   $("nkInsF").textContent = $("nkSubF").textContent = negMonthLabel();
   if (!$("negMonth").value) $("negMonth").value = NEG.month || parisDay(0).slice(0, 7);
-  $("negBanner").innerHTML = d.comptoir_actif ? "" : '<div class="banner warn"><span class="grow"><b>L\'offre comptoir est coupée.</b> piloz.fr/comptoir propose l\'essai habituel de 14 jours, quel que soit le négoce.</span></div>';
+  $("negBanner").innerHTML = d.comptoir_actif ? "" : '<div class="banner warn"><span class="grow"><b>L\'offre comptoir est coupée.</b> piloz.fr/comptoir propose l\'essai habituel de 7 jours, quel que soit le négoce.</span></div>';
   renderNegRanking(); renderNegTemplate(); renderNegTable(); negZoneInit(); renderNegAuto();
 }
 function renderNegRanking(){
