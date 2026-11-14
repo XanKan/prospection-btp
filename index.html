@@ -3046,7 +3046,7 @@ const SECT_NAME = { "41":"construction de bâtiments", "42":"génie civil", "43"
 const DEFAULT_EFFS = ["03", "11", "12", "21", "22"];
 
 $("metChips").innerHTML = METIERS.map((m, i) =>
-  (m.voisin && !(METIERS[i - 1] || {}).voisin ? '<span class="chips-sep">Métiers voisins du BTP et métiers d'intervention (paysagistes, nettoyage et interventions reçoivent leur propre mail)</span>' : "") +
+  (m.voisin && !(METIERS[i - 1] || {}).voisin ? '<span class="chips-sep">Métiers voisins du BTP et métiers d’intervention (paysagistes, nettoyage et interventions reçoivent leur propre mail)</span>' : "") +
   '<label class="chip"><input type="checkbox" name="metier" value="' + m.c + '"' + (m.top ? ' data-top="1"' : "") + "> " + esc(m.n) + "</label>"
 ).join("");
 
