@@ -2533,7 +2533,7 @@ $("repDetail").addEventListener("click", async ev => {
    ============================================================ */
 let dashAt = 0;
 async function loadDashExtra(force){
-  if (!force && Date.now() - dashAt < 120000) return;
+  if (!force && Date.now() - dashAt < 600000) return;
   dashAt = Date.now();
   try {
     const d = await api("dashboard.extra");
@@ -2984,6 +2984,9 @@ $("bApRun").addEventListener("click", async ev => {
   busy(btn, false);
 });
 
+// Rafraîchissement automatique toutes les 5 minutes (17/11/2026) : toutes les 30 secondes, l'état
+// (une vingtaine de requêtes, dont la liste des relances dues) faisait à lui seul plusieurs fois le
+// travail de l'automate d'envoi sur la base. Le bouton et les changements d'onglet restent immédiats.
 let pollT = null;
 function startPolling(){
   clearInterval(pollT);
@@ -2992,7 +2995,7 @@ function startPolling(){
     loadState().catch(() => {});
     loadDashExtra(false);
     loadDashRvRecent(false);
-  }, 30000);
+  }, 300000);
 }
 
 /* ============================================================
@@ -3466,7 +3469,7 @@ function renderDashRv(r, c, on, cap){
 }
 let dashRvAt = 0;
 async function loadDashRvRecent(force){
-  if (!state || !state.revendeurs || (!force && Date.now() - dashRvAt < 60000)) return;
+  if (!state || !state.revendeurs || (!force && Date.now() - dashRvAt < 300000)) return;
   dashRvAt = Date.now();
   try {
     const data = await api("queue.list", { status: "sent", campaign: "revendeur", page: 1 });
