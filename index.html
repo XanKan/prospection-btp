@@ -528,6 +528,24 @@
     --violet:#6d5ef8; --violet-dark:#4a3fd0; --violet-soft:#efecff;
     color-scheme:light;color:var(--ink);border-color:rgba(255,255,255,.14)
   }
+  /* LinkedIn (23/11/2026) */
+  .li-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+  .li-list{display:grid;gap:6px;max-height:70vh;overflow:auto;margin-top:8px}
+  .li-item{display:grid;gap:2px;text-align:left;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel);cursor:pointer}
+  .li-item:hover{border-color:#cfd0e4}
+  .li-item.on{border-color:var(--violet);background:var(--violet-soft)}
+  .li-item.done{opacity:.55}
+  .li-item-t{font-weight:700;font-size:.86rem;line-height:1.35}
+  .li-item-s{font-size:.76rem;color:var(--muted)}
+  .li-nav{display:flex;gap:6px;align-items:center}
+  .li-post{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:22px;align-items:start}
+  .li-visual{display:grid;gap:10px}
+  .li-visual canvas{width:100%;height:auto;border-radius:var(--r);box-shadow:var(--sh);background:var(--paper)}
+  .li-textcol{display:grid;gap:10px}
+  .li-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .li-styles{display:flex;gap:6px;flex-wrap:wrap}
+  .li-styles .b.on{border-color:var(--violet);color:var(--violet)}
+  @media (max-width:1100px){.li-grid{grid-template-columns:1fr}.li-post{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -575,6 +593,7 @@
       <button class="nav-b" data-view="log"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg><span class="t">Envois</span><span class="pill num" id="pillQueue">0</span></button>
       <button class="nav-b" data-view="seq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="t">Qui reçoit quoi</span></button>
       <button class="nav-b" data-view="rep"><span class="t">Réponses</span><span class="pill num hot" id="pillRep" hidden>0</span></button>
+      <button class="nav-b" data-view="linkedin"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/></svg><span class="t">LinkedIn</span><span class="pill num" id="pillLinkedin" hidden>0</span></button>
       <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
       <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
       <button class="nav-b" data-view="revendeurs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg><span class="t">Revendeurs</span></button>
@@ -827,6 +846,35 @@
       </section>
 
       <!-- ==================== CIBLAGE ==================== -->
+      <section class="view" id="v-linkedin">
+        <div class="li-grid">
+          <div class="card li-side">
+            <div class="card-h"><h2>Posts</h2></div>
+            <div class="card-b"><p class="note" id="liCount"></p><div class="li-list" id="liList"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2>Post à publier</h2><div class="right li-nav"><button type="button" class="b b-out b-xs" id="liPrev" aria-label="Post précédent">‹</button><span class="note" id="liPos"></span><button type="button" class="b b-out b-xs" id="liNext" aria-label="Post suivant">›</button></div></div>
+            <div class="card-b">
+              <p class="note" id="liEmpty">Aucun post au nouveau format. Demandez à Claude : « recharge les posts LinkedIn ».</p>
+              <div class="li-post" id="liPost" hidden>
+                <div class="li-visual">
+                  <canvas id="liCanvas" width="1080" height="1350" aria-label="Visuel du post"></canvas>
+                  <div class="li-row"><span class="note">Mise en page</span><span class="li-styles" id="liStyles"></span></div>
+                  <label class="fl" for="liTitre">Accroche du visuel</label>
+                  <input class="inp" id="liTitre" maxlength="70">
+                  <div class="li-row"><button type="button" class="b b-main b-sm" id="liCopyImg">Copier le visuel</button><button type="button" class="b b-out b-sm" id="liDownload">Télécharger le visuel</button></div>
+                </div>
+                <div class="li-textcol">
+                  <label class="fl" for="liText">Texte du post</label>
+                  <textarea class="inp" id="liText" rows="20"></textarea>
+                  <div class="li-row"><button type="button" class="b b-main b-sm" id="liCopyText">Copier le texte</button><button type="button" class="b b-out b-sm" id="liSave">Enregistrer</button><button type="button" class="b b-out b-sm" id="liDone">Marquer comme publié</button></div>
+                  <p class="help">Sur LinkedIn : « Commencer un post », collez le texte, puis collez le visuel (ou ajoutez l'image téléchargée). Les textes sont écrits par Claude : pour une nouvelle série, demandez « recharge les posts LinkedIn ».</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <section class="view" id="v-target">
         <form class="card" id="targetForm" style="max-width:1080px">
           <div class="fset">
@@ -1627,6 +1675,282 @@ async function api(action, payload, retried){
 }
 
 /* ============================================================
+   LINKEDIN (23/11/2026) : posts prêts à copier-coller, avec de vrais visuels
+   (captures de l'application en mode démo, mises en page au format 4:5 de LinkedIn).
+   Les textes sont écrits par Claude Code dans reseau_posts (visuel_spec.variant = "v5",
+   visuel_spec.layout = scène) : aucune IA payante n'est appelée depuis cet écran.
+   ============================================================ */
+const LI = { posts: [], idx: 0, styles: {}, imgs: {}, loaded: false };
+const LI_W = 1080, LI_H = 1350;
+// Scène du post -> capture de l'application (assets/linkedin, même origine : le visuel reste exportable).
+const LI_SHOTS = { planning: "bureau-planning", mobile: "mobile-salarie-planning", pointage: "bureau-pointage", devis: "bureau-crm",
+  equipe: "bureau-equipe", tableau: "bureau-tableau", chantier: "bureau-chantiers" };
+const LI_PHONE = "mobile-salarie-planning";
+// Trois points courts par scène pour la mise en page Téléphone (ce que fait vraiment l'application).
+const LI_POINTS = {
+  planning: ["Le planning de la semaine sur un écran", "Chacun voit le sien sur son téléphone", "Un changement ? Il le voit tout de suite"],
+  mobile: ["Le chantier, l'heure, l'adresse", "Confirmer, pas dispo ou proposer", "Vous validez d'un clic"],
+  pointage: ["Pointage chantier par chantier", "Validation en fin de semaine", "Éléments de paie pour le comptable"],
+  devis: ["Chaque affaire a sa prochaine action", "Qui relancer aujourd'hui", "Plus rien ne s'oublie"],
+  equipe: ["Le chef d'équipe agit à distance", "Vous choisissez qui valide", "Toute l'équipe sur un écran"],
+  tableau: ["Qui travaille où", "Les chantiers à surveiller", "Les devis à relancer"],
+  chantier: ["Adresse, client et dates", "Équipe prévue et avancement", "L'essentiel sur le téléphone"],
+};
+const LI_STYLES = { ecran: "Écran", telephone: "Téléphone", impact: "Impact", calendrier: "Calendrier" };
+const LI_INK = "#15161f", LI_VIOLET = "#6d5ef8", LI_VIOLET_2 = "#8b7cfb", LI_ORANGE = "#e8893a", LI_PAPER = "#f7f6fe";
+const liIsNew = (p) => p && p.visuel_spec && String(p.visuel_spec.variant || "") === "v5";
+const liScene = (p) => String((p.visuel_spec || {}).layout || "planning");
+function liStylesFor(p){
+  return liScene(p) === "facture" ? ["calendrier", "impact"] : liScene(p) === "mobile" ? ["telephone", "impact", "ecran"] : ["ecran", "telephone", "impact"];
+}
+function liStyle(p){ const list = liStylesFor(p); const s = LI.styles[p.id] || (p.visuel_spec || {}).chiffre; return list.includes(s) ? s : list[0]; }
+
+function liImage(name){
+  if (!name) return Promise.resolve(null);
+  if (!LI.imgs[name]) LI.imgs[name] = new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = "assets/linkedin/" + name + ".jpg?v=20261123";
+  });
+  return LI.imgs[name];
+}
+
+async function loadLinkedin(){
+  try {
+    const r = await api("reseau.state", {});
+    LI.posts = (r.posts || []).filter(liIsNew).sort((a, b) =>
+      (a.status === "publie") - (b.status === "publie") || (a.status === "publie" ? String(b.published_at || "").localeCompare(String(a.published_at || "")) : a.position - b.position));
+    LI.loaded = true;
+  } catch(e){ if (e.code !== "session") toast(e.message || "Chargement impossible"); return; }
+  if (LI.idx >= LI.posts.length) LI.idx = 0;
+  const ready = LI.posts.filter((p) => p.status !== "publie").length;
+  $("pillLinkedin").hidden = !ready; $("pillLinkedin").textContent = ready;
+  renderLinkedinList(); renderLinkedinPost();
+}
+
+function renderLinkedinList(){
+  const ready = LI.posts.filter((p) => p.status !== "publie").length;
+  $("liCount").textContent = ready ? ready + " post" + (ready > 1 ? "s" : "") + " prêt" + (ready > 1 ? "s" : "") + " à publier" : "Aucun post prêt : demandez à Claude « recharge les posts LinkedIn ».";
+  $("liList").innerHTML = LI.posts.map((p, i) => {
+    const first = String(p.texte || "").split("\n")[0];
+    return '<button type="button" class="li-item' + (i === LI.idx ? " on" : "") + (p.status === "publie" ? " done" : "") + '" data-li="' + i + '">' +
+      '<span class="li-item-t">' + esc(first) + '</span><span class="li-item-s">' + esc(p.theme || "") + (p.status === "publie" ? " · publié" : "") + "</span></button>";
+  }).join("") || '<p class="note">Rien pour l\'instant.</p>';
+}
+
+async function renderLinkedinPost(){
+  const p = LI.posts[LI.idx];
+  $("liEmpty").hidden = Boolean(p); $("liPost").hidden = !p;
+  if (!p) return;
+  $("liText").value = p.texte || "";
+  $("liTitre").value = (p.visuel_spec || {}).titre || "";
+  $("liStyles").innerHTML = liStylesFor(p).map((s) => '<button type="button" class="b b-out b-xs' + (s === liStyle(p) ? " on" : "") + '" data-listyle="' + s + '">' + LI_STYLES[s] + "</button>").join("");
+  $("liDone").disabled = p.status === "publie";
+  $("liDone").textContent = p.status === "publie" ? "Publié" : "Marquer comme publié";
+  $("liPos").textContent = (LI.idx + 1) + " / " + LI.posts.length;
+  await drawLinkedin(p);
+}
+
+/* ---------- Dessin des visuels ---------- */
+function liRound(ctx, x, y, w, h, r){
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+// Image couvrant un cadre (comme object-fit: cover), cadrée sur le haut de la capture.
+function liCover(ctx, img, x, y, w, h, focusY){
+  const s = Math.max(w / img.width, h / img.height), sw = w / s, sh = h / s;
+  const sx = (img.width - sw) / 2, sy = Math.max(0, Math.min(img.height - sh, (img.height - sh) * (focusY == null ? 0 : focusY)));
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+}
+// Accroche sur plusieurs lignes ; les mots avec un chiffre (21 h, 25 %, 2027…) ou, à défaut, le dernier mot, en couleur.
+function liHeadline(ctx, text, x, y, maxW, size, color, accent, maxLines){
+  const words = [];
+  String(text || "").split(/\s+/).filter(Boolean).forEach((w) => {
+    const prev = words[words.length - 1];
+    if (prev && (/^[?!:;»%]+[.,]?$/.test(w) || (/^h[.,]?$/.test(w) && /\d$/.test(prev)))) words[words.length - 1] = prev + " " + w;
+    else words.push(w);
+  });
+  const hasDigit = words.some((w) => /\d/.test(w));
+  const hot = new Set(words.map((w, i) => (hasDigit ? /\d/.test(w) : i === words.length - 1) ? i : -1).filter((i) => i >= 0));
+  let fs = size, lines;
+  for (;;){
+    ctx.font = "800 " + fs + "px Manrope, 'DM Sans', Arial, sans-serif";
+    lines = [[]]; let width = 0;
+    words.forEach((w, i) => {
+      const ww = ctx.measureText((lines[lines.length - 1].length ? " " : "") + w).width;
+      if (width + ww > maxW && lines[lines.length - 1].length){ lines.push([]); width = ctx.measureText(w).width; } else width += ww;
+      lines[lines.length - 1].push(i);
+    });
+    if (lines.length <= maxLines || fs <= 44) break;
+    fs -= 6;
+  }
+  const lh = Math.round(fs * 1.08);
+  ctx.textBaseline = "top";
+  lines.forEach((line, li) => {
+    let cx = x;
+    line.forEach((i, k) => {
+      const w = (k ? " " : "") + words[i];
+      ctx.fillStyle = hot.has(i) ? accent : color;
+      ctx.fillText(w, cx, y + li * lh);
+      cx += ctx.measureText(w).width;
+    });
+  });
+  return y + lines.length * lh;
+}
+function liBrand(ctx, x, y, dark){
+  ctx.textBaseline = "alphabetic";
+  ctx.font = "800 46px Manrope, Arial, sans-serif";
+  ctx.fillStyle = dark ? "#ffffff" : LI_INK; ctx.fillText("PILO", x, y);
+  const w = ctx.measureText("PILO").width; ctx.fillStyle = dark ? LI_VIOLET_2 : LI_VIOLET; ctx.fillText("Z", x + w, y);
+  ctx.font = "600 22px 'DM Sans', Arial, sans-serif"; ctx.fillStyle = dark ? "rgba(255,255,255,.72)" : "#5b5d72";
+  ctx.fillText("Planning · Pointage · CRM pour le BTP  —  piloz.fr", x + w + ctx.measureText("Z").width + 26, y - 6);
+}
+function liGlow(ctx, x, y, r, color){
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, color); g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function liShadow(ctx, blur, dy, alpha){ ctx.shadowColor = "rgba(10,8,40," + alpha + ")"; ctx.shadowBlur = blur; ctx.shadowOffsetY = dy; ctx.shadowOffsetX = 0; }
+function liNoShadow(ctx){ ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; }
+function liPhone(ctx, img, cx, cy, w, angle){
+  const h = w * 2.05, r = w * 0.15;
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle);
+  liShadow(ctx, 80, 40, .55); liRound(ctx, -w / 2, -h / 2, w, h, r); ctx.fillStyle = "#0d0e14"; ctx.fill(); liNoShadow(ctx);
+  const b = w * 0.045, bar = w * 0.13; liRound(ctx, -w / 2 + b, -h / 2 + b, w - 2 * b, h - 2 * b, r - b); ctx.save(); ctx.clip();
+  ctx.fillStyle = "#f4f4f7"; ctx.fillRect(-w / 2 + b, -h / 2 + b, w - 2 * b, h - 2 * b);
+  ctx.fillStyle = "#15161f"; ctx.font = "700 " + Math.round(w * 0.04) + "px 'DM Sans', Arial, sans-serif"; ctx.textBaseline = "middle";
+  ctx.fillText("9:41", -w / 2 + b + w * 0.09, -h / 2 + b + bar * 0.48);
+  if (img) liCover(ctx, img, -w / 2 + b, -h / 2 + b + bar, w - 2 * b, h - 2 * b - bar, 0);
+  ctx.restore();
+  ctx.fillStyle = "#0d0e14"; liRound(ctx, -w * 0.16, -h / 2 + b + 8, w * 0.32, w * 0.075, w * 0.04); ctx.fill();
+  ctx.restore();
+}
+function liBrowser(ctx, img, x, y, w, h, dark){
+  liShadow(ctx, 70, 34, dark ? .6 : .28); liRound(ctx, x, y, w, h, 22); ctx.fillStyle = "#ffffff"; ctx.fill(); liNoShadow(ctx);
+  ctx.save(); liRound(ctx, x, y, w, h, 22); ctx.clip();
+  ctx.fillStyle = "#eeedf6"; ctx.fillRect(x, y, w, 54);
+  ["#ff5f57", "#febc2e", "#28c840"].forEach((c, i) => { ctx.beginPath(); ctx.arc(x + 30 + i * 26, y + 27, 8, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill(); });
+  liRound(ctx, x + 130, y + 13, w - 260, 28, 14); ctx.fillStyle = "#ffffff"; ctx.fill();
+  ctx.font = "600 17px 'DM Sans', Arial, sans-serif"; ctx.fillStyle = "#8a8ca0"; ctx.textBaseline = "middle"; ctx.textAlign = "center";
+  ctx.fillText("app.piloz.fr", x + w / 2, y + 27); ctx.textAlign = "left";
+  if (img){
+    const s = w / img.width, sh = Math.min(img.height, (h - 54) / s);
+    ctx.drawImage(img, 0, 0, img.width, sh, x, y + 54, w, sh * s);
+  }
+  ctx.restore();
+}
+
+async function drawLinkedin(p){
+  const canvas = $("liCanvas"), ctx = canvas.getContext("2d");
+  await Promise.all([document.fonts.load("800 80px Manrope"), document.fonts.load("600 22px 'DM Sans'")]).catch(() => {});
+  const scene = liScene(p), style = liStyle(p), titre = $("liTitre").value || (p.visuel_spec || {}).titre || "";
+  const [shot, phone] = await Promise.all([liImage(LI_SHOTS[scene]), liImage(LI_PHONE)]);
+  ctx.clearRect(0, 0, LI_W, LI_H); liNoShadow(ctx);
+
+  if (style === "telephone"){
+    const g = ctx.createLinearGradient(0, 0, LI_W, LI_H); g.addColorStop(0, "#1a1b2e"); g.addColorStop(1, "#3b2fb0");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, LI_W, LI_H);
+    liGlow(ctx, 860, 980, 620, "rgba(139,124,251,.55)"); liGlow(ctx, 120, 160, 420, "rgba(232,137,58,.18)");
+    const endT = liHeadline(ctx, titre, 80, 96, 560, 96, "#ffffff", LI_ORANGE, 5);
+    const points = LI_POINTS[scene] || LI_POINTS.planning;
+    ctx.textBaseline = "top"; ctx.font = "600 34px 'DM Sans', Arial, sans-serif";
+    let py = Math.max(endT + 70, 520);
+    points.forEach((pt) => {
+      ctx.fillStyle = LI_ORANGE; ctx.beginPath(); ctx.arc(98, py + 20, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.beginPath(); ctx.moveTo(90, py + 20); ctx.lineTo(96, py + 26); ctx.lineTo(107, py + 13); ctx.stroke();
+      ctx.fillStyle = "#ffffff";
+      const words = pt.split(" "); let line = "", ly = py;
+      words.forEach((w) => { const test = (line ? line + " " : "") + w; if (ctx.measureText(test).width > 400 && line){ ctx.fillText(line, 132, ly); line = w; ly += 44; } else line = test; });
+      ctx.fillText(line, 132, ly); py = ly + 74;
+    });
+    liPhone(ctx, scene === "mobile" ? phone || shot : phone, 790, 760, 430, -0.07);
+    liBrand(ctx, 80, LI_H - 80, true);
+  } else if (style === "impact"){
+    ctx.fillStyle = LI_VIOLET; ctx.fillRect(0, 0, LI_W, LI_H);
+    liGlow(ctx, 980, 80, 520, "rgba(255,255,255,.16)"); liGlow(ctx, 60, 1300, 600, "rgba(21,22,31,.35)");
+    ctx.fillStyle = "rgba(255,255,255,.14)"; for (let i = 0; i < 12; i++){ ctx.fillRect(80 + i * 80, 0, 1, LI_H); }
+    const end = liHeadline(ctx, titre, 80, 120, 900, 128, "#ffffff", "#ffd8a8", 4);
+    ctx.fillStyle = LI_ORANGE; ctx.fillRect(80, end + 34, 160, 12);
+    const img = scene === "mobile" ? phone : shot;
+    if (img){
+      ctx.save(); ctx.translate(560, Math.min(935, Math.max(end + 300, 860))); ctx.rotate(-0.04);
+      liBrowser(ctx, img, -440, -215, 880, 430, true); ctx.restore();
+    }
+    liBrand(ctx, 80, LI_H - 70, true);
+  } else if (style === "calendrier"){
+    const g = ctx.createLinearGradient(0, 0, 0, LI_H); g.addColorStop(0, "#15161f"); g.addColorStop(1, "#24205a");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, LI_W, LI_H); liGlow(ctx, 900, 300, 560, "rgba(109,94,248,.45)");
+    const end = liHeadline(ctx, titre || "Facture électronique : le compte à rebours.", 80, 96, 920, 92, "#ffffff", LI_ORANGE, 3);
+    const cards = [["1er sept.", "2026", "Toutes les entreprises doivent pouvoir RECEVOIR des factures électroniques."],
+                   ["1er sept.", "2027", "Les PME et les TPE doivent aussi les ÉMETTRE."]];
+    cards.forEach(([d, y, t], i) => {
+      const top = end + 70 + i * 330;
+      liShadow(ctx, 50, 24, .5); liRound(ctx, 80, top, 920, 290, 34); ctx.fillStyle = i ? LI_VIOLET : "#ffffff"; ctx.fill(); liNoShadow(ctx);
+      ctx.textBaseline = "top"; ctx.fillStyle = i ? "#ffffff" : LI_VIOLET; ctx.font = "800 44px Manrope, Arial"; ctx.fillText(d, 130, top + 48);
+      ctx.font = "800 120px Manrope, Arial"; ctx.fillText(y, 130, top + 100);
+      ctx.fillStyle = i ? "rgba(255,255,255,.92)" : LI_INK; ctx.font = "600 34px 'DM Sans', Arial";
+      const words = t.split(" "); let line = "", ly = top + 70;
+      words.forEach((w) => { const test = (line ? line + " " : "") + w; if (ctx.measureText(test).width > 470 && line){ ctx.fillText(line, 500, ly); line = w; ly += 46; } else line = test; });
+      ctx.fillText(line, 500, ly);
+    });
+    liBrand(ctx, 80, LI_H - 70, true);
+  } else {
+    ctx.fillStyle = LI_PAPER; ctx.fillRect(0, 0, LI_W, LI_H);
+    liGlow(ctx, 980, 140, 520, "rgba(139,124,251,.35)"); liGlow(ctx, 80, 1250, 520, "rgba(232,137,58,.16)");
+    const end = liHeadline(ctx, titre, 80, 96, 920, 100, LI_INK, LI_VIOLET, 3);
+    const room = LI_H - Math.max(end + 60, 430) - 170;
+    const fh = shot ? Math.min(room, 54 + 960 * shot.height / shot.width) : room;
+    const top = Math.max(end + 60, 430) + (room - fh) / 2;
+    liBrowser(ctx, shot, 60, top, 960, fh, false);
+    if (phone && scene !== "facture") liPhone(ctx, phone, 900, LI_H - 330, 220, 0.06);
+    liBrand(ctx, 80, LI_H - 70, false);
+  }
+}
+
+/* ---------- Actions ---------- */
+function liCurrent(){ return LI.posts[LI.idx]; }
+async function liSave(extra){
+  const p = liCurrent(); if (!p || p.status === "publie") return;
+  const spec = { ...(p.visuel_spec || {}), titre: $("liTitre").value.trim(), chiffre: liStyle(p), ...(extra || {}) };
+  try {
+    const r = await api("reseau.draft.save", { id: p.id, texte: $("liText").value, theme: p.theme, visuel: p.visuel || 1, visuel_spec: { ...spec, layout: liScene(p), variant: "v5" } });
+    Object.assign(p, r.post || {}); toast("Post enregistré.");
+  } catch(e){ toast(e.message || "Enregistrement impossible"); }
+}
+$("liList").addEventListener("click", (ev) => { const b = ev.target.closest("[data-li]"); if (!b) return; LI.idx = Number(b.dataset.li); renderLinkedinList(); renderLinkedinPost(); });
+$("liPrev").addEventListener("click", () => { if (!LI.posts.length) return; LI.idx = (LI.idx - 1 + LI.posts.length) % LI.posts.length; renderLinkedinList(); renderLinkedinPost(); });
+$("liNext").addEventListener("click", () => { if (!LI.posts.length) return; LI.idx = (LI.idx + 1) % LI.posts.length; renderLinkedinList(); renderLinkedinPost(); });
+$("liStyles").addEventListener("click", (ev) => { const b = ev.target.closest("[data-listyle]"); const p = liCurrent(); if (!b || !p) return; LI.styles[p.id] = b.dataset.listyle; renderLinkedinPost(); });
+let liTitreT = null;
+$("liTitre").addEventListener("input", () => { clearTimeout(liTitreT); liTitreT = setTimeout(() => { const p = liCurrent(); if (p) drawLinkedin(p); }, 250); });
+$("liSave").addEventListener("click", () => liSave());
+$("liCopyText").addEventListener("click", async () => {
+  const t = $("liText").value;
+  try { await navigator.clipboard.writeText(t); toast("Texte copié : collez-le dans LinkedIn."); }
+  catch(e){ $("liText").select(); toast("Sélectionné : faites Ctrl+C."); }
+});
+function liBlob(){ return new Promise((resolve) => $("liCanvas").toBlob(resolve, "image/png")); }
+$("liCopyImg").addEventListener("click", async () => {
+  try {
+    if (!window.ClipboardItem) throw new Error("copie d'image non prise en charge");
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": liBlob() })]);
+    toast("Visuel copié : collez-le dans LinkedIn (Ctrl+V).");
+  } catch(e){ toast("Copie impossible ici : utilisez « Télécharger le visuel »."); }
+});
+$("liDownload").addEventListener("click", async () => {
+  const p = liCurrent(); const blob = await liBlob(); if (!blob) return;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "piloz-linkedin-" + String(p && p.theme || "post").normalize("NFD").replace(/[^\w]+/g, "-").toLowerCase() + ".png";
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+});
+$("liDone").addEventListener("click", async () => {
+  const p = liCurrent(); if (!p) return;
+  try { await api("reseau.draft.done", { id: p.id }); toast("Marqué comme publié."); await loadLinkedin(); }
+  catch(e){ toast(e.message || "Impossible"); }
+});
+
+/* ============================================================
    NAVIGATION
    ============================================================ */
 const VIEWS = {
@@ -1634,6 +1958,7 @@ const VIEWS = {
   negoces:  { t:"Négoces", s:"Les négoces partenaires de l'offre comptoir : mail de proposition, flyers au comptoir et classement du petit-déjeuner." },
   boites:   { t:"Boîtes d'envoi", s:"Chaque boîte et chaque domaine : quotas, montée progressive, résultats et santé." },
   rep:      { t:"Réponses", s:"Les réponses des boîtes d'envoi, réunies et classées automatiquement." },
+  linkedin: { t:"LinkedIn", s:"Posts prêts à publier : copiez le texte, copiez ou téléchargez le visuel, collez sur LinkedIn." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
   revendeurs: { t:"Revendeurs", s:"Campagne de recrutement des revendeurs de logiciels de gestion : ciblage, messages et prospects en file." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
@@ -1658,6 +1983,7 @@ function showView(v){
   if (v === "negoces") loadNegoces();
   if (v === "boites") loadBoxes();
   if (v === "rep") loadReplies();
+  if (v === "linkedin") loadLinkedin();
   if (v === "log"){ fillLogFacets(); fillViews(); }
   if (v === "tpl") mountTplEditor("btp");
   if (v === "revendeurs"){ mountTplEditor("revendeur"); renderRevendeurs(); RV.page = 1; loadRvQueue(); }
