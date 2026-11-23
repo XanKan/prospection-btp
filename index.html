@@ -1043,7 +1043,7 @@
             </div>
             <div class="card">
               <div class="card-h"><h2>Aperçu</h2>
-                <div class="right"><select class="inp" id="tplSample" style="min-width:240px"></select></div></div>
+                <div class="right" style="display:flex;gap:8px;flex-wrap:wrap"><select class="inp" id="tplBox" title="Boîte d'envoi (signature et expéditeur)" style="min-width:220px"></select><select class="inp" id="tplSample" style="min-width:240px"></select></div></div>
               <div class="card-b"><div class="mail" id="tplPreview"></div>
                 <p class="note" style="margin-top:12px">Chaque message part avec la signature et le logo (la version légère du premier mail : signature en texte, sans logo), ainsi qu'un suivi discret : ouverture (image invisible) et clics, pour savoir qui s'intéresse à Piloz et ne relancer que ceux-là.</p></div>
             </div>
@@ -2683,7 +2683,42 @@ const textToHtml = (t, leger) => String(t || "").replace(/\r\n/g, "\n").trim().s
   if (leger && (ESPACE_LINK_RE.test(x) || moisOffertBlock(x))) return '<p style="margin:0 0 14px"><a href="' + hesc(x) + '" style="color:#4f46e5">' + (ESPACE_LINK_RE.test(x) ? "Activer mon espace Piloz" : "Créer mon compte Piloz") + "</a></p>";
   return ESPACE_LINK_RE.test(x) ? linkButton(x, "Activer mon espace Piloz") : moisOffertBlock(x) ? linkButton(x, "Créer mon compte Piloz") : '<p style="margin:0 0 14px">' + linkify(hesc(b)).replace(/\n/g, "<br>") + "</p>"; }).join("");
 function youtubeId(url){ const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; }
-function buildEmail(tpl, s, data, kind, campaign, leger){
+// Signature et nom d'expéditeur par boîte (23/11/2026) : miroir de BOX_IDENTITIES, signatureForBox
+// et senderNameForBox (prospection-core). Plus jamais « Service commercial ».
+const BOX_IDENTITIES = {
+  "contact@piloz.fr": { name: "Quentin", role: "Direction | PILOZ" },
+  "quentin@erp-btp-piloz.fr": { name: "Quentin", role: "Direction | PILOZ" },
+  "quentin@piloz-btp.fr": { name: "Quentin", role: "Direction | PILOZ" },
+  "ethan@erp-btp-piloz.fr": { name: "Ethan", role: "Conseiller BTP | PILOZ" },
+  "louis@erp-btp-piloz.fr": { name: "Louis", role: "Conseiller BTP | PILOZ" },
+  "arthur@piloz-btp.fr": { name: "Arthur", role: "Conseiller BTP | PILOZ" },
+  "contact@erp-btp-piloz.fr": { name: "Camille", role: "Accompagnement BTP | PILOZ" },
+  "commercial@piloz.fr": { name: "Julien", role: "Conseiller BTP | PILOZ" },
+  "chantier@erp-btp-piloz.fr": { name: "Hugo", role: "Suivi de chantier | PILOZ" },
+  "planning@erp-btp-piloz.fr": { name: "Léa", role: "Planning des équipes | PILOZ" },
+  "contact@querax.fr": { name: "Maxime", role: "Conseiller BTP | PILOZ" },
+};
+const boxIdentity = box => BOX_IDENTITIES[String(box || "").trim().toLowerCase()] || null;
+function signatureForBox(signature, box, reply){
+  const lines = String(signature || "").replace(/\r\n/g, "\n").trim().split("\n"), id = boxIdentity(box);
+  if (!id || lines.length < 2 || !lines[0].trim()) return lines.join("\n");
+  lines[0] = id.name; lines[1] = id.role;
+  const at = lines.findIndex((l, i) => i > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(l.trim()));
+  if (at > 1 && reply) lines[at] = reply;
+  return lines.join("\n");
+}
+const senderNameForBox = (box, fallback) => { const id = boxIdentity(box); return id ? id.name + " - PILOZ" : fallback; };
+// Boîtes qui envoient (dédiées, Resend, boîtes piloz.fr) et adresse qui reçoit leurs réponses (miroir de deliver).
+function sendBoxes(s){
+  s = s || {};
+  return [...new Set([...(s.boites || []), s.resend_from, s.sender_email, s.sender_email_2].map(b => String(b || "").trim().toLowerCase()).filter(Boolean))];
+}
+function replyFor(s, box){
+  s = s || {};
+  if (s.resend_from && box === String(s.resend_from).toLowerCase() && s.resend_reply_to) return s.resend_reply_to;
+  return (s.boites || []).map(b => String(b).toLowerCase()).includes(box) ? box : (s.reply_to || box);
+}
+function buildEmail(tpl, s, data, kind, campaign, leger, box){
   s = s || {};
   // BTP : liens « pas le bon moment » et « bonne personne » au-dessus du pied de page (miroir de choiceLinks) ;
   // jamais dans la version légère du premier mail.
@@ -2695,13 +2730,16 @@ function buildEmail(tpl, s, data, kind, campaign, leger){
   const parts = firstVariants(tpl.body).replace(/\r\n/g, "\n").split(/^[ \t]*\{video\}[ \t]*$/m);
   const lighten = x => leger ? lightBlocks(x) : x;
   const before = lighten(tidy(parts[0] || "")), after = lighten(tidy(parts.slice(1).join("\n")));
-  const url = espace ? "" : s.video_url || "", id = youtubeId(url);
+  // Vidéo seulement là où le modèle écrit {video} (miroir de videoForTemplate, 23/11/2026).
+  const url = espace || !/\{video\}/i.test(String(tpl.body || "")) ? "" : s.video_url || "", id = youtubeId(url);
+  box = String(box || sendBoxes(s)[0] || "contact@piloz.fr").toLowerCase();
+  const reply = replyFor(s, box);
   const thumb = id ? (VIDEO_THUMBNAILS[id] || "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg") : "";
   const video = url ? (thumb ? '<p style="margin:4px 0 6px"><a href="' + hesc(url) + '" style="text-decoration:none"><img src="' + hesc(thumb) + '" width="480" alt="Vidéo : découvrez Piloz en 1 minute" style="display:block;width:100%;max-width:480px;height:auto;border:0;border-radius:12px"></a></p>' : "") +
     '<p style="margin:0 0 16px;font-size:14px"><a href="' + hesc(url) + '" style="color:#4f46e5;font-weight:bold">▶ Découvrez Piloz en 1 minute</a></p>' : "";
   // Ligne « [texte](https://…) » : un bouton sous la signature (prise de rendez-vous), comme côté serveur.
   const SIG_BUTTON = /^\[([^\]]{1,80})\]\((https?:\/\/[^\s)]+)\)$/;
-  const allLines = String((espace && s.client_signature) || s.signature || "").replace(/\r\n/g, "\n").split("\n").map(l => l.trim()).filter(Boolean);
+  const allLines = signatureForBox((espace && s.client_signature) || s.signature || "", box, reply).split("\n").map(l => l.trim()).filter(Boolean);
   const sigButton = allLines.map(l => l.match(SIG_BUTTON)).find(Boolean);
   const lines = allLines.filter(l => !SIG_BUTTON.test(l));
   const buttonHtml = sigButton ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:10px 0 0;border-collapse:collapse"><tr><td style="border-radius:6px;background:#6d5ef8;padding:7px 14px">' +
@@ -2717,9 +2755,10 @@ function buildEmail(tpl, s, data, kind, campaign, leger){
     return '<i style="color:#6d5ef8">' + linkify(hesc(l)) + "</i>";
   };
   const sig = leger ? (lines.length ? '<p style="margin:22px 0 0;font-size:13px;line-height:1.7;color:#2a2c3f">' + lines.map(l => hesc(l)).join("<br>") + "</p>" : "")
+    // Marque PILOZ en texte à gauche, barre violette (signature de tous les mails depuis le 23/11/2026).
     : lines.length ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;border-collapse:collapse"><tr>' +
-    '<td style="padding:0 14px 0 0;vertical-align:middle"><img src="' + LOGO_URL + '" width="52" height="52" alt="Piloz" style="display:block;border:0;border-radius:12px"></td>' +
-    '<td style="vertical-align:middle;font:13px/1.7 Arial,Helvetica,sans-serif;color:#2a2c3f;border-left:3px solid #6d5ef8;padding:3px 0 3px 14px">' +
+    '<td style="padding:0 18px 0 0;vertical-align:middle;border-right:3px solid #6d5ef8;font:bold 30px Arial,Helvetica,sans-serif;letter-spacing:-1px;color:#15161f">PILO<span style="color:#6d5ef8">Z</span></td>' +
+    '<td style="vertical-align:middle;font:13px/1.7 Arial,Helvetica,sans-serif;color:#2a2c3f;padding:3px 0 3px 18px">' +
     lines.map(sigLine).join("<br>") + buttonHtml + "</td></tr></table>" : "";
   const company = v.entreprise || "votre entreprise", identity = clean(s.footer_identity, 300);
   const html = '<div style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#1f2030;max-width:640px">' + textToHtml(before, leger) + video + (after ? textToHtml(after, leger) : "") + sig +
@@ -2727,10 +2766,9 @@ function buildEmail(tpl, s, data, kind, campaign, leger){
       'Ce n\'est pas vous qui gérez les chantiers ? <a href="https://piloz.fr/bonne-personne.html" style="color:#5b5d72">Indiquez-nous la bonne personne</a>.</p>' : "") +
     '<p style="margin:' + (choices ? "16px" : "28px") + ' 0 0;padding-top:12px;border-top:1px solid #e5e5ef;font-size:12px;line-height:1.5;color:#8a8ca0">' + dataNotice(company, (data || {}).source) + " " +
     '<a href="https://piloz.fr/desinscription.html" style="color:#8a8ca0">Ne plus recevoir de message</a>.' + (identity ? "<br>" + hesc(identity) : "") + "</p></div>";
-  // {reponse_oui} : lien de réponse écrite d'avance vers la première boîte d'envoi (la vraie est choisie à l'envoi).
+  // {reponse_oui} : lien de réponse écrite d'avance vers l'adresse qui reçoit les réponses de la boîte.
   const subject = clean(renderTpl(tpl.subject, v).split(REPONSE_OUI).join("répondez « oui »"), 200);
-  const box = (s.boites && s.boites[0]) || s.sender_email || "contact@piloz.fr";
-  const oui = leger ? "Répondez « oui » à ce message" : '<a href="mailto:' + hesc(box) + '?subject=' + encodeURIComponent("Re: " + subject) + '&amp;body=' + encodeURIComponent("Oui, je veux essayer Piloz.") + '" style="color:#4f46e5;font-weight:bold">Répondez « oui »</a>';
+  const oui = leger ? "Répondez « oui » à ce message" : '<a href="mailto:' + hesc(reply) + '?subject=' + encodeURIComponent("Re: " + subject) + '&amp;body=' + encodeURIComponent("Oui, je veux essayer Piloz.") + '" style="color:#4f46e5;font-weight:bold">Répondez « oui »</a>';
   return { subject, html: html.split(REPONSE_OUI).join(oui) };
 }
 // Mention d'origine (miroir de dataNotice côté serveur).
@@ -2743,11 +2781,11 @@ function dataNotice(company, source){
   if (source === "web") return "Vous recevez ce message car " + c + " figure dans le répertoire public des entreprises (base SIRENE de l'INSEE) et publie ses coordonnées professionnelles sur son site internet.";
   return "Vous recevez ce message car " + c + " figure dans les registres publics des professionnels du bâtiment (annuaire RGE de l'ADEME, base SIRENE).";
 }
-function mailHtml(tpl, s, data, to, kind, campaign, leger){
-  const mail = buildEmail(tpl, s, data, kind || (tpl && tpl.kind), campaign, leger);
-  // Boîtes dédiées : l'une d'elles envoie (la moins utilisée du jour).
-  const box = s && ((s.boites && s.boites[0]) || s.sender_email);
-  const from = box ? (s.sender_name || "Piloz") + " <" + box + ">" + (s.boites && s.boites.length > 1 ? " (ou " + s.boites.slice(1).join(", ") + ")" : "") : "adresse d'envoi à renseigner";
+function mailHtml(tpl, s, data, to, kind, campaign, leger, box){
+  // Boîte montrée : celle demandée (boîte d'un message envoyé, choix de l'aperçu), sinon la première.
+  box = String(box || sendBoxes(s)[0] || "").toLowerCase();
+  const mail = buildEmail(tpl, s, data, kind || (tpl && tpl.kind), campaign, leger, box);
+  const from = box ? senderNameForBox(box, (s && s.sender_name) || "Piloz") + " <" + box + ">" : "adresse d'envoi à renseigner";
   return '<div class="mail-h"><div><span>De : </span>' + esc(from) + "</div><div><span>À : </span>" + esc(to || "contact@entreprise.fr") +
     '</div><div><span>Objet : </span><b>' + esc(mail.subject || "(objet vide)") + "</b></div></div>" +
     '<iframe class="mail-frame" sandbox="allow-same-origin" title="Aperçu du message" srcdoc="' + hesc('<!doctype html><html><head><meta charset="utf-8"><base target="_blank"></head><body style="margin:0;padding:18px;background:#fff">' + mail.html + "</body></html>") + '"></iframe>';
@@ -3700,8 +3738,16 @@ function renderPreview(){
     // Espace prêt : lien d'exemple (le vrai lien est propre à chaque prospect).
     : kind === "espace" || kind === "espace_rappel" ? { ...sampleData(), lien_espace: ESPACE_SAMPLE_LINK } : sampleData();
   const leger = kind === "initial" && tplCampaign !== "revendeur" && $("tTestLeger").checked;
-  $("tplPreview").innerHTML = mailHtml(tpl, state && state.settings, data, m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr", kind, tplCampaign, leger);
+  const to = m ? m.email : tplCampaign === "revendeur" ? "julien@atelier-informatique.fr" : "j.dupont@dupont-batiment.fr";
+  // Comme à l'envoi réel (templateVars(data, email)) : {lien_mois_offert} est rempli pour tout mail de prospection.
+  if (kind !== "client" && !data.email) data.email = to;
+  // Boîte d'envoi choisie : sa signature (prénom, rôle, adresse de réponse) et son nom d'expéditeur.
+  const s = state && state.settings, boxes = sendBoxes(s), keep = $("tplBox").value;
+  $("tplBox").innerHTML = boxes.map(b => '<option value="' + esc(b) + '">' + esc(senderNameForBox(b, "Sans prénom")) + " · " + esc(b) + "</option>").join("");
+  if (boxes.includes(keep)) $("tplBox").value = keep;
+  $("tplPreview").innerHTML = mailHtml(tpl, s, data, to, kind, tplCampaign, leger, $("tplBox").value);
 }
+$("tplBox").addEventListener("change", renderPreview);
 $("tTestLeger").addEventListener("change", renderPreview);
 ["tName", "tSubject", "tBody"].forEach(id => $(id).addEventListener("input", () => { $("tName").dataset.dirty = "1"; renderPreview(); }));
 $("tKind").addEventListener("change", () => { $("tName").dataset.dirty = "1"; syncKind(); renderPreview(); });
@@ -4160,7 +4206,7 @@ async function openMessage(id, stage = 0){
       const mine = state ? state.templates.filter(t => t.active && tplCampaignOf(t) === (m.campaign || "btp")) : [];
       // Bonne personne indiquée par l'entreprise : son modèle propre.
       const tpl = (m.origin === "transmis" && mine.find(t => t.kind === "transmis")) || (m.origin === "absence" && mine.find(t => t.kind === "absence")) || mine.find(t => !t.kind || t.kind === "initial") || mine[0];
-      body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(tpl, state.settings, { ...d, email: m.email }, m.email, null, m.campaign) + "</div>"
+      body = tpl ? '<p class="note" style="margin-bottom:10px">Aperçu avec le modèle « ' + esc(tpl.name) + " » (l'automate tire un modèle actif au hasard au moment de l'envoi).</p><div class=\"mail\">" + mailHtml(tpl, state.settings, { ...d, email: m.email }, m.email, null, m.campaign, false, m.sender) + "</div>"
         : '<p class="note">Aucun modèle actif pour l\'aperçu.</p>';
     }
     openModal(niceCompany(m.company) || m.email, relance ? relanceLabel(stage) + (relance.sent_at ? " envoyée le " + dateTimeFr(relance.sent_at) : " · " + (BADGE[relance.status] || relance.status))
