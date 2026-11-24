@@ -1593,7 +1593,17 @@ async function needsMfa(){
   return false;
 }
 
-async function enter(){
+// Session connue : l'outil s'affiche aussitôt avec ses « Chargement… » (24/11/2026). Avant, le formulaire de
+// connexion restait affiché pendant tout le chargement (jusqu'à 30 s quand le serveur est lent) : on croyait
+// être déconnecté, on retapait le mot de passe, et chaque connexion relançait un chargement de plus.
+function showAppLoading(){ $("login").hidden = true; $("app").hidden = false; }
+let entering = null;
+function enter(){
+  // Un seul chargement à la fois : un deuxième appel attend le premier.
+  if (!entering) entering = enterOnce().finally(() => { entering = null; });
+  return entering;
+}
+async function enterOnce(){
   try {
     await loadState();
     if (current === "auto"){ loadDashExtra(true); loadDashRvRecent(true); }
@@ -1621,6 +1631,7 @@ async function boot(){
   if (!session && !storageOk()) return showLogin(STORAGE_BLOCKED);
   if (!session) return showLogin(seen ? "Ce navigateur n'a plus de session enregistrée (données du site effacées ou bloquées, ou déconnexion). Reconnectez-vous ; si cela recommence, envoyez ce message à Claude." : "");
   if (await needsMfa()) return showLogin("", true);
+  showAppLoading();
   enter();
 }
 
@@ -1634,6 +1645,7 @@ $("loginForm").addEventListener("submit", async ev => {
   $("lPwd").value = "";
   if (await needsMfa()) return showLogin("", true);
   if (!storageOk()) toast(STORAGE_BLOCKED, 12000);
+  showAppLoading();
   enter();
 });
 $("mfaForm").addEventListener("submit", async ev => {
