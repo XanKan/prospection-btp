@@ -1566,6 +1566,17 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
 });
 let booted = false;
 
+// La connexion est gardée dans le stockage du navigateur (localStorage). S'il est bloqué pour ce site
+// (réglage de Chrome, extension, données effacées à chaque fois), la session ne vit qu'en mémoire et
+// chaque rechargement redemande le mot de passe (24/11/2026) : on le dit au lieu de le subir.
+function storageOk(){
+  try { localStorage.setItem("piloz-prospection-test", "1"); const ok = localStorage.getItem("piloz-prospection-test") === "1"; localStorage.removeItem("piloz-prospection-test"); return ok; }
+  catch(e){ return false; }
+}
+const STORAGE_BLOCKED = "Ce navigateur n'enregistre pas les données de prospection.piloz.fr : la connexion est perdue à chaque rechargement. Dans Chrome, cliquez sur l'icône à gauche de l'adresse, puis « Paramètres du site », et autorisez « Cookies et données des sites ».";
+const BUSY_TEXT = "Le serveur est occupé (base de données lente). Nouvel essai dans quelques secondes.";
+let enterRetries = 0;
+
 function showLogin(message, mfa){
   $("app").hidden = true;
   $("login").hidden = false;
@@ -1591,9 +1602,12 @@ async function enter(){
     if (e.code === "forbidden"){ await sb.auth.signOut({ scope: "local" }); return showLogin(e.message); }
     if (e.code === "session") return;
     $("login").hidden = true; $("app").hidden = false;
+    // Serveur encore occupé après les nouveaux essais : on recharge seul dans 15 s (3 fois au plus).
+    if (e.busy && enterRetries < 3){ enterRetries++; toast("Le serveur est lent : nouvel essai dans 15 secondes…", 6000); setTimeout(enter, 15000); return; }
     toast(e.message || "Impossible de charger l'automate.");
   }
   if (!state) return;
+  enterRetries = 0;
   try { localStorage.setItem("piloz-prospection-vu", "1"); } catch(e){}
   $("login").hidden = true;
   $("app").hidden = false;
@@ -1604,6 +1618,7 @@ async function boot(){
   const { data: { session } } = await sb.auth.getSession();
   // Diagnostic (11/11/2026) : ce navigateur s'était déjà connecté mais n'a plus de session enregistrée.
   let seen = false; try { seen = localStorage.getItem("piloz-prospection-vu") === "1"; } catch(e){}
+  if (!session && !storageOk()) return showLogin(STORAGE_BLOCKED);
   if (!session) return showLogin(seen ? "Ce navigateur n'a plus de session enregistrée (données du site effacées ou bloquées, ou déconnexion). Reconnectez-vous ; si cela recommence, envoyez ce message à Claude." : "");
   if (await needsMfa()) return showLogin("", true);
   enter();
@@ -1618,6 +1633,7 @@ $("loginForm").addEventListener("submit", async ev => {
   if (error){ $("loginErr").textContent = /invalid/i.test(error.message) ? "Adresse ou mot de passe incorrect." : error.message; return; }
   $("lPwd").value = "";
   if (await needsMfa()) return showLogin("", true);
+  if (!storageOk()) toast(STORAGE_BLOCKED, 12000);
   enter();
 });
 $("mfaForm").addEventListener("submit", async ev => {
@@ -1642,9 +1658,31 @@ $("mfaForm").addEventListener("submit", async ev => {
 $("mBack").addEventListener("click", async () => { await sb.auth.signOut({ scope: "local" }); showLogin(); });
 $("bLogout").addEventListener("click", async () => { await sb.auth.signOut({ scope: "local" }); state = null; showLogin("Vous êtes déconnecté."); });
 
-async function api(action, payload, retried){
+// Serveur occupé (24/11/2026) : la base Supabase (offre gratuite) coupe une requête au bout de 8 s
+// quand plusieurs calculs lourds tournent ensemble, et l'ouverture de l'outil en lançait une
+// dizaine d'un coup. Les lectures passent donc au plus deux à la fois et sont refaites d'elles-mêmes
+// (après 2 s, puis 5 s) quand le serveur est occupé. Les enregistrements et envois ne sont jamais rejoués.
+const API_READ = /^(state|[a-z]+\.(state|list|get|stats|extra|preview|search))$/;
+const API_MAX = 2;
+let apiRunning = 0;
+const apiQueue = [];
+function apiSlot(){ if (apiRunning < API_MAX){ apiRunning++; return Promise.resolve(); } return new Promise(resolve => apiQueue.push(resolve)); }
+function apiRelease(){ const next = apiQueue.shift(); if (next) next(); else apiRunning--; }
+async function api(action, payload){
+  if (!API_READ.test(action)) return apiCall(action, payload);
+  for (let attempt = 0; ; attempt++){
+    await apiSlot();
+    let data, error;
+    try { data = await apiCall(action, payload); } catch(e){ error = e; } finally { apiRelease(); }
+    if (!error) return data;
+    if (!error.busy || attempt >= 2) throw error;
+    await new Promise(resolve => setTimeout(resolve, attempt ? 5000 : 2000));
+  }
+}
+
+async function apiCall(action, payload, retried){
   const { data: { session } } = await sb.auth.getSession();
-  if (!session){ showLogin("Session expirée, reconnectez-vous."); throw Object.assign(new Error("Session expirée"), { code: "session" }); }
+  if (!session){ showLogin(storageOk() ? "Session expirée, reconnectez-vous." : STORAGE_BLOCKED); throw Object.assign(new Error("Session expirée"), { code: "session" }); }
   let resp;
   try {
     resp = await fetch(API, {
@@ -1652,7 +1690,7 @@ async function api(action, payload, retried){
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token, apikey: SUPABASE_ANON },
       body: JSON.stringify({ action, payload: payload || {} })
     });
-  } catch(e){ throw new Error("Connexion au serveur impossible. Vérifiez votre réseau."); }
+  } catch(e){ throw Object.assign(new Error("Connexion au serveur impossible. Vérifiez votre réseau."), { busy: true }); }
   const data = await resp.json().catch(() => ({}));
   if (resp.status === 401){
     // Jeton expiré pendant que l'onglet dormait, ou refus passager du serveur (mise à jour en cours) :
@@ -1661,7 +1699,9 @@ async function api(action, payload, retried){
     let renewNote = "";
     if (!retried){
       const { data: renewed, error: renewError } = await sb.auth.refreshSession();
-      if (!renewError && renewed && renewed.session) return api(action, payload, true);
+      if (!renewError && renewed && renewed.session) return apiCall(action, payload, true);
+      // Renouvellement impossible faute de réseau ou serveur lent : pas de retour à l'écran de connexion.
+      if (renewError && !(Number(renewError.status) >= 400 && Number(renewError.status) < 500)) throw Object.assign(new Error(BUSY_TEXT), { busy: true });
       renewNote = renewError ? " · renouvellement : " + (renewError.message || renewError.name || "refusé") : "";
     }
     // Motif exact affiché sous le formulaire (11/11/2026) : sans lui, impossible de savoir pourquoi le serveur refuse.
@@ -1670,7 +1710,7 @@ async function api(action, payload, retried){
     throw Object.assign(new Error("Session expirée"), { code: "session" });
   }
   if (resp.status === 404) throw new Error("Le service d'automate n'est pas encore déployé sur le serveur.");
-  if (!resp.ok) throw Object.assign(new Error(data.error || ("Erreur " + resp.status)), { code: data.code, data });
+  if (!resp.ok) throw Object.assign(new Error(data.error || (resp.status >= 500 ? BUSY_TEXT : "Erreur " + resp.status)), { code: data.code, data, busy: resp.status >= 500 });
   return data;
 }
 
