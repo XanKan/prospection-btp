@@ -3460,7 +3460,12 @@ const METIERS = [
   { c:"71.12B", n:"Bureaux d'études", voisin:1 }, { c:"49.42Z", n:"Déménagement", voisin:1 },
   { c:"37.00Z", n:"Assainissement et vidange", voisin:1 }, { c:"38.11Z", n:"Collecte de déchets", voisin:1 },
   { c:"39.00Z", n:"Dépollution et désamiantage", voisin:1 }, { c:"02.40Z", n:"Élagage et travaux forestiers", voisin:1 },
-  { c:"01.61Z", n:"Travaux agricoles", voisin:1 }
+  { c:"01.61Z", n:"Travaux agricoles", voisin:1 },
+  // Métiers voisins ajoutés le 24/11/2026 (réserve des 6 à 49 salariés épuisée sur les autres).
+  { c:"31.01Z", n:"Agencement de magasins et bureaux (fabrication)", voisin:1 }, { c:"31.02Z", n:"Cuisines (fabrication)", voisin:1 },
+  { c:"31.09B", n:"Ébénisterie et agencement", voisin:1 }, { c:"47.59A", n:"Cuisinistes et magasins de meubles", voisin:1 },
+  { c:"23.70Z", n:"Taille de pierre et marbrerie", voisin:1 }, { c:"35.11Z", n:"Photovoltaïque (production d'électricité)", voisin:1 },
+  { c:"02.10Z,02.20Z", n:"Sylviculture et exploitation forestière", voisin:1 }, { c:"38.12Z", n:"Collecte de déchets dangereux", voisin:1 }
 ];
 const NAF_NAME = {};
 for (const m of METIERS) for (const code of m.c.split(",")) NAF_NAME[code] = m.n;
