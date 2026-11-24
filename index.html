@@ -683,11 +683,11 @@
 
         <div class="grid2" id="dashExtra" hidden>
           <div class="card">
-            <div class="card-h"><h2>Du premier mail au client</h2><span class="sub">depuis le début, toutes boîtes</span></div>
+            <div class="card-h"><h2>Du premier mail au client</h2><span class="sub" id="dashFunnelSub">depuis le début, toutes boîtes</span></div>
             <div class="card-b"><div class="funnel" id="dashFunnel"></div><p class="note" id="dashComptes" style="margin-top:12px"></p></div>
           </div>
           <div class="card">
-            <div class="card-h"><h2>Boîtes d'envoi</h2><span class="sub">aujourd'hui · 14 derniers jours</span><div class="right"><button type="button" class="b b-out b-xs" data-go="boites">Tout le détail</button></div></div>
+            <div class="card-h"><h2>Boîtes d'envoi</h2><span class="sub" id="dashBoxesSub">aujourd'hui · 14 derniers jours</span><div class="right"><button type="button" class="b b-out b-xs" data-go="boites">Tout le détail</button></div></div>
             <div class="tscroll"><table><thead><tr><th>Boîte</th><th style="width:92px">Aujourd'hui</th><th style="width:128px">14 jours</th><th style="width:70px">Ouv.</th><th style="width:52px">Rép.</th></tr></thead><tbody id="dashBoxes"></tbody></table></div>
             <div class="card-b" style="padding-top:10px"><p class="note" id="dashReplies"></p></div>
           </div>
@@ -2898,11 +2898,22 @@ $("repDetail").addEventListener("click", async ev => {
    TABLEAU DE BORD — parcours, boîtes, réponses à lire
    ============================================================ */
 let dashAt = 0;
+// Statistiques calculées d'avance par le serveur (24/11/2026 : la nuit, puis au plus une fois par
+// heure quand l'outil sert) : l'heure du calcul est affichée à côté du titre.
+function calcLabel(iso){
+  if (!iso) return "";
+  const d = new Date(iso), tz = { timeZone: "Europe/Paris" };
+  const h = d.toLocaleTimeString("fr-FR", { ...tz, hour: "2-digit", minute: "2-digit" }).replace(":", "h");
+  const day = d.toLocaleDateString("fr-FR", { ...tz, day: "2-digit", month: "2-digit" });
+  return " · chiffres " + (day === new Date().toLocaleDateString("fr-FR", { ...tz, day: "2-digit", month: "2-digit" }) ? "de " + h : "du " + day + " à " + h);
+}
 async function loadDashExtra(force){
   if (!force && Date.now() - dashAt < 600000) return;
   dashAt = Date.now();
   try {
     const d = await api("dashboard.extra");
+    $("dashFunnelSub").textContent = "depuis le début, toutes boîtes" + calcLabel(d.calcule_le);
+    $("dashBoxesSub").textContent = "aujourd'hui · 14 derniers jours" + calcLabel(d.calcule_le);
     const f = d.funnel || {}, comptes = f.comptes || [];
     const rows = [["Premiers mails", f.premiers, "", "#d7d3fd"], ["Relances", f.relances, "", "#d7d3fd"], ["Ouverts", f.ouverts, pct(f.ouverts, f.premiers), "#a99ffb"],
       ["Cliqués", f.clics, pct(f.clics, f.premiers), "#6d5ef8"], ["Réponses", f.reponses, pct(f.reponses, f.premiers), "#4a3fd0"], ["Démo ouverte", f.demo, "", "#4a3fd0"], ["Comptes créés", comptes.length, "", "#17a06a"]];
