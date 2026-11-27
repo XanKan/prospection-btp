@@ -4338,7 +4338,7 @@ function renderLog(){
 const SEND_TYPE = { premier: "Premier mail", relance1: "Relance 1", relance2: "Relance 2", relance3: "Relance démo", chaude: "Relance chaude", espace: "Espace prêt", rappel_espace: "Rappel espace prêt", recontact: "Recontact (3 mois)", rappel_inscription: "Rappel d'inscription", relance_tous: "Relance pour tous", hesitation: "Question « hésitation »", negoce: "Mail négoce" };
 // Rang 3 : relance des visiteurs de la démo ; rang 4 : relance chaude (prospect intéressé mais silencieux) ;
 // rang 5 : mail « Espace prêt » (comptes prêts) ; rang 6 : son rappel.
-function relanceLabel(stage){ return Number(stage) === 8 ? "Rappel d'inscription" : Number(stage) === 7 ? "Recontact (3 mois)" : Number(stage) === 6 ? "Rappel espace prêt" : Number(stage) === 5 ? "Espace prêt" : Number(stage) === 4 ? "Relance chaude" : Number(stage) === 3 ? "Relance démo" : "Relance " + stage; }
+function relanceLabel(stage){ return Number(stage) === 10 ? "Relance hésitation" : Number(stage) === 9 ? "Relance pour tous" : Number(stage) === 8 ? "Rappel d'inscription" : Number(stage) === 7 ? "Recontact (3 mois)" : Number(stage) === 6 ? "Rappel espace prêt" : Number(stage) === 5 ? "Espace prêt" : Number(stage) === 4 ? "Relance chaude" : Number(stage) === 3 ? "Relance démo" : "Relance " + stage; }
 function logSelectable(m){ return (!m.type || m.type === "premier") && m.status !== "sent" && m.status !== "sending"; }
 function logSel(){
   $("bLogRemove").disabled = !LOG.sel.size; $("bLogRetry").disabled = !LOG.sel.size;
