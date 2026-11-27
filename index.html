@@ -546,6 +546,13 @@
   .li-styles{display:flex;gap:6px;flex-wrap:wrap}
   .li-styles .b.on{border-color:var(--violet);color:var(--violet)}
   @media (max-width:1100px){.li-grid{grid-template-columns:1fr}.li-post{grid-template-columns:1fr}}
+  #v-tests .card{margin-bottom:16px}
+  .opt-modele{padding:12px 0 16px;border-bottom:1px solid var(--line)}
+  .opt-modele:last-child{border-bottom:0}
+  .opt-modele h3{margin:0 0 8px;font-size:1rem}
+  .opt-barre{height:10px;border-radius:99px;background:var(--line-2);overflow:hidden;min-width:80px}
+  .opt-barre i{display:block;height:100%;background:var(--violet)}
+  tr.opt-top td{background:var(--ok-soft);font-weight:700}
   .tt-grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
   .tt-apercu canvas{width:100%;max-width:340px;aspect-ratio:9/16;height:auto;display:block;margin:0 auto 12px;border-radius:18px;background:#0f0e1a}
   .tt-idees{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
@@ -612,6 +619,7 @@
       <button class="nav-b" data-view="linkedin"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/></svg><span class="t">LinkedIn</span><span class="pill num" id="pillLinkedin" hidden>0</span></button>
       <button class="nav-b" data-view="tiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.5 2.6 2.4 4.5 5 5"/></svg><span class="t">TikTok</span></button>
       <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
+      <button class="nav-b" data-view="tests"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M7.5 15h9"/></svg><span class="t">Tests</span></button>
       <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
       <button class="nav-b" data-view="revendeurs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg><span class="t">Revendeurs</span></button>
       <button class="nav-b" data-view="negoces"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 4.5 4h15L21 9"/><path d="M3 9h18v1.5a2.5 2.5 0 0 1-4.5 1.5 2.5 2.5 0 0 1-4.5 0 2.5 2.5 0 0 1-4.5 0A2.5 2.5 0 0 1 3 10.5z"/><path d="M5 12.5V20h14v-7.5"/><path d="M10 20v-4h4v4"/></svg><span class="t">Négoces</span><span class="pill num" id="pillNeg" hidden>0</span></button>
@@ -928,6 +936,42 @@
               <p class="help">Dans l'appli TikTok : « + », importez le MP4, ajoutez une musique de la bibliothèque TikTok si vous voulez (volume bas, sous la voix), collez la légende, publiez.</p>
             </div>
           </div>
+        </div>
+      </section>
+      <section class="view" id="v-tests">
+        <div class="li-row" style="margin-bottom:12px;align-items:center"><p class="note" id="optEtat" style="margin:0;flex:1"></p><button type="button" class="b b-out b-sm" id="optRecalc">Recalculer maintenant</button></div>
+        <div class="card">
+          <div class="card-h"><h2>1 · Objets testés</h2></div>
+          <div class="card-b">
+            <p class="help">Chaque premier mail part avec son objet ou un de ses objets de rechange, tiré au hasard. Quand chaque objet a 500 envois, celui qui fait le plus ouvrir gagne (vérifié chaque nuit) et part seul. Vous pouvez aussi en garder un à la main.</p>
+            <div id="optObjets"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>2 · Mail court</h2></div>
+          <div class="card-b">
+            <p class="help">Un modèle en « mail court » part toujours en version légère : texte simple, signature sans bouton, sans vidéo ni liens en bas. Comparez-le aux autres sur les réponses.</p>
+            <div class="tscroll"><table><thead><tr><th>Modèle</th><th style="width:80px">Envois</th><th style="width:90px">Ouverture</th><th style="width:80px">Clics</th><th style="width:90px">Réponses</th><th style="width:120px">Format</th></tr></thead><tbody id="optCourt"></tbody></table></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>3 · Heure d'envoi</h2><div class="right"><select class="inp" id="optMetier" style="min-width:240px"></select></div></div>
+          <div class="card-b">
+            <p class="help">Premiers mails des 30 derniers jours, par heure d'envoi (heure de Paris). La ligne en couleur est la meilleure heure mesurée.</p>
+            <div class="tscroll"><table><thead><tr><th style="width:70px">Heure</th><th style="width:80px">Envois</th><th>Ouverture</th><th style="width:80px"></th><th style="width:60px">Clics</th><th style="width:80px">Réponses</th></tr></thead><tbody id="optHeures"></tbody></table></div>
+            <p class="note" id="optHeuresNote"></p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>4 · Adresses muettes</h2><div class="right"><select class="inp" id="optSeuil"><option value="0">Règle coupée</option><option value="2">Arrêt après 2 mails</option><option value="3">Arrêt après 3 mails</option><option value="4">Arrêt après 4 mails</option><option value="5">Arrêt après 5 mails</option></select></div></div>
+          <div class="card-b">
+            <p class="help">Quand une adresse a reçu ce nombre de mails (premier + relances) sans aucune ouverture, aucun clic ni réponse, elle ne reçoit plus de relance « à froid ». Ça protège la réputation des boîtes et libère du volume. Mesuré sur 30 jours avant la règle : aucune des 92 réponses n'est venue après 3 mails sans ouverture.</p>
+            <p id="optMuettes"></p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>5 · Relances dans le même fil</h2><div class="right"><span class="badge sent">En place</span></div></div>
+          <div class="card-b"><p id="optFil"></p></div>
         </div>
       </section>
       <section class="view" id="v-target">
@@ -2447,6 +2491,126 @@ const TT = (() => {
   return { monter, arreter };
 })();
 
+// ——— Onglet « Tests » (27/11/2026) : objets testés, mail court, heure d'envoi, adresses muettes, relances dans le fil.
+const OPT = (() => {
+  let data = null, metier = "", charge = false;
+  const pct = (a, b) => b ? (100 * a / b).toFixed(1).replace(".", ",") + " %" : "—";
+  const nb = (n) => Number(n || 0).toLocaleString("fr-FR");
+  const quand = (d) => d ? new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }) : "";
+
+  async function charger(recalculer = false) {
+    $("optEtat").textContent = recalculer ? "Calcul en cours (une dizaine de secondes)…" : "Chargement…";
+    try {
+      data = await api("optim.state", recalculer ? { recalculer: true } : {});
+      $("optEtat").textContent = data.calcule_le ? "Chiffres des 30 derniers jours, calculés le " + quand(data.calcule_le) + ". Recalculés chaque jour à 19 h 05, après les envois." : "Premiers chiffres ce soir à 19 h 05, après les envois (le calcul ralentirait les envois en journée). Les réglages marchent déjà.";
+      rendre();
+    } catch (e) { $("optEtat").textContent = "Indisponible : " + (e?.message || e); }
+  }
+
+  function rendre() {
+    const s = data.stats || {}, modeles = (data.modeles || []).filter((m) => m.active);
+    const parObjet = new Map((s.objets || []).map((o) => [o.template_id + "|" + o.objet, o]));
+    const parModele = new Map((s.modeles || []).map((o) => [o.template_id, o]));
+
+    // 1. Objets testés
+    $("optObjets").innerHTML = modeles.map((m) => {
+      const objets = [m.subject, ...(m.objets || [])].map((o) => String(o || "").trim()).filter(Boolean);
+      const lignes = objets.map((o, i) => {
+        const st = parObjet.get(m.id + "|" + o) || { envois: 0, ouvertures: 0, clics: 0, reponses: 0 };
+        const gagnant = m.objet_gagnant && m.objet_gagnant.trim() === o;
+        const etat = gagnant ? `<span class="badge sent">Gagnant</span>`
+          : m.objet_gagnant ? `<span class="tag">Arrêté</span>`
+          : objets.length > 1 ? `<span class="tag">${nb(Math.min(st.envois, 500))} / 500</span>` : `<span class="tag">Seul objet</span>`;
+        return `<tr><td>${i === 0 ? "" : "<span class=\"tag\">Rechange</span> "}${esc(o)}</td><td class="num">${nb(st.envois)}</td><td class="num">${pct(st.ouvertures, st.envois)}</td><td class="num">${nb(st.clics)}</td><td class="num">${nb(st.reponses)}</td><td>${etat}</td>
+          <td>${objets.length > 1 && !gagnant ? `<button type="button" class="b b-out b-xs" data-opt-gagnant="${esc(m.id)}" data-objet="${esc(o)}">Garder celui-ci</button>` : gagnant ? `<button type="button" class="b b-out b-xs" data-opt-gagnant="${esc(m.id)}" data-objet="">Reprendre le test</button>` : ""}</td></tr>`;
+      }).join("");
+      return `<div class="opt-modele">
+        <h3>${esc(m.name)} ${m.format === "court" ? `<span class="tag">Mail court</span>` : ""}</h3>
+        <div class="tscroll"><table><thead><tr><th>Objet</th><th style="width:80px">Envois</th><th style="width:90px">Ouverture</th><th style="width:60px">Clics</th><th style="width:80px">Réponses</th><th style="width:100px">État</th><th style="width:150px"></th></tr></thead><tbody>${lignes}</tbody></table></div>
+        <label class="fl" for="optObj-${esc(m.id)}">Objets de rechange (un par ligne, 3 au plus — mêmes variables que les modèles, ex. {prenom|Bonjour})</label>
+        <textarea class="inp" id="optObj-${esc(m.id)}" rows="3">${esc((m.objets || []).join("\n"))}</textarea>
+        <div class="li-row"><button type="button" class="b b-main b-sm" data-opt-objets="${esc(m.id)}">Enregistrer les objets</button></div>
+      </div>`;
+    }).join("") || `<p class="help">Aucun modèle de premier contact actif.</p>`;
+
+    // 2. Mail court
+    $("optCourt").innerHTML = (data.modeles || []).map((m) => {
+      const st = parModele.get(m.id) || { envois: 0, ouvertures: 0, clics: 0, reponses: 0 };
+      return `<tr><td>${esc(m.name)} ${m.active ? "" : `<span class="tag">Inactif</span>`}</td><td class="num">${nb(st.envois)}</td><td class="num">${pct(st.ouvertures, st.envois)}</td><td class="num">${pct(st.clics, st.envois)}</td><td class="num">${pct(st.reponses, st.envois)}</td>
+        <td><label class="swi"><input type="checkbox" data-opt-court="${esc(m.id)}" ${m.format === "court" ? "checked" : ""}><i></i><span>${m.format === "court" ? "Court" : "Normal"}</span></label></td></tr>`;
+    }).join("");
+
+    // 3. Heure d'envoi
+    const heures = s.heures || [];
+    const totaux = new Map();
+    for (const h of heures) totaux.set(h.metier, (totaux.get(h.metier) || 0) + h.envois);
+    const metiers = [...totaux.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
+    $("optMetier").innerHTML = `<option value="">Tous les métiers</option>` + metiers.map(([m, n]) => `<option value="${esc(m)}" ${m === metier ? "selected" : ""}>${esc(m)} (${nb(n)})</option>`).join("");
+    const parHeure = new Map();
+    for (const h of heures) {
+      if (metier && h.metier !== metier) continue;
+      const x = parHeure.get(h.heure) || { envois: 0, ouvertures: 0, clics: 0, reponses: 0 };
+      x.envois += h.envois; x.ouvertures += h.ouvertures; x.clics += h.clics; x.reponses += h.reponses; parHeure.set(h.heure, x);
+    }
+    const rangs = [...parHeure.entries()].sort((a, b) => a[0] - b[0]);
+    const fiables = rangs.filter(([, x]) => x.envois >= 200);
+    const meilleure = fiables.length ? fiables.reduce((a, b) => (b[1].ouvertures / b[1].envois > a[1].ouvertures / a[1].envois ? b : a)) : null;
+    const maxTaux = Math.max(0.0001, ...rangs.map(([, x]) => x.envois ? x.ouvertures / x.envois : 0));
+    $("optHeures").innerHTML = rangs.map(([h, x]) => {
+      const taux = x.envois ? x.ouvertures / x.envois : 0;
+      return `<tr${meilleure && meilleure[0] === h ? ` class="opt-top"` : ""}><td>${String(h).padStart(2, "0")} h</td><td class="num">${nb(x.envois)}</td>
+        <td><div class="opt-barre"><i style="width:${(100 * taux / maxTaux).toFixed(0)}%"></i></div></td><td class="num">${pct(x.ouvertures, x.envois)}</td><td class="num">${nb(x.clics)}</td><td class="num">${nb(x.reponses)}</td></tr>`;
+    }).join("") || `<tr><td colspan="6" class="help">Aucun envoi sur la période.</td></tr>`;
+    const clics = rangs.reduce((a, [, x]) => a + x.clics, 0), reps = rangs.reduce((a, [, x]) => a + x.reponses, 0);
+    $("optHeuresNote").textContent = (meilleure ? `Meilleure heure mesurée${metier ? " pour « " + metier + " »" : ""} : ${String(meilleure[0]).padStart(2, "0")} h (${pct(meilleure[1].ouvertures, meilleure[1].envois)} d'ouverture, créneaux d'au moins 200 envois). ` : "Pas encore de créneau d'au moins 200 envois. ")
+      + `${nb(clics)} clics et ${nb(reps)} réponses sur 30 jours : c'est trop peu pour caler les envois sur les clics, la comparaison se fait sur l'ouverture. Le calage automatique des heures par métier sera proposé quand chaque créneau aura assez de données.`;
+
+    // 4. Adresses muettes
+    $("optSeuil").value = String(data.reglages?.muettes_seuil ?? 3);
+    const mu = s.muettes || {};
+    $("optMuettes").innerHTML = `<b>${nb(mu.jour)}</b> relance(s) évitée(s) sur 24 h · <b>${nb(mu.semaine)}</b> sur 7 jours · <b>${nb(mu.total)}</b> depuis la mise en place.`;
+
+    // 5. Relances dans le fil
+    const fil = s.fil || {};
+    $("optFil").innerHTML = `<b>${nb(fil.dans_le_fil)}</b> des <b>${nb(fil.relances)}</b> relances des 7 derniers jours sont parties en « Re: » dans le fil du premier mail (${pct(fil.dans_le_fil, fil.relances)}). `
+      + `Les ${nb(fil.hesitation)} relances « hésitation » ouvrent volontairement une nouvelle conversation.`;
+  }
+
+  async function enregistrerObjets(id) {
+    const objets = $("optObj-" + id).value.split("\n").map((x) => x.trim()).filter(Boolean);
+    if (objets.length > 3) { toast("3 objets de rechange au plus."); return; }
+    try { await api("optim.objets", { id, objets }); toast("Objets enregistrés : le test repart de zéro pour ce modèle."); await charger(); }
+    catch (e) { toast(e?.message || String(e)); }
+  }
+
+  function monter() {
+    if (!charge) {
+      charge = true;
+      $("optRecalc").addEventListener("click", () => charger(true));
+      $("optMetier").addEventListener("change", (ev) => { metier = ev.target.value; rendre(); });
+      $("optSeuil").addEventListener("change", async (ev) => {
+        try { await api("optim.muettes", { seuil: Number(ev.target.value) }); toast(Number(ev.target.value) ? "Règle des adresses muettes enregistrée." : "Règle des adresses muettes coupée."); }
+        catch (e) { toast(e?.message || String(e)); }
+      });
+      $("v-tests").addEventListener("click", async (ev) => {
+        const o = ev.target.closest("[data-opt-objets]"); if (o) return enregistrerObjets(o.dataset.optObjets);
+        const g = ev.target.closest("[data-opt-gagnant]");
+        if (g) {
+          try { await api("optim.gagnant", { id: g.dataset.optGagnant, objet: g.dataset.objet }); toast(g.dataset.objet ? "Cet objet part seul désormais." : "Le test des objets reprend."); await charger(); }
+          catch (e) { toast(e?.message || String(e)); }
+        }
+      });
+      $("v-tests").addEventListener("change", async (ev) => {
+        const c = ev.target.closest("[data-opt-court]"); if (!c) return;
+        try { await api("optim.format", { id: c.dataset.optCourt, court: c.checked }); toast(c.checked ? "Ce modèle part en mail court." : "Ce modèle repart en format normal."); await charger(); }
+        catch (e) { c.checked = !c.checked; toast(e?.message || String(e)); }
+      });
+    }
+    charger();
+  }
+  return { monter };
+})();
+
 const VIEWS = {
   auto:     { t:"Tableau de bord", s:"Recherche d'entreprises et envoi des e-mails de prospection, en continu et sans intervention." },
   negoces:  { t:"Négoces", s:"Les négoces partenaires de l'offre comptoir : mail de proposition, flyers au comptoir et classement du petit-déjeuner." },
@@ -2457,6 +2621,7 @@ const VIEWS = {
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
   revendeurs: { t:"Revendeurs", s:"Campagne de recrutement des revendeurs de logiciels de gestion : ciblage, messages et prospects en file." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
+  tests:    { t:"Tests", s:"Ce qui est testé sur les mails : objets, mail court, heure d'envoi, adresses muettes, relances dans le fil." },
   log:      { t:"Envois",     s:"File d'attente et historique de tout ce que l'automate a envoyé." },
   seq:      { t:"Qui reçoit quoi, quand", s:"Tous les mails automatiques : à qui, à quelle heure, dans quel ordre et dans quelles limites, d'après les réglages en service." },
   supp:     { t:"Exclusions", s:"Adresses qui ne recevront plus jamais de message." },
@@ -2480,6 +2645,7 @@ function showView(v){
   if (v === "rep") loadReplies();
   if (v === "linkedin") loadLinkedin();
   if (v === "tiktok") TT.monter(); else TT.arreter();
+  if (v === "tests") OPT.monter();
   if (v === "log"){ fillLogFacets(); fillViews(); }
   if (v === "tpl") mountTplEditor("btp");
   if (v === "revendeurs"){ mountTplEditor("revendeur"); renderRevendeurs(); RV.page = 1; loadRvQueue(); }
