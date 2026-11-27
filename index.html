@@ -551,9 +551,17 @@
   .tt-idees{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
   .tt-idees .chip{white-space:normal;text-align:left;font-weight:600}
   .tt-titre{margin:16px 0 8px;font-size:1.05rem}
+  .tt-biblio{grid-column:1}
+  .tt-apercu{grid-column:2;grid-row:1 / span 2}
+  .tt-liste{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+  .tt-liste li.v{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line, #e3e1f0);border-radius:10px}
+  .tt-liste li.v.on{border-color:var(--violet, #6d5ef8);background:rgba(109,94,248,.06)}
+  .tt-liste .tt-ouvrir{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;cursor:pointer;font:inherit;color:inherit}
+  .tt-liste .tt-ouvrir b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tt-liste .tt-ouvrir small{color:var(--muted, #7a7894)}
   .tt-scenes{margin:0 0 14px;padding-left:20px;display:grid;gap:6px;font-size:.9rem}
   #ttEtape.err{color:var(--danger)}
-  @media (max-width:1000px){.tt-grid{grid-template-columns:1fr}}
+  @media (max-width:1000px){.tt-grid{grid-template-columns:1fr}.tt-biblio,.tt-apercu{grid-column:auto;grid-row:auto}}
 </style>
 </head>
 <body>
@@ -903,6 +911,13 @@
                 <textarea class="inp" id="ttLegende" rows="5"></textarea>
                 <div class="li-row"><button type="button" class="b b-out b-sm" id="ttCopier">Copier la légende</button></div>
               </div>
+            </div>
+          </div>
+          <div class="card tt-biblio">
+            <div class="card-h"><h2>Vidéos déjà faites</h2></div>
+            <div class="card-b">
+              <p class="help">Cliquez sur une vidéo pour la revoir dans l'aperçu, la re-télécharger en MP4 et copier sa légende (sans repayer Claude ni la voix).</p>
+              <ul class="tt-liste" id="ttListe"><li class="help">Chargement…</li></ul>
             </div>
           </div>
           <div class="card tt-apercu">
@@ -2243,32 +2258,78 @@ const TT = (() => {
 
   function etape(texte, ok) { $("ttEtape").textContent = texte; $("ttEtape").className = "note" + (ok === false ? " err" : ""); }
 
+  // Début de chaque scène dans le texte lu (scènes jointes par une espace).
+  function debutsScenes(script) {
+    let full = ""; const starts = [];
+    for (const s of script.scenes) { starts.push(full.length + (full ? 1 : 0)); full += (full ? " " : "") + s.voix.trim(); }
+    return starts;
+  }
+  async function afficher(script, alignment, audioB64) {
+    minuter(script, alignment, debutsScenes(script));
+    const bytes = Uint8Array.from(atob(audioB64), (c) => c.charCodeAt(0));
+    state.mp3 = new Blob([bytes], { type: "audio/mpeg" });
+    state.buffer = await new AudioContext().decodeAudioData(bytes.buffer.slice(0));
+    await chargerImages(script);
+    state.script = script;
+    $("ttLegende").value = script.legende + "\n\n" + (script.hashtags || []).map((h) => "#" + String(h).replace(/^#/, "")).join(" ");
+    $("ttTitre").textContent = script.titre;
+    $("ttScenes").innerHTML = script.scenes.map((s) => `<li><b>${esc(s.texte_ecran)}</b> — ${esc(s.voix)}</li>`).join("");
+    $("ttResultat").hidden = false;
+    dessiner(0);
+  }
+
+  // ——— Vidéos déjà faites
+  const dateCourte = (d) => new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
+  async function listeVideos() {
+    try {
+      const { videos } = await api("tiktok.liste", {});
+      $("ttListe").innerHTML = videos.length ? videos.map((x) => `<li class="v${x.id === state.id ? " on" : ""}">
+        <button type="button" class="tt-ouvrir" data-tt-ouvrir="${esc(x.id)}"><b>${esc(x.titre || x.theme || "Sans titre")}</b><small>${esc(dateCourte(x.created_at))}</small></button>
+        <button type="button" class="b b-out b-sm" data-tt-suppr="${esc(x.id)}" title="Supprimer">✕</button></li>`).join("")
+        : `<li class="help">Aucune vidéo pour l'instant : créez la première ci-dessus.</li>`;
+    } catch (e) { $("ttListe").innerHTML = `<li class="help">Liste indisponible : ${esc(e?.message || e)}</li>`; }
+  }
+  async function ouvrir(id) {
+    if (state.busy) return;
+    state.busy = true; arreter(); state.mp4 = null;
+    try {
+      etape("Chargement de la vidéo…");
+      const { video } = await api("tiktok.charger", { id });
+      await afficher(video.script, video.alignment, video.audio_base64);
+      state.id = id; $("ttTheme").value = video.theme || "";
+      document.querySelectorAll("#ttListe li.v").forEach((li) => li.classList.toggle("on", !!li.querySelector(`[data-tt-ouvrir="${id}"]`)));
+      etape("Vidéo rouverte (" + (video.script.duree + FIN).toFixed(0) + " s). Lisez l'aperçu ou téléchargez le MP4.", true);
+      $("ttCanvas").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (e) {
+      etape("Échec : " + (e?.message || e), false);
+    } finally { state.busy = false; }
+  }
+  async function supprimer(id) {
+    if (!confirm("Supprimer cette vidéo de la liste ?")) return;
+    try { await api("tiktok.supprimer", { id }); if (state.id === id) state.id = null; listeVideos(); }
+    catch (e) { toast("Suppression impossible : " + (e?.message || e)); }
+  }
+
   async function creer() {
     if (state.busy) return;
     const theme = $("ttTheme").value.trim();
-    state.busy = true; arreter(); state.mp4 = null; $("ttCreer").disabled = true; $("ttResultat").hidden = true;
+    state.busy = true; arreter(); state.mp4 = null; state.id = null; $("ttCreer").disabled = true; $("ttResultat").hidden = true;
     try {
       etape("1/3 · Claude écrit le script…");
       const r = await api("tiktok.script", { theme });
       const script = r.script;
-      let full = ""; const starts = [];
-      for (const s of script.scenes) { starts.push(full.length + (full ? 1 : 0)); full += (full ? " " : "") + s.voix.trim(); }
+      const full = script.scenes.map((s) => s.voix.trim()).join(" ");
       etape("2/3 · Jessica enregistre la voix off…");
       const v = await api("tiktok.voix", { texte: full });
-      minuter(script, v.alignment, starts);
-      const bytes = Uint8Array.from(atob(v.audio_base64), (c) => c.charCodeAt(0));
-      state.mp3 = new Blob([bytes], { type: "audio/mpeg" });
-      state.buffer = await new AudioContext().decodeAudioData(bytes.buffer.slice(0));
+      const brut = JSON.parse(JSON.stringify(script));
       etape("3/3 · Montage…");
-      await chargerImages(script);
-      state.script = script;
-      $("ttLegende").value = script.legende + "\n\n" + (script.hashtags || []).map((h) => "#" + String(h).replace(/^#/, "")).join(" ");
-      $("ttTitre").textContent = script.titre;
-      $("ttScenes").innerHTML = script.scenes.map((s) => `<li><b>${esc(s.texte_ecran)}</b> — ${esc(s.voix)}</li>`).join("");
-      $("ttResultat").hidden = false;
-      dessiner(0);
+      await afficher(script, v.alignment, v.audio_base64);
       memoriser(theme || script.titre);
       etape("Vidéo prête (" + (script.duree + FIN).toFixed(0) + " s). Lisez l'aperçu ou téléchargez le MP4.", true);
+      try {
+        const e = await api("tiktok.enregistrer", { theme, script: brut, alignment: v.alignment, audio_base64: v.audio_base64 });
+        state.id = e.id; listeVideos();
+      } catch { toast("Vidéo prête, mais pas enregistrée dans « Vidéos déjà faites »."); }
     } catch (e) {
       etape("Échec : " + (e?.message || e), false);
     } finally { state.busy = false; $("ttCreer").disabled = false; }
@@ -2363,7 +2424,7 @@ const TT = (() => {
   }
 
   function monter() {
-    if (cv) return;
+    if (cv) { listeVideos(); return; }
     cv = $("ttCanvas"); g = cv.getContext("2d");
     g.fillStyle = C.fond; g.fillRect(0, 0, W, H);
     g.fillStyle = C.gris; g.font = "600 46px 'Segoe UI', Arial"; g.textAlign = "center"; g.fillText("L'aperçu apparaît ici", W / 2, H / 2);
@@ -2376,7 +2437,12 @@ const TT = (() => {
       try { await navigator.clipboard.writeText($("ttLegende").value); toast("Légende copiée."); }
       catch { $("ttLegende").select(); toast("Sélectionnée : Ctrl+C pour copier."); }
     });
+    $("ttListe").addEventListener("click", (ev) => {
+      const o = ev.target.closest("[data-tt-ouvrir]"); if (o) return ouvrir(o.dataset.ttOuvrir);
+      const d = ev.target.closest("[data-tt-suppr]"); if (d) supprimer(d.dataset.ttSuppr);
+    });
     renderDeja();
+    listeVideos();
   }
   return { monter, arreter };
 })();
