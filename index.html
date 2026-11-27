@@ -2052,7 +2052,7 @@ $("liDone").addEventListener("click", async () => {
    en MP4 (WebCodecs + mp4-muxer). Rien n'est publié : on télécharge la vidéo et on copie la légende.
    ============================================================ */
 const TT = (() => {
-  const W = 1080, H = 1920, FIN = 2.2, FPS = 30;
+  const W = 1080, H = 1920, FIN = 2.2, FPS = 30, MINIA = 0.4;
   const C = { fond: "#0f0e1a", violet: "#6d5ef8", violet2: "#9b90ff", blanc: "#ffffff", jaune: "#ffd84d", gris: "#b9b6d3" };
   const FOCUS = {
     "bureau-planning": { vue: { x: 0.19, y: 0.31, w: 0.62 }, cible: { x: 0.194, y: 0.636, w: 0.5, h: 0.2 } },
@@ -2097,13 +2097,20 @@ const TT = (() => {
     });
     g.restore();
   }
+  // Heure affichée sur le téléphone : celle citée dans le script (ex. « 6h30 »), sinon un début de matinée.
+  function heureTelephone() {
+    const sc = state.script || {};
+    const txt = [sc.titre, ...(sc.scenes || []).map((s) => s.texte_ecran + " " + s.voix)].join(" ");
+    const m = txt.match(/\b([01]?\d|2[0-3])\s*h\s*([0-5]\d)?\b/i);
+    return m ? m[1].padStart(2, "0") + ":" + (m[2] || "00") : "07:42";
+  }
   function telephone(t, t0, p, k, notif) {
     const vib = Math.sin(t * 60) * (p < 0.6 ? 9 : 2);
     g.translate(W / 2 + vib, 1030); g.rotate(-0.07 + vib * 0.004); g.scale(0.85 + 0.15 * k, 0.85 + 0.15 * k);
     g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 70; rr(-230, -420, 460, 840, 70); g.fillStyle = "#121026"; g.fill(); g.shadowBlur = 0;
     g.lineWidth = 12; g.strokeStyle = "#2c2850"; g.stroke();
     rr(-200, -390, 400, 780, 52); g.fillStyle = "#1c1838"; g.fill();
-    g.fillStyle = "rgba(255,255,255,0.85)"; g.font = "300 110px 'Segoe UI', Arial"; g.textAlign = "center"; g.fillText("21:04", 0, -230);
+    g.fillStyle = "rgba(255,255,255,0.85)"; g.font = "300 110px 'Segoe UI', Arial"; g.textAlign = "center"; g.fillText(heureTelephone(), 0, -230);
     const nk = ease((t - t0 - 0.5) / 0.35); g.globalAlpha = Math.min(1, k * 1.4) * nk; g.translate(0, (1 - nk) * -40);
     const lignes = wrap(notif.texte, 300, "500 30px 'Segoe UI', Arial").slice(0, 2);
     rr(-180, -110, 360, 130 + lignes.length * 40, 30); g.fillStyle = "rgba(255,255,255,0.96)"; g.fill();
@@ -2172,14 +2179,27 @@ const TT = (() => {
     g.fillStyle = C.gris; g.font = "600 44px 'Segoe UI', Arial"; g.fillText("sans carte bancaire", W / 2, 1195);
     g.restore();
   }
+  function notifDe(s) {
+    return { expediteur: s.accroche_notif?.expediteur || "Un salarié", texte: s.accroche_notif?.texte || "Patron, je vais où demain ?" };
+  }
+  // Miniature : première image de la vidéo (couverture TikTok par défaut), tout est déjà affiché.
+  function miniature() {
+    const s = state.script, sc = s.scenes[0], img = state.imgs[sc.visuel] || null;
+    const t1 = s.scenes[1] ? s.scenes[1].debut : s.duree;
+    fond(0, img);
+    visuel(sc.visuel, img, -5, Math.max(t1, 1) + 5, 0, notifDe(s));
+    titre(s.titre || sc.texte_ecran, -5, 0);
+    g.font = "900 40px 'Segoe UI', Arial"; g.textAlign = "left"; g.textBaseline = "alphabetic"; g.fillStyle = "rgba(255,255,255,0.85)"; g.fillText("PILOZ", 60, 150);
+    g.fillStyle = C.violet2; g.fillRect(60, 165, 70, 6);
+  }
   function dessiner(t) {
     const s = state.script; if (!s) return;
+    if (t < MINIA) { miniature(); return; }
     const total = s.duree + FIN, scenes = s.scenes;
     let idx = 0; for (let j = 0; j < scenes.length; j++) if (scenes[j].debut <= t) idx = j;
     const sc = scenes[idx], t1 = idx + 1 < scenes.length ? scenes[idx + 1].debut : s.duree, img = state.imgs[sc.visuel] || null;
     fond(t, img);
-    const notif = { expediteur: s.accroche_notif?.expediteur || "Un salarié", texte: s.accroche_notif?.texte || "Patron, je vais où demain ?" };
-    visuel(sc.visuel, img, sc.debut, t1, t, notif);
+    visuel(sc.visuel, img, sc.debut, t1, t, notifDe(s));
     titre(sc.texte_ecran, sc.debut, t);
     sousTitres(s.mots, t);
     g.font = "900 40px 'Segoe UI', Arial"; g.textAlign = "left"; g.textBaseline = "alphabetic"; g.fillStyle = "rgba(255,255,255,0.85)"; g.fillText("PILOZ", 60, 150);
@@ -2246,7 +2266,7 @@ const TT = (() => {
       $("ttTitre").textContent = script.titre;
       $("ttScenes").innerHTML = script.scenes.map((s) => `<li><b>${esc(s.texte_ecran)}</b> — ${esc(s.voix)}</li>`).join("");
       $("ttResultat").hidden = false;
-      dessiner(0.8);
+      dessiner(0);
       memoriser(theme || script.titre);
       etape("Vidéo prête (" + (script.duree + FIN).toFixed(0) + " s). Lisez l'aperçu ou téléchargez le MP4.", true);
     } catch (e) {
@@ -2317,10 +2337,10 @@ const TT = (() => {
         }
         await venc.flush(); await aenc.flush(); if (erreur) throw erreur; muxer.finalize();
         state.mp4 = new Blob([muxer.target.buffer], { type: "video/mp4" });
-        dessiner(0.8);
+        dessiner(0);
       }
       const a = document.createElement("a"); a.href = URL.createObjectURL(state.mp4);
-      a.download = "piloz-tiktok-" + String(state.script.titre || "video").normalize("NFD").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase().slice(0, 50) + ".mp4";
+      a.download = "piloz-tiktok-" + String(state.script.titre || "video").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase().slice(0, 50) + ".mp4";
       document.body.appendChild(a); a.click(); a.remove();
       etape("MP4 téléchargé (" + (state.mp4.size / 1e6).toFixed(1) + " Mo). Publiez-le dans l'appli TikTok et collez la légende.", true);
     } catch (e) {
