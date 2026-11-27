@@ -546,6 +546,14 @@
   .li-styles{display:flex;gap:6px;flex-wrap:wrap}
   .li-styles .b.on{border-color:var(--violet);color:var(--violet)}
   @media (max-width:1100px){.li-grid{grid-template-columns:1fr}.li-post{grid-template-columns:1fr}}
+  .tt-grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+  .tt-apercu canvas{width:100%;max-width:340px;aspect-ratio:9/16;height:auto;display:block;margin:0 auto 12px;border-radius:18px;background:#0f0e1a}
+  .tt-idees{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .tt-idees .chip{white-space:normal;text-align:left;font-weight:600}
+  .tt-titre{margin:16px 0 8px;font-size:1.05rem}
+  .tt-scenes{margin:0 0 14px;padding-left:20px;display:grid;gap:6px;font-size:.9rem}
+  #ttEtape.err{color:var(--danger)}
+  @media (max-width:1000px){.tt-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -594,6 +602,7 @@
       <button class="nav-b" data-view="seq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="t">Qui reçoit quoi</span></button>
       <button class="nav-b" data-view="rep"><span class="t">Réponses</span><span class="pill num hot" id="pillRep" hidden>0</span></button>
       <button class="nav-b" data-view="linkedin"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/></svg><span class="t">LinkedIn</span><span class="pill num" id="pillLinkedin" hidden>0</span></button>
+      <button class="nav-b" data-view="tiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.5 2.6 2.4 4.5 5 5"/></svg><span class="t">TikTok</span></button>
       <button class="nav-b" data-view="tpl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg><span class="t">Messages</span></button>
       <button class="nav-b" data-view="target"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><span class="t">Ciblage</span></button>
       <button class="nav-b" data-view="revendeurs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg><span class="t">Revendeurs</span></button>
@@ -871,6 +880,37 @@
                   <p class="help">Sur LinkedIn : « Commencer un post », collez le texte, puis collez le visuel (ou ajoutez l'image téléchargée). Les textes sont écrits par Claude : pour une nouvelle série, demandez « recharge les posts LinkedIn ».</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="v-tiktok">
+        <div class="tt-grid">
+          <div class="card">
+            <div class="card-h"><h2>Nouvelle vidéo</h2></div>
+            <div class="card-b">
+              <label class="fl" for="ttTheme">Thème de la vidéo</label>
+              <textarea class="inp" id="ttTheme" rows="3" maxlength="300" placeholder="ex. Le devis envoyé il y a trois semaines que personne n'a relancé"></textarea>
+              <div class="li-row"><button type="button" class="b b-out b-sm" id="ttIdees">Proposer des idées</button></div>
+              <div class="tt-idees" id="ttIdeesList"></div>
+              <div class="li-row"><button type="button" class="b b-main" id="ttCreer">Créer la vidéo</button></div>
+              <p class="note" id="ttEtape">Claude écrit le script (accroche, scènes, légende), Jessica lit la voix off, puis la vidéo est montée ici avec les vraies captures de Piloz. Environ une minute.</p>
+              <p class="note" id="ttDeja"></p>
+              <div id="ttResultat" hidden>
+                <h3 class="tt-titre" id="ttTitre"></h3>
+                <ol class="tt-scenes" id="ttScenes"></ol>
+                <label class="fl" for="ttLegende">Légende TikTok</label>
+                <textarea class="inp" id="ttLegende" rows="5"></textarea>
+                <div class="li-row"><button type="button" class="b b-out b-sm" id="ttCopier">Copier la légende</button></div>
+              </div>
+            </div>
+          </div>
+          <div class="card tt-apercu">
+            <div class="card-h"><h2>Aperçu</h2></div>
+            <div class="card-b">
+              <canvas id="ttCanvas" width="1080" height="1920" aria-label="Aperçu de la vidéo TikTok"></canvas>
+              <div class="li-row"><button type="button" class="b b-out b-sm" id="ttLire">▶ Lire l'aperçu</button><button type="button" class="b b-main b-sm" id="ttTelecharger">Télécharger la vidéo (MP4)</button></div>
+              <p class="help">Dans l'appli TikTok : « + », importez le MP4, ajoutez une musique de la bibliothèque TikTok si vous voulez (volume bas, sous la voix), collez la légende, publiez.</p>
             </div>
           </div>
         </div>
@@ -2006,12 +2046,328 @@ $("liDone").addEventListener("click", async () => {
 /* ============================================================
    NAVIGATION
    ============================================================ */
+/* ============================================================
+   Onglet TikTok (27/11/2026) : Claude écrit le script, ElevenLabs fait la voix off (Jessica),
+   le montage (captures de Piloz, titres, sous-titres mot à mot) est dessiné ici, puis encodé
+   en MP4 (WebCodecs + mp4-muxer). Rien n'est publié : on télécharge la vidéo et on copie la légende.
+   ============================================================ */
+const TT = (() => {
+  const W = 1080, H = 1920, FIN = 2.2, FPS = 30;
+  const C = { fond: "#0f0e1a", violet: "#6d5ef8", violet2: "#9b90ff", blanc: "#ffffff", jaune: "#ffd84d", gris: "#b9b6d3" };
+  const FOCUS = {
+    "bureau-planning": { vue: { x: 0.19, y: 0.31, w: 0.62 }, cible: { x: 0.194, y: 0.636, w: 0.5, h: 0.2 } },
+    "bureau-pointage": { vue: { x: 0.19, y: 0.31, w: 0.62 }, cible: { x: 0.194, y: 0.49, w: 0.188, h: 0.186 } },
+    "bureau-tableau": { vue: { x: 0.19, y: 0.31, w: 0.62 }, cible: { x: 0.194, y: 0.547, w: 0.32, h: 0.16 } },
+  };
+  const state = { script: null, audio: null, buffer: null, imgs: {}, raf: 0, playing: false, busy: false, mp4: null };
+  let cv = null, g = null;
+
+  const ease = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
+  const easeIO = (t) => { t = Math.min(1, Math.max(0, t)); return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+  const lerp = (a, b, k) => a + (b - a) * k;
+  function wrap(text, maxW, font) {
+    g.font = font; const words = String(text).split(/\s+/); const lines = []; let line = "";
+    for (const w of words) { const t = line ? line + " " + w : w; if (g.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+    if (line) lines.push(line); return lines;
+  }
+  function rr(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+
+  function fond(t, img) {
+    g.fillStyle = C.fond; g.fillRect(0, 0, W, H);
+    if (img) {
+      const s = Math.max(W / img.width, H / img.height) * (1.15 + 0.05 * Math.sin(t * 0.3));
+      g.save(); g.filter = "blur(36px) brightness(0.32) saturate(1.2)";
+      g.drawImage(img, (W - img.width * s) / 2, (H - img.height * s) / 2, img.width * s, img.height * s); g.restore();
+    }
+    const rg = g.createRadialGradient(W / 2, 1000, 60, W / 2, 1000, 1200);
+    rg.addColorStop(0, "rgba(109,94,248,0.28)"); rg.addColorStop(1, "rgba(10,9,20,0.55)");
+    g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  }
+  function titre(text, t0, t) {
+    const font = "900 78px 'Segoe UI', Arial, sans-serif";
+    const lines = wrap(String(text).toUpperCase(), 900, font), lh = 108, y0 = 380 - ((lines.length - 1) * lh) / 2;
+    g.save(); g.font = font; g.textAlign = "center"; g.textBaseline = "middle";
+    lines.forEach((l, i) => {
+      const k = ease((t - t0 - i * 0.08) / 0.3); if (k <= 0) return;
+      const last = i === lines.length - 1, w = g.measureText(l).width + 56;
+      g.save(); g.globalAlpha = k; g.translate(W / 2, y0 + i * lh); g.rotate(-0.025); g.scale(0.7 + 0.3 * k, 0.7 + 0.3 * k);
+      g.shadowColor = "rgba(0,0,0,0.45)"; g.shadowBlur = 24; g.shadowOffsetY = 8;
+      rr(-w / 2, -50, w, 100, 18); g.fillStyle = last ? C.jaune : C.blanc; g.fill(); g.shadowColor = "transparent";
+      g.fillStyle = "#14122b"; g.fillText(l, 0, 4); g.restore();
+    });
+    g.restore();
+  }
+  function telephone(t, t0, p, k, notif) {
+    const vib = Math.sin(t * 60) * (p < 0.6 ? 9 : 2);
+    g.translate(W / 2 + vib, 1030); g.rotate(-0.07 + vib * 0.004); g.scale(0.85 + 0.15 * k, 0.85 + 0.15 * k);
+    g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 70; rr(-230, -420, 460, 840, 70); g.fillStyle = "#121026"; g.fill(); g.shadowBlur = 0;
+    g.lineWidth = 12; g.strokeStyle = "#2c2850"; g.stroke();
+    rr(-200, -390, 400, 780, 52); g.fillStyle = "#1c1838"; g.fill();
+    g.fillStyle = "rgba(255,255,255,0.85)"; g.font = "300 110px 'Segoe UI', Arial"; g.textAlign = "center"; g.fillText("21:04", 0, -230);
+    const nk = ease((t - t0 - 0.5) / 0.35); g.globalAlpha = Math.min(1, k * 1.4) * nk; g.translate(0, (1 - nk) * -40);
+    const lignes = wrap(notif.texte, 300, "500 30px 'Segoe UI', Arial").slice(0, 2);
+    rr(-180, -110, 360, 130 + lignes.length * 40, 30); g.fillStyle = "rgba(255,255,255,0.96)"; g.fill();
+    g.textAlign = "left"; g.fillStyle = "#7a7894"; g.font = "700 24px 'Segoe UI', Arial"; g.fillText("MESSAGES · maintenant", -150, -72);
+    g.fillStyle = "#15161f"; g.font = "800 30px 'Segoe UI', Arial"; g.fillText(notif.expediteur.slice(0, 22), -150, -32);
+    g.font = "500 30px 'Segoe UI', Arial"; lignes.forEach((l, i) => g.fillText(l, -150, 12 + i * 40));
+  }
+  function visuel(nom, img, t0, t1, t, notif) {
+    const p = (t - t0) / Math.max(0.1, t1 - t0), k = ease((t - t0) / 0.45);
+    g.save(); g.globalAlpha = Math.min(1, k * 1.4);
+    if (!img) { telephone(t, t0, p, k, notif); g.restore(); return; }
+    if (nom.startsWith("mobile")) {
+      const w = 540, hv = 880, x = (W - w) / 2, y = 610, h = w * img.height / img.width;
+      g.translate(W / 2, y + hv / 2); g.rotate(lerp(-0.05, -0.015, ease(p))); g.scale(0.9 + 0.1 * k, 0.9 + 0.1 * k); g.translate(-W / 2, -(y + hv / 2));
+      g.shadowColor = "rgba(0,0,0,0.65)"; g.shadowBlur = 80; rr(x - 20, y - 20, w + 40, hv + 40, 72); g.fillStyle = "#0b0a14"; g.fill(); g.shadowBlur = 0;
+      g.save(); rr(x, y, w, hv, 54); g.clip(); g.drawImage(img, x, y - Math.max(0, h - hv) * 0.35 * easeIO(p), w, h); g.restore();
+      g.restore(); return;
+    }
+    const cw = 1000, ch = 900, cx = (W - cw) / 2, cy = 620, f = FOCUS[nom] || { vue: { x: 0.19, y: 0.31, w: 0.62 }, cible: null };
+    const IW = img.width, IH = img.height;
+    const A = { x: f.vue.x * IW, y: f.vue.y * IH, w: f.vue.w * IW }; A.h = A.w * ch / cw;
+    let B = A;
+    if (f.cible) {
+      const tw = f.cible.w * IW * 1.35, th = f.cible.h * IH * 1.35, bw = Math.max(tw, th * cw / ch), bh = bw * ch / cw;
+      B = { x: (f.cible.x + f.cible.w / 2) * IW - bw / 2, y: (f.cible.y + f.cible.h / 2) * IH - bh / 2, w: bw, h: bh };
+    }
+    const z = easeIO((p - 0.35) / 0.35), drift = 1 - 0.04 * ease(p);
+    const cam = { x: lerp(A.x, B.x, z), y: lerp(A.y, B.y, z), w: lerp(A.w, B.w, z) * (f.cible ? 1 : drift) }; cam.h = cam.w * ch / cw;
+    cam.x = Math.max(0, Math.min(IW - cam.w, cam.x)); cam.y = Math.max(0, Math.min(IH - cam.h, cam.y));
+    g.translate(W / 2, cy + ch / 2); g.rotate(lerp(-0.06, -0.012, k)); g.scale(0.88 + 0.12 * k, 0.88 + 0.12 * k); g.translate(-W / 2, -(cy + ch / 2));
+    g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 80; g.shadowOffsetY = 30;
+    rr(cx - 10, cy - 10, cw + 20, ch + 20, 38); g.fillStyle = "rgba(255,255,255,0.18)"; g.fill(); g.shadowColor = "transparent";
+    g.save(); rr(cx, cy, cw, ch, 30); g.clip(); g.drawImage(img, cam.x, cam.y, cam.w, cam.h, cx, cy, cw, ch);
+    if (f.cible && z > 0.6) {
+      const a = ease((z - 0.6) / 0.4), sx = cw / cam.w, pulse = 1 + 0.015 * Math.sin(t * 6);
+      const rx = cx + (f.cible.x * IW - cam.x) * sx, ry = cy + (f.cible.y * IH - cam.y) * sx, rw = f.cible.w * IW * sx, rh = f.cible.h * IH * sx;
+      g.save(); g.globalAlpha = a; g.translate(rx + rw / 2, ry + rh / 2); g.scale(pulse, pulse);
+      g.shadowColor = C.jaune; g.shadowBlur = 40; g.lineWidth = 9; g.strokeStyle = C.jaune;
+      rr(-rw / 2 - 12, -rh / 2 - 12, rw + 24, rh + 24, 22); g.stroke(); g.restore();
+    }
+    g.restore(); g.restore();
+  }
+  function sousTitres(mots, t) {
+    let i = -1; for (let j = 0; j < mots.length; j++) if (mots[j].debut <= t + 0.05) i = j; else break;
+    if (i < 0) return;
+    const d = Math.floor(i / 4) * 4, groupe = mots.slice(d, d + 4);
+    g.font = "800 66px 'Segoe UI', Arial, sans-serif"; g.textAlign = "left"; g.textBaseline = "middle";
+    const esp = 20, larg = groupe.reduce((a, m) => a + g.measureText(m.t).width, 0) + esp * (groupe.length - 1);
+    let x = (W - larg) / 2; const y = 1640;
+    rr(x - 34, y - 62, larg + 68, 124, 30); g.fillStyle = "rgba(0,0,0,0.55)"; g.fill();
+    groupe.forEach((m, j) => {
+      const courant = d + j === i, dit = d + j <= i;
+      g.lineWidth = 10; g.strokeStyle = "rgba(0,0,0,0.6)"; g.strokeText(m.t, x, y);
+      g.fillStyle = courant ? C.jaune : dit ? C.blanc : "rgba(255,255,255,0.45)"; g.fillText(m.t, x, y);
+      x += g.measureText(m.t).width + esp;
+    });
+  }
+  function carteFin(t0, t) {
+    const k = ease((t - t0) / 0.5);
+    g.save(); g.globalAlpha = k; g.fillStyle = C.fond; g.fillRect(0, 0, W, H);
+    const rg = g.createRadialGradient(W / 2, 900, 40, W / 2, 900, 900); rg.addColorStop(0, "rgba(109,94,248,0.55)"); rg.addColorStop(1, "rgba(15,14,26,0)");
+    g.fillStyle = rg; g.fillRect(0, 0, W, H); g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillStyle = C.blanc; g.font = "900 200px 'Segoe UI', Arial"; g.fillText("PILOZ", W / 2, 800 - (1 - k) * 60);
+    g.fillStyle = C.jaune; g.font = "800 72px 'Segoe UI', Arial"; g.fillText("piloz.fr", W / 2, 990);
+    g.fillStyle = C.blanc; g.font = "700 54px 'Segoe UI', Arial"; g.fillText("7 jours de Premium offerts", W / 2, 1120);
+    g.fillStyle = C.gris; g.font = "600 44px 'Segoe UI', Arial"; g.fillText("sans carte bancaire", W / 2, 1195);
+    g.restore();
+  }
+  function dessiner(t) {
+    const s = state.script; if (!s) return;
+    const total = s.duree + FIN, scenes = s.scenes;
+    let idx = 0; for (let j = 0; j < scenes.length; j++) if (scenes[j].debut <= t) idx = j;
+    const sc = scenes[idx], t1 = idx + 1 < scenes.length ? scenes[idx + 1].debut : s.duree, img = state.imgs[sc.visuel] || null;
+    fond(t, img);
+    const notif = { expediteur: s.accroche_notif?.expediteur || "Un salarié", texte: s.accroche_notif?.texte || "Patron, je vais où demain ?" };
+    visuel(sc.visuel, img, sc.debut, t1, t, notif);
+    titre(sc.texte_ecran, sc.debut, t);
+    sousTitres(s.mots, t);
+    g.font = "900 40px 'Segoe UI', Arial"; g.textAlign = "left"; g.textBaseline = "alphabetic"; g.fillStyle = "rgba(255,255,255,0.85)"; g.fillText("PILOZ", 60, 150);
+    g.fillStyle = C.violet2; g.fillRect(60, 165, 70, 6);
+    g.fillStyle = C.violet; g.fillRect(0, 0, W * Math.min(1, t / total), 10);
+    if (t > s.duree) carteFin(s.duree, t);
+  }
+
+  // Minutage : début de chaque scène, mots avec leur heure, ponctuation collée aux mots.
+  function minuter(script, alignment, starts) {
+    const chars = alignment.characters, deb = alignment.character_start_times_seconds, fin = alignment.character_end_times_seconds;
+    const at = (i) => deb[Math.min(i, deb.length - 1)];
+    script.scenes.forEach((s, i) => { s.debut = at(starts[i]); });
+    script.duree = fin[fin.length - 1];
+    const bruts = []; let cur = null;
+    for (let i = 0; i < chars.length; i++) {
+      if (/\s/.test(chars[i])) { if (cur) { bruts.push(cur); cur = null; } continue; }
+      if (!cur) cur = { t: chars[i], debut: deb[i] }; else cur.t += chars[i];
+    }
+    if (cur) bruts.push(cur);
+    const mots = []; let attente = "";
+    for (const m of bruts) {
+      if (!/[\p{L}\p{N}]/u.test(m.t)) {
+        if (m.t === "«" || m.t === "(" || m.t === '"') attente += m.t === "«" ? "« " : m.t;
+        else if (mots.length) mots[mots.length - 1].t += ([":", ";", "!", "?", "»"].includes(m.t) ? " " : "") + m.t;
+        continue;
+      }
+      mots.push(attente ? { ...m, t: attente + m.t } : m); attente = "";
+    }
+    script.mots = mots;
+    return script;
+  }
+
+  async function chargerImages(script) {
+    const noms = [...new Set(script.scenes.map((s) => s.visuel).filter((v) => v && v !== "aucun"))];
+    await Promise.all(noms.map(async (n) => {
+      if (state.imgs[n]) return;
+      const img = new Image(); img.src = "assets/linkedin/" + n + ".jpg?v=20261123"; await img.decode(); state.imgs[n] = img;
+    }));
+  }
+
+  function etape(texte, ok) { $("ttEtape").textContent = texte; $("ttEtape").className = "note" + (ok === false ? " err" : ""); }
+
+  async function creer() {
+    if (state.busy) return;
+    const theme = $("ttTheme").value.trim();
+    state.busy = true; arreter(); state.mp4 = null; $("ttCreer").disabled = true; $("ttResultat").hidden = true;
+    try {
+      etape("1/3 · Claude écrit le script…");
+      const r = await api("tiktok.script", { theme });
+      const script = r.script;
+      let full = ""; const starts = [];
+      for (const s of script.scenes) { starts.push(full.length + (full ? 1 : 0)); full += (full ? " " : "") + s.voix.trim(); }
+      etape("2/3 · Jessica enregistre la voix off…");
+      const v = await api("tiktok.voix", { texte: full });
+      minuter(script, v.alignment, starts);
+      const bytes = Uint8Array.from(atob(v.audio_base64), (c) => c.charCodeAt(0));
+      state.mp3 = new Blob([bytes], { type: "audio/mpeg" });
+      state.buffer = await new AudioContext().decodeAudioData(bytes.buffer.slice(0));
+      etape("3/3 · Montage…");
+      await chargerImages(script);
+      state.script = script;
+      $("ttLegende").value = script.legende + "\n\n" + (script.hashtags || []).map((h) => "#" + String(h).replace(/^#/, "")).join(" ");
+      $("ttTitre").textContent = script.titre;
+      $("ttScenes").innerHTML = script.scenes.map((s) => `<li><b>${esc(s.texte_ecran)}</b> — ${esc(s.voix)}</li>`).join("");
+      $("ttResultat").hidden = false;
+      dessiner(0.8);
+      memoriser(theme || script.titre);
+      etape("Vidéo prête (" + (script.duree + FIN).toFixed(0) + " s). Lisez l'aperçu ou téléchargez le MP4.", true);
+    } catch (e) {
+      etape("Échec : " + (e?.message || e), false);
+    } finally { state.busy = false; $("ttCreer").disabled = false; }
+  }
+
+  function arreter() {
+    cancelAnimationFrame(state.raf); state.playing = false;
+    if (state.audio) { state.audio.pause(); state.audio = null; }
+    if ($("ttLire")) $("ttLire").textContent = "▶ Lire l'aperçu";
+  }
+  function lire() {
+    if (!state.script) return;
+    if (state.playing) { arreter(); return; }
+    const a = new Audio(URL.createObjectURL(state.mp3)); state.audio = a; state.playing = true; $("ttLire").textContent = "■ Arrêter";
+    const total = state.script.duree + FIN, t0 = performance.now();
+    a.play().catch(() => {});
+    const frame = () => {
+      const t = a.ended ? (performance.now() - t0) / 1000 : a.currentTime;
+      dessiner(t);
+      if (state.playing && t < total) state.raf = requestAnimationFrame(frame); else arreter();
+    };
+    state.raf = requestAnimationFrame(frame);
+  }
+
+  let muxerPret = null;
+  function chargerMuxer() {
+    if (window.Mp4Muxer) return Promise.resolve();
+    return muxerPret ||= new Promise((ok, ko) => {
+      const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js";
+      s.onload = () => ok(); s.onerror = () => { muxerPret = null; ko(new Error("Module MP4 non chargé (connexion ?).")); }; document.head.appendChild(s);
+    });
+  }
+  async function exporter() {
+    if (!state.script || state.busy) return;
+    if (!("VideoEncoder" in window) || !("AudioEncoder" in window)) { toast("Ce navigateur ne sait pas fabriquer de MP4 : utilisez Chrome ou Edge à jour."); return; }
+    state.busy = true; arreter(); $("ttTelecharger").disabled = true;
+    try {
+      if (!state.mp4) {
+        await chargerMuxer();
+        const s = state.script, total = s.duree + FIN, n = Math.ceil(total * FPS), SR = 48000;
+        const off = new OfflineAudioContext(2, Math.ceil(total * SR), SR);
+        const src = off.createBufferSource(); src.buffer = state.buffer; src.connect(off.destination); src.start(0);
+        const son = await off.startRendering();
+        const aac = (await AudioEncoder.isConfigSupported({ codec: "mp4a.40.2", numberOfChannels: 2, sampleRate: SR, bitrate: 160000 })).supported;
+        const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), fastStart: "in-memory",
+          video: { codec: "avc", width: W, height: H, frameRate: FPS }, audio: { codec: aac ? "aac" : "opus", numberOfChannels: 2, sampleRate: SR } });
+        let erreur = null;
+        const venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: (e) => { erreur = e; } });
+        venc.configure({ codec: "avc1.640028", width: W, height: H, bitrate: 8_000_000, framerate: FPS, avc: { format: "avc" } });
+        const aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: (e) => { erreur = e; } });
+        aenc.configure({ codec: aac ? "mp4a.40.2" : "opus", numberOfChannels: 2, sampleRate: SR, bitrate: 160000 });
+        for (let i = 0; i < n; i++) {
+          if (erreur) throw erreur;
+          dessiner(i / FPS);
+          const f = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+          venc.encode(f, { keyFrame: i % (FPS * 2) === 0 }); f.close();
+          if (i % 15 === 0) { etape("Fabrication du MP4 : " + Math.round(i / n * 100) + " %…"); await new Promise((r) => setTimeout(r, 0)); }
+          while (venc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 5));
+        }
+        const L = son.getChannelData(0), R = son.getChannelData(1), BLOC = 1024;
+        for (let p = 0; p < son.length; p += BLOC) {
+          const k = Math.min(BLOC, son.length - p), data = new Float32Array(k * 2);
+          data.set(L.subarray(p, p + k), 0); data.set(R.subarray(p, p + k), k);
+          const ad = new AudioData({ format: "f32-planar", sampleRate: SR, numberOfFrames: k, numberOfChannels: 2, timestamp: Math.round(p * 1e6 / SR), data });
+          aenc.encode(ad); ad.close();
+        }
+        await venc.flush(); await aenc.flush(); if (erreur) throw erreur; muxer.finalize();
+        state.mp4 = new Blob([muxer.target.buffer], { type: "video/mp4" });
+        dessiner(0.8);
+      }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(state.mp4);
+      a.download = "piloz-tiktok-" + String(state.script.titre || "video").normalize("NFD").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase().slice(0, 50) + ".mp4";
+      document.body.appendChild(a); a.click(); a.remove();
+      etape("MP4 téléchargé (" + (state.mp4.size / 1e6).toFixed(1) + " Mo). Publiez-le dans l'appli TikTok et collez la légende.", true);
+    } catch (e) {
+      etape("Échec du MP4 : " + (e?.message || e), false);
+    } finally { state.busy = false; $("ttTelecharger").disabled = false; }
+  }
+
+  // Thèmes déjà traités (ce navigateur seulement) : évités par les idées de Claude.
+  function deja() { try { return JSON.parse(localStorage.getItem("pz-tiktok-themes") || "[]"); } catch { return []; } }
+  function memoriser(theme) { try { localStorage.setItem("pz-tiktok-themes", JSON.stringify([theme, ...deja().filter((x) => x !== theme)].slice(0, 20))); } catch { /* stockage indisponible */ } renderDeja(); }
+  function renderDeja() { const d = deja(); $("ttDeja").innerHTML = d.length ? "Déjà faits : " + d.slice(0, 6).map((x) => esc(x)).join(" · ") : ""; }
+
+  async function idees() {
+    $("ttIdees").disabled = true; $("ttIdeesList").innerHTML = '<span class="note">Claude réfléchit…</span>';
+    try {
+      const r = await api("tiktok.idees", { deja: deja() });
+      $("ttIdeesList").innerHTML = (r.idees || []).map((x) => `<button type="button" class="chip" data-tt-idee="${esc(x)}">${esc(x)}</button>`).join("");
+    } catch (e) { $("ttIdeesList").innerHTML = `<span class="note err">${esc(e?.message || e)}</span>`; }
+    finally { $("ttIdees").disabled = false; }
+  }
+
+  function monter() {
+    if (cv) return;
+    cv = $("ttCanvas"); g = cv.getContext("2d");
+    g.fillStyle = C.fond; g.fillRect(0, 0, W, H);
+    g.fillStyle = C.gris; g.font = "600 46px 'Segoe UI', Arial"; g.textAlign = "center"; g.fillText("L'aperçu apparaît ici", W / 2, H / 2);
+    $("ttCreer").addEventListener("click", creer);
+    $("ttLire").addEventListener("click", lire);
+    $("ttTelecharger").addEventListener("click", exporter);
+    $("ttIdees").addEventListener("click", idees);
+    $("ttIdeesList").addEventListener("click", (ev) => { const b = ev.target.closest("[data-tt-idee]"); if (b) { $("ttTheme").value = b.dataset.ttIdee; $("ttTheme").focus(); } });
+    $("ttCopier").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText($("ttLegende").value); toast("Légende copiée."); }
+      catch { $("ttLegende").select(); toast("Sélectionnée : Ctrl+C pour copier."); }
+    });
+    renderDeja();
+  }
+  return { monter, arreter };
+})();
+
 const VIEWS = {
   auto:     { t:"Tableau de bord", s:"Recherche d'entreprises et envoi des e-mails de prospection, en continu et sans intervention." },
   negoces:  { t:"Négoces", s:"Les négoces partenaires de l'offre comptoir : mail de proposition, flyers au comptoir et classement du petit-déjeuner." },
   boites:   { t:"Boîtes d'envoi", s:"Chaque boîte et chaque domaine : quotas, montée progressive, résultats et santé." },
   rep:      { t:"Réponses", s:"Les réponses des boîtes d'envoi, réunies et classées automatiquement." },
   linkedin: { t:"LinkedIn", s:"Posts prêts à publier : copiez le texte, copiez ou téléchargez le visuel, collez sur LinkedIn." },
+  tiktok:   { t:"TikTok", s:"Vidéos verticales avec voix off : Claude écrit, Jessica lit, la vidéo se monte ici. Téléchargez le MP4 et publiez-le vous-même." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
   revendeurs: { t:"Revendeurs", s:"Campagne de recrutement des revendeurs de logiciels de gestion : ciblage, messages et prospects en file." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
@@ -2037,6 +2393,7 @@ function showView(v){
   if (v === "boites") loadBoxes();
   if (v === "rep") loadReplies();
   if (v === "linkedin") loadLinkedin();
+  if (v === "tiktok") TT.monter(); else TT.arreter();
   if (v === "log"){ fillLogFacets(); fillViews(); }
   if (v === "tpl") mountTplEditor("btp");
   if (v === "revendeurs"){ mountTplEditor("revendeur"); renderRevendeurs(); RV.page = 1; loadRvQueue(); }
