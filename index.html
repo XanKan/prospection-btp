@@ -1509,8 +1509,9 @@ applyTheme(root.dataset.theme === "dark" ? "dark" : "light", false);
 /* ============================================================
    CONFIGURATION — clé publique Supabase (la même que l'application)
    ============================================================ */
-const SUPABASE_URL = "https://hpxcbemezvynofxiffzs.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhweGNiZW1lenZ5bm9meGlmZnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NDM3NTQsImV4cCI6MjEwMDExOTc1NH0.g6LBMbz0Hyxh32ZMPJD7e2iizGNyaGAX6184b0e_pVA";
+// Base PILOZ - PROSPECTION depuis le 27/11/2026 (la base principale reste celle de l'app clients).
+const SUPABASE_URL = "https://dbwuavmjscljuhrhaetl.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRid3Vhdm1qc2NsanVocmhhZXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU3Mzc4MTUsImV4cCI6MjExMTMxMzgxNX0.1tp91PxEuQAjV-ps2vech1vO-qq6ZQ8KC4RIrjImYsA";
 const API = SUPABASE_URL + "/functions/v1/prospection-api";
 
 const $ = id => document.getElementById(id);
