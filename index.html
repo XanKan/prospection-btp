@@ -910,7 +910,7 @@
               <div class="li-row"><button type="button" class="b b-out b-sm" id="ttIdees">Proposer des idées</button></div>
               <div class="tt-idees" id="ttIdeesList"></div>
               <div class="li-row"><button type="button" class="b b-main" id="ttCreer">Créer la vidéo</button></div>
-              <p class="note" id="ttEtape">Claude écrit le script (accroche, scènes, légende), Jessica lit la voix off, puis la vidéo est montée ici avec les vraies captures de Piloz. Environ une minute.</p>
+              <p class="note" id="ttEtape">Claude écrit le script (accroche, scènes, légende), Claire ou Sarah (voix françaises, à tour de rôle) lit la voix off, puis la vidéo est montée ici avec les vraies captures de Piloz. Environ une minute.</p>
               <p class="note" id="ttDeja"></p>
               <div id="ttResultat" hidden>
                 <h3 class="tt-titre" id="ttTitre"></h3>
@@ -2106,7 +2106,7 @@ $("liDone").addEventListener("click", async () => {
    NAVIGATION
    ============================================================ */
 /* ============================================================
-   Onglet TikTok (27/11/2026) : Claude écrit le script, ElevenLabs fait la voix off (Jessica),
+   Onglet TikTok (27/11/2026) : Claude écrit le script, ElevenLabs fait la voix off (Claire et Sarah en alternance),
    le montage (captures de Piloz, titres, sous-titres mot à mot) est dessiné ici, puis encodé
    en MP4 (WebCodecs + mp4-muxer). Rien n'est publié : on télécharge la vidéo et on copie la légende.
    ============================================================ */
@@ -2363,7 +2363,7 @@ const TT = (() => {
       const r = await api("tiktok.script", { theme });
       const script = r.script;
       const full = script.scenes.map((s) => s.voix.trim()).join(" ");
-      etape("2/3 · Jessica enregistre la voix off…");
+      etape("2/3 · Enregistrement de la voix off…");
       const v = await api("tiktok.voix", { texte: full });
       const brut = JSON.parse(JSON.stringify(script));
       etape("3/3 · Montage…");
@@ -2617,7 +2617,7 @@ const VIEWS = {
   boites:   { t:"Boîtes d'envoi", s:"Chaque boîte et chaque domaine : quotas, montée progressive, résultats et santé." },
   rep:      { t:"Réponses", s:"Les réponses des boîtes d'envoi, réunies et classées automatiquement." },
   linkedin: { t:"LinkedIn", s:"Posts prêts à publier : copiez le texte, copiez ou téléchargez le visuel, collez sur LinkedIn." },
-  tiktok:   { t:"TikTok", s:"Vidéos verticales avec voix off : Claude écrit, Jessica lit, la vidéo se monte ici. Téléchargez le MP4 et publiez-le vous-même." },
+  tiktok:   { t:"TikTok", s:"Vidéos verticales avec voix off : Claude écrit, Claire ou Sarah lit, la vidéo se monte ici. Téléchargez le MP4 et publiez-le vous-même." },
   target:   { t:"Ciblage",    s:"Les entreprises que l'automate va chercher et contacter." },
   revendeurs: { t:"Revendeurs", s:"Campagne de recrutement des revendeurs de logiciels de gestion : ciblage, messages et prospects en file." },
   tpl:      { t:"Messages",   s:"Les modèles d'e-mail personnalisés par l'automate." },
